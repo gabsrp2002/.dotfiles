@@ -19,9 +19,6 @@ alias prev="open -a Preview"
 # nvim alias
 alias vim="nvim"
 
-# config files repo
-alias config='git --git-dir=$HOME/.configfiles/ --work-tree=$HOME'
-
 # Function to fast add, commit and push
 function acp() {
   git add .
