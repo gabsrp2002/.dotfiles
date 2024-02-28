@@ -47,6 +47,7 @@ brew install --cask raycast # Better spotlight
 brew install --cask font-hack-nerd-font # Nice font for kitty and neovim
 brew install --cask skim # For pdf preview
 brew install --cask spotify # For music
+brew install --cask nikitabobko/tap/aerospace # For WM
 
 echo "\nInstalling developer tools for neovim..."
 brew install nvim # Best editor ever brew install stylua # For lua formatting
@@ -60,12 +61,6 @@ npm install -g neovim
 brew install deno # For markdown preview
 echo "${GREEN}Developer tools installed!${NC}"
 
-echo "\nInstalling keymap tool and window manager..."
-brew install koekeishiya/formulae/skhd # Keymap tool
-brew install koekeishiya/formulae/yabai # Window manager
-brew install jq # To use yabai better
-echo "${GREEN}yabai and skhd installed!${NC}"
-
 echo "\nInstalling funny terminal commands..."
 brew install fortune
 brew install asciiquarium
@@ -73,33 +68,11 @@ brew install sl
 brew install cmatrix
 echo "${GREEN}Funny terminal commands installed!${NC}"
 
-echo "\nInstalling neofetch..."
-brew install neofetch
-echo "${GREEN}neofetch installed!${NC}"
-
 # Give scripts permission to run
-echo "\n=> Step 6: Give scripts permission to run"
+echo "\n=> Step 6: Make scripts executable"
 chmod +x $HOME/scripts/*
-chmod +x $HOME/.yabairc
-echo "${GREEN}Scripts permission granted!${NC}"
+echo "${GREEN}Scripts are now executable!${NC}"
 
 echo "${GREEN}Installation complete!${NC}"
-
-# Post installation
-
-echo "\n=> Post installation"
-
-echo "\n${RED}To enable all yabai features you'll need to disable SIP by following steps:${NC}"
-echo "1. Reboot into recovery mode (hold the power button) "
-echo "2. Open the terminal and run the following command:'
-csrutil enable --without fs --without debug --without nvram
-' in the terminal"
-
-echo "\n${RED}Then, to enable yabai and skhd you need to follow the steps:${NC}"
-echo "1. Run the following command in the terminal:"
-echo "'sudo update_yabai'"
-echo "then enter your password to oad scriting additions without having to type your password"
-echo "2. Run 'yabai --start-service' in the terminal"
-echo "3. Run 'skhd --start-service' in the terminal"
 
 echo "${GREEN}That's all folks! Enjoy your new setup!${NC}"
