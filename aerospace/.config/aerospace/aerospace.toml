@@ -1,0 +1,105 @@
+after-login-command = []
+
+after-startup-command = []
+
+start-at-login = true
+
+# Normalizations. See: https://nikitabobko.github.io/AeroSpace/guide.html#normalization
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = true
+
+# See: https://nikitabobko.github.io/AeroSpace/guide.html#layouts
+# The 'accordion-padding' specifies the size of accordion padding
+# You can set 0 to disable the padding feature
+accordion-padding = 30
+
+default-root-container-layout = 'tiles'
+
+default-root-container-orientation = 'auto'
+
+# Gaps between windows (inner-*) and between monitor edges (outer-*).
+# Possible values:
+# - Constant:     gaps.outer.top = 8
+# - Per monitor:  gaps.outer.top = [{ monitor.main = 16 }, { monitor."some-pattern" = 32 }, 24]
+#                 In this example, 24 is a default value when there is no match.
+#                 Monitor pattern is the same as for 'workspace-to-monitor-force-assignment'.
+#                 See: https://nikitabobko.github.io/AeroSpace/guide.html#assign-workspaces-to-monitors
+gaps.inner.horizontal = 0
+gaps.inner.vertical =   0
+gaps.outer.left =       0
+gaps.outer.bottom =     0
+gaps.outer.top =        0
+gaps.outer.right =      0
+
+# Visual indent makes it easier to understand that containers of the same orientation are nested.
+# If you have 'enable-normalization-opposite-orientation-for-nested-containers' enabled then
+# there is no way to observe the indent
+indent-for-nested-containers-with-the-same-orientation = 30
+
+[[on-window-detected]]
+if.app-id = 'com.apple.weather'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.finder'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'net.whatsapp.WhatsApp'
+run = 'move-node-to-workspace whatsapp'
+
+[[on-window-detected]]
+if.app-id = 'com.spotify.client'
+run = 'move-node-to-workspace spotify'
+
+[mode.main.binding]
+
+ctrl-shift-t = 'exec-and-forget /opt/homebrew/bin/kitty --single-instance -d ~ -e /opt/homebrew/bin/tmux new -A -s default'
+
+alt-slash = 'layout tiles horizontal vertical'
+
+alt-h = 'focus left'
+alt-j = 'focus down'
+alt-k = 'focus up'
+alt-l = 'focus right'
+
+alt-shift-h = 'move left'
+alt-shift-j = 'move down'
+alt-shift-k = 'move up'
+alt-shift-l = 'move right'
+
+alt-c = 'exec-and-forget ~/scripts/move_to_new_ws'
+alt-n = 'workspace --wrap-around next'
+alt-p = 'workspace --wrap-around prev'
+alt-shift-n = ['move-node-to-workspace --wrap-around next', 'workspace --wrap-around next']
+alt-shift-p = ['move-node-to-workspace --wrap-around prev', 'workspace --wrap-around prev']
+
+alt-shift-semicolon = 'mode service'
+alt-shift-slash = 'mode join'
+alt-r = 'mode resize'
+
+[mode.resize.binding]
+h = 'resize width -50'
+j = 'resize height +50'
+k = 'resize height -50'
+l = 'resize width +50'
+enter = 'mode main'
+esc = 'mode main'
+
+[mode.service.binding]
+r = ['flatten-workspace-tree', 'mode main'] # reset layout
+f = ['layout floating tiling', 'mode main'] # Toggle between floating and tiling layout
+backspace = ['close-all-windows-but-current', 'mode main']
+esc = ['reload-config', 'mode main']
+
+[mode.join.binding]
+alt-shift-h = ['join-with left', 'mode main']
+alt-shift-j = ['join-with down', 'mode main']
+alt-shift-k = ['join-with up', 'mode main']
+alt-shift-l = ['join-with right', 'mode main']
+esc = 'mode main'
+
+[workspace-to-monitor-force-assignment]
+whatsapp = 'secondary'
+spotify = 'secondary'
+0 = 'main'

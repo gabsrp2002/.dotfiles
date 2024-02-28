@@ -1,0 +1,11 @@
+[user]
+	email = gabrielpaiva2002@gmail.com
+	name = Gabriel Ribeiro Paiva
+[pull]
+	rebase = false
+[difftool]
+    prompt = false
+[diff]
+    tool = nvimdiff
+[difftool "nvimdiff"]
+    cmd = "nvim -d \"$LOCAL\" \"$REMOTE\""

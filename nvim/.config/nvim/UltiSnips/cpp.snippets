@@ -1,0 +1,79 @@
+extends c
+
+snippet cpd "Template for cp with double"
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define dbg(x) cout << #x << " = " << x << endl
+typedef long long ll;
+
+${1}
+
+int main() \{
+	ios_base::sync_with_stdio(0);
+	cin.tie(0);
+	cout.tie(0);
+	cout.precision(${2});
+	cout.setf(ios::fixed);
+
+	${0}
+
+	return 0;
+}
+endsnippet
+
+
+snippet cp "Default template for cp"
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define dbg(x) cout << #x << " = " << x << endl
+typedef long long ll;
+const int mod = 1e9 + 7;
+
+${1}
+
+int main() \{
+	ios_base::sync_with_stdio(0);
+	cin.tie(0);
+	cout.tie(0);
+
+	${0}
+
+	return 0;
+}
+endsnippet
+
+
+snippet forin "Template for for in loop"
+for (${1:auto} ${2:item} : ${3:arr}) \{
+	${0}
+}
+endsnippet
+
+
+snippet lcout "Inline cout snippet" A
+cout << $1 << ' ';
+endsnippet
+
+
+snippet scout "Simple cout snippet" A
+cout << $1;
+endsnippet
+
+
+snippet cout "Cout snippet" A
+cout << $1 << '\\n';
+endsnippet
+
+
+snippet fcout "Cout with flush snippet" A
+cout << $1 << endl;
+endsnippet
+
+
+snippet cin "Cin snippet" A
+cin >> $1;
+endsnippet

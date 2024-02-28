@@ -1,0 +1,105 @@
+#!/bin/zsh
+
+GREEN='\033[1;32m' # Light Green color
+RED='\033[0;31m' # Red color
+NC='\033[0m' # No Color
+
+# Install homebrew
+echo "\n=> Step 1: Install Homebrew"
+if [ -x "$(command -v brew)" ]; then
+    echo "${GREEN}Homebrew already installed!${NC}"
+else
+    echo "\nInstalling homebrew..."
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    echo "${GREEN}Homebrew installed!${NC}"
+fi
+
+# Install oh-my-zsh
+echo "\n=> Step 2: Install oh-my-zsh"
+if [ -d "$HOME/.oh-my-zsh" ]; then
+    echo "${GREEN}oh-my-zsh already installed!${NC}"
+else
+    echo "\nInstalling oh-my-zsh..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    mv .zshrc.pre-oh-my-zsh .zshrc # Keep .zshrc file
+    echo "${GREEN}oh-my-zsh installed!${NC}"
+fi
+
+echo "\n=> Step 3: Install oh-my-zsh plugin(s)"
+if [ -d "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" ]; then
+    echo "${GREEN}zsh-syntax-highlighting already installed!${NC}"
+else
+    echo "\nInstalling zsh-syntax-highlighting..."
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+    echo "${GREEN}zsh-syntax-highlighting installed!${NC}"
+fi
+
+# Sourcing zshrc
+echo "\n=> Step 4: Source .zshrc"
+source ~/.zshrc
+echo "${GREEN}.zshrc sourced!${NC}"
+
+# Install homebrew packages
+echo "\n=> Step 5: Install homebrew packages"
+echo "\nInstalling casks..."
+brew install --cask kitty # Terminal
+brew install --cask raycast # Better spotlight
+brew install --cask font-hack-nerd-font # Nice font for kitty and neovim
+brew install --cask skim # For pdf preview
+brew install --cask spotify # For music
+
+echo "\nInstalling developer tools for neovim..."
+brew install nvim # Best editor ever brew install stylua # For lua formatting
+brew install lua-language-server # For lua language server
+brew install prettier # For a lot of languages formatting
+brew install python
+brew install node
+brew install yarn
+pip3 install pynvim
+npm install -g neovim
+brew install deno # For markdown preview
+echo "${GREEN}Developer tools installed!${NC}"
+
+echo "\nInstalling keymap tool and window manager..."
+brew install koekeishiya/formulae/skhd # Keymap tool
+brew install koekeishiya/formulae/yabai # Window manager
+brew install jq # To use yabai better
+echo "${GREEN}yabai and skhd installed!${NC}"
+
+echo "\nInstalling funny terminal commands..."
+brew install fortune
+brew install asciiquarium
+brew install sl
+brew install cmatrix
+echo "${GREEN}Funny terminal commands installed!${NC}"
+
+echo "\nInstalling neofetch..."
+brew install neofetch
+echo "${GREEN}neofetch installed!${NC}"
+
+# Give scripts permission to run
+echo "\n=> Step 6: Give scripts permission to run"
+chmod +x $HOME/scripts/*
+chmod +x $HOME/.yabairc
+echo "${GREEN}Scripts permission granted!${NC}"
+
+echo "${GREEN}Installation complete!${NC}"
+
+# Post installation
+
+echo "\n=> Post installation"
+
+echo "\n${RED}To enable all yabai features you'll need to disable SIP by following steps:${NC}"
+echo "1. Reboot into recovery mode (hold the power button) "
+echo "2. Open the terminal and run the following command:'
+csrutil enable --without fs --without debug --without nvram
+' in the terminal"
+
+echo "\n${RED}Then, to enable yabai and skhd you need to follow the steps:${NC}"
+echo "1. Run the following command in the terminal:"
+echo "'sudo update_yabai'"
+echo "then enter your password to oad scriting additions without having to type your password"
+echo "2. Run 'yabai --start-service' in the terminal"
+echo "3. Run 'skhd --start-service' in the terminal"
+
+echo "${GREEN}That's all folks! Enjoy your new setup!${NC}"

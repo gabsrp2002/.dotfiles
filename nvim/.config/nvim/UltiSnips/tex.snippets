@@ -1,0 +1,223 @@
+snippet gtex "Default latex file"
+\\documentclass[a4paper]\{scrartcl}
+
+%% Sets page size and margins
+\\usepackage[a4paper,total=\{7in,10in}]\{geometry} 
+
+%% Useful packages
+\\usepackage\{euler}
+\\usepackage\{amsmath}
+\\usepackage\{amssymb}
+\\usepackage\{mathtools}
+\\usepackage\{hyperref}
+\\usepackage\{xcolor}
+\\usepackage\{tikz}
+\\usepackage\{ntheorem}
+\\usepackage\{array}
+\\usepackage\{enumitem}
+
+\\definecolor\{linkBlue}\{HTML}\{4DA6FF}
+\\hypersetup\{
+	colorlinks=true,
+	linkcolor=blue,
+	filecolor=magenta,      
+	citecolor=black,      
+	urlcolor=linkBlue
+}
+
+\\theoremseparator\{.}
+\\newtheorem\{thm}\{Teorema}[section]
+\\newtheorem\{defi}\{Definição}[section]
+\\theorembodyfont\{\\upshape}
+\\newtheorem\{lem}\{Lema}[section]
+\\newtheorem\{prob}\{Problema}
+\\newtheorem\{sol}\{Solução}
+
+\\theoremstyle\{plain}
+\\newtheorem*\{prob**}\{Problema}
+\\newtheorem*\{sol**}\{Solução}
+
+%% Math symbols
+\\newcommand\{\\Mod}[1]\{\\ (\\mathrm\{mod}\\ #1)}
+\\newcommand\{\\cc}\{\\mathbb C}
+\\newcommand\{\\nn}\{\\mathbb N}
+\\newcommand\{\\qq}\{\\mathbb Q}
+\\newcommand\{\\rr}\{\\mathbb R}
+\\newcommand\{\\zz}\{\\mathbb Z}
+\\newcommand\{\\ff}\{\\mathbb F}
+\\newcommand\{\\ee}\{\\mathbb E}
+\\newcommand\{\\pp}\{\\mathbb P}
+\\newcommand\{\\vv}\{\\mathbb V}
+
+\\newcommand\{\\parconfig}[2]\{
+	\\setlength\{\\parindent}\{#1}
+	\\setlength\{\\parskip}\{#2}
+}
+
+%% Paragraph indentation
+\\parconfig\{0em}\{0.5em}
+
+\\title\{${1:Title}}
+
+\\author\{Gabriel Ribeiro Paiva}
+\\date\{${2}}
+
+\\begin\{document}
+\\maketitle
+
+${0}
+
+\\end\{document}
+endsnippet
+
+snippet simulado "Default simulado file"
+
+\\documentclass[12pt]\{article}
+\\usepackage[a4paper, total=\{6.5in, 10in}]\{geometry}
+
+%% Useful packages
+\\usepackage\{amsmath}
+\\usepackage\{amssymb}
+\\usepackage\{mathtools}
+\\usepackage\{hyperref}
+\\usepackage\{xcolor}
+\\usepackage\{tikz}
+\\usepackage\{ntheorem}
+\\usepackage\{array}
+\\usepackage\{enumitem}
+\\usepackage\{booktabs}
+
+\\theoremseparator\{.}
+\\theorembodyfont\{\\upshape}
+\\newtheorem\{prob}\{Problema}
+
+\\usepackage[document]\{ragged2e}
+
+\\title\{${1:Simulágil}}
+\\date\{\\vspace\{-5ex}$2 \\vspace\{-2ex}}
+\\begin\{document}
+
+\\maketitle
+
+\\toprule
+
+\\section*\{Instruções}
+
+\\begin\{itemize}
+	\\item Não escreva mais de uma questão por folha. Escreva seu nome em cada folha que usar. 
+	\\item Cada problema vale 10 pontos. 
+	\\item Tudo o que você escrever deve ser justificado.
+	\\item Duração: ${3:2 horas e meia}.
+\\end\{itemize}
+
+\\bottomrule
+
+\\vspace\{10mm}
+
+\\newline
+
+\\begin\{prob}
+
+	$4
+
+\\end\{prob}
+
+\\begin\{prob}
+
+	$5
+
+\\end\{prob}
+
+\\begin\{prob}
+
+	$6
+
+\\end\{prob}
+
+\\begin\{prob}
+
+	$7
+
+\\end\{prob}
+
+\\end\{document}
+endsnippet
+
+snippet enum "Begins enumerate" bA
+\\begin\{enumerate}
+
+	\\item ${1}
+
+\\end\{enumerate}
+endsnippet
+
+snippet prob "Begins problem statement" bA
+\\begin\{prob}
+
+	$1
+
+\\end\{prob}
+endsnippet
+
+snippet sol "Begins solve statement" bA
+\\begin\{sol}
+
+	$1
+
+\\end\{sol}
+endsnippet
+
+
+snippet lem "Begins lema statement" bA
+\\begin\{lem}
+
+	$1
+
+\\end\{lem}
+endsnippet
+
+snippet env "Starts an enviroment"
+\\begin\{${VISUAL}}
+	$0
+\\end\{${VISUAL}}
+endsnippet
+
+snippet def "Begins definition statement" bA
+\\begin\{definition}
+
+	$1
+
+\\end\{definition}
+endsnippet
+
+snippet example "Begins example statement" bA
+\\begin\{example}
+
+	$1
+
+\\end\{example}
+endsnippet
+
+snippet thm "Begins theorem statement" bA
+\\begin\{thm}
+
+	$1
+
+\\end\{thm}
+endsnippet
+
+snippet proof "Begins proof statement" bA
+\\begin\{proof}
+
+	$1
+
+\\end\{proof}
+endsnippet
+
+snippet cor "Begins corollary statement" bA
+\\begin\{corollary}
+
+	$1
+
+\\end\{corollary}
+endsnippet

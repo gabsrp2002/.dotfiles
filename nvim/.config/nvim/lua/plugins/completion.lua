@@ -1,0 +1,118 @@
+return {
+  {
+    "hrsh7th/nvim-cmp",
+    event = { "InsertEnter", "CmdlineEnter" },
+    dependencies = {
+      "neovim/nvim-lspconfig",
+      "hrsh7th/cmp-nvim-lsp",
+      "hrsh7th/cmp-buffer",
+      "hrsh7th/cmp-path",
+      "hrsh7th/cmp-cmdline",
+      "hrsh7th/cmp-nvim-lua",
+      "kdheepak/cmp-latex-symbols",
+      "SirVer/ultisnips",
+      "quangnguyen30192/cmp-nvim-ultisnips",
+    },
+    config = function()
+      local cmp = require("cmp")
+      local kind_icons = {
+        Text = "",
+        Method = "󰆧",
+        Function = "󰊕",
+        Constructor = "",
+        Field = "󰇽",
+        Variable = "󰂡",
+        Class = "󰠱",
+        Interface = "",
+        Module = "",
+        Property = "󰜢",
+        Unit = "",
+        Value = "󰎠",
+        Enum = "",
+        Keyword = "󰌋",
+        Snippet = "",
+        Color = "󰏘",
+        File = "󰈙",
+        Reference = "",
+        Folder = "󰉋",
+        EnumMember = "",
+        Constant = "󰏿",
+        Struct = "",
+        Event = "",
+        Operator = "󰆕",
+        TypeParameter = "󰅲",
+      }
+
+      cmp.setup({
+        snippet = {
+          expand = function(args)
+            vim.fn["UltiSnips#Anon"](args.body)
+          end,
+        },
+        window = {
+          completion = cmp.config.window.bordered(),
+          documentation = cmp.config.window.bordered(),
+        },
+        mapping = cmp.mapping.preset.insert({
+          ["<C-p>"] = cmp.mapping(cmp.mapping.select_prev_item(), { "i", "c" }),
+          ["<C-n>"] = cmp.mapping(cmp.mapping.select_next_item(), { "i", "c" }),
+          ["<CR>"] = cmp.mapping.confirm({ select = false }),
+        }),
+        sources = cmp.config.sources({
+          { name = "nvim_lsp" },
+          { name = "ultisnips" },
+          { name = "path" },
+          {
+            name = "latex_symbols",
+            option = {
+              strategy = 0, -- mixed
+            },
+          },
+        }, {
+          { name = "buffer" },
+        }),
+        formatting = {
+          format = function(entry, vim_item)
+            -- Kind icons
+            vim_item.kind = string.format("%s %s", kind_icons[vim_item.kind], vim_item.kind) -- This concatonates the icons with the name of the item kind
+            -- Source
+            vim_item.menu = ({
+              buffer = "[Buffer]",
+              nvim_lsp = "[LSP]",
+              ultisnips = "[Snip]",
+              path = "[Path]",
+              nvim_lua = "[Lua]",
+              latex_symbols = "[LaTeX]",
+            })[entry.source.name]
+            return vim_item
+          end,
+        },
+      })
+
+      cmp.setup.cmdline("/", {
+        sources = {
+          { name = "buffer" },
+        },
+      })
+
+      cmp.setup.cmdline(":", {
+        sources = cmp.config.sources({
+          { name = "path" },
+        }, {
+          { name = "cmdline" },
+        }),
+      })
+    end,
+  },
+  {
+    "SirVer/ultisnips",
+    lazy = true,
+    cmd = { "UltiSnipsEdit", "UltiSnipsAddFiletypes" },
+    init = function()
+      vim.g.UltiSnipsEditSplit = "vertical"
+      vim.g.UltiSnipsExpandTrigger = "<c-k>"
+      vim.g.UltiSnipsJumpForwardTrigger = "<c-k>"
+      vim.g.UltiSnipsJumpBackwardTrigger = "<c-j>"
+    end,
+  },
+}
