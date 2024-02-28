@@ -1,2 +1,2 @@
 # .dotfiles
-My dotfiles managed with stow
+My dotfiles managed with `stow`
