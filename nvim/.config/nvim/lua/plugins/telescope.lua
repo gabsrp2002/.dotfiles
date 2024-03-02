@@ -14,7 +14,7 @@ return {
     keys = {
       { "<leader>tf", ":Telescope find_files<CR>", { noremap = true, silent = true } },
       { "<leader>tr", ":Telescope oldfiles<CR>", { noremap = true, silent = true } },
-      { "<leader>tb", ":Telescope buffers<CR>", { noremap = true, silent = true } },
+      { "<leader>bb", ":Telescope buffers<CR>", { noremap = true, silent = true } },
       { "<leader>gb", ":Telescope git_branches<CR>", { noremap = true, silent = true } },
       { "<leader>gs", ":Telescope git_status<CR>", { noremap = true, silent = true } },
       {
