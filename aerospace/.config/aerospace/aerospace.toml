@@ -73,7 +73,7 @@ alt-shift-n = ['move-node-to-workspace --wrap-around next', 'workspace --wrap-ar
 alt-shift-p = ['move-node-to-workspace --wrap-around prev', 'workspace --wrap-around prev']
 
 ctrl-alt-cmd-h = 'move-workspace-to-monitor --wrap-around prev'
-ctrl-alt-cmd-j = 'move-workspace-to-monitor --wrap-around next'
+ctrl-alt-cmd-l = 'move-workspace-to-monitor --wrap-around next'
 
 alt-shift-semicolon = 'mode service'
 alt-shift-slash = 'mode join'
