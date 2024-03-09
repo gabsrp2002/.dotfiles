@@ -48,6 +48,10 @@ run = 'layout floating'
 if.app-id = 'net.whatsapp.WhatsApp'
 run = 'move-node-to-workspace whatsapp'
 
+[[on-window-detected]]
+if.app-id = 'com.jordanbaird.Ice'
+run = 'layout floating'
+
 [mode.main.binding]
 
 ctrl-shift-t = 'exec-and-forget /opt/homebrew/bin/kitty --single-instance -d ~ -e /opt/homebrew/bin/tmux new -A -s default'
