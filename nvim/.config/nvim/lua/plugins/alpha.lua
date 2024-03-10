@@ -30,13 +30,13 @@ return {
       dashboard.button(
         "vv",
         "  Neovim config",
-        ":Telescope file_browser path=~/.config/nvim/lua select_buffer=true<CR>"
+        ":lua require(\"mini.files\").open(\"~/.config/nvim/lua\", false)<cr>"
       ),
 
       dashboard.button(
         "vf",
         "󰈮  Filetypes config",
-        ":Telescope file_browser path=~/.config/nvim/after/ftplugin select_buffer=true<cr>"
+        ":lua require(\"mini.files\").open(\"~/.config/nvim/after/ftplugin\", false)<cr>"
       ),
 
       dashboard.button("q", "  Quit", ":qa<cr>"),

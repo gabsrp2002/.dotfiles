@@ -8,7 +8,6 @@ return {
       "BurntSushi/ripgrep",
       "nvim-telescope/telescope-ui-select.nvim",
       { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
-      "nvim-telescope/telescope-file-browser.nvim",
     },
     cmd = "Telescope",
     keys = {
@@ -26,14 +25,8 @@ return {
       { "gi", ":Telescope lsp_implementations<CR>", { noremap = true, silent = true } },
       { "gr", ":Telescope lsp_references<CR>", { noremap = true, silent = true } },
       { "gt", ":Telescope lsp_type_definitions<CR>", { noremap = true, silent = true } },
-      {
-        "-",
-        ":Telescope file_browser path=%:p:h select_buffer=true<CR>",
-        { noremap = true, silent = true },
-      },
     },
     config = function()
-      local fb_actions = require("telescope").extensions.file_browser.actions
       require("telescope").setup({
         extensions = {
           ["ui-select"] = {
@@ -45,21 +38,10 @@ return {
             override_file_sorter = true, -- override the file sorter
             case_mode = "smart_case", -- or "ignore_case" or "respect_case"
           },
-          file_browser = {
-            hijack_netrw = true,
-            mappings = {
-              ["i"] = {},
-              ["n"] = {
-                g = false,
-                ["-"] = fb_actions.goto_parent_dir,
-              },
-            },
-          },
         },
       })
       require("telescope").load_extension("ui-select")
       require("telescope").load_extension("fzf")
-      require("telescope").load_extension("file_browser")
     end,
   },
 }
