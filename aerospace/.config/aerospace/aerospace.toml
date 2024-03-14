@@ -54,7 +54,7 @@ run = 'layout floating'
 
 [mode.main.binding]
 
-ctrl-shift-t = 'exec-and-forget /opt/homebrew/bin/kitty --single-instance -d ~ -e /opt/homebrew/bin/tmux new -A -s default'
+ctrl-shift-t = 'exec-and-forget kitty --single-instance -d ~ -e tmux new -A -s default'
 
 alt-slash = 'layout tiles horizontal vertical'
 
