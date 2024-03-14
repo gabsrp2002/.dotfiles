@@ -7,6 +7,9 @@ return {
     "nvim-telescope/telescope.nvim",
   },
   cmd = { "Neogit" },
+  keys = {
+    { "<leader>ng", ":Neogit cwd=%:h<cr>", { silent = true, noremap = true } },
+  },
   opts = {
     kind = "tab",
     mappings = {
