@@ -8,7 +8,7 @@ return {
   },
   cmd = { "Neogit" },
   opts = {
-    kind = "replace",
+    kind = "tab",
     mappings = {
       commit_editor = {
         ["q"] = "Close",
