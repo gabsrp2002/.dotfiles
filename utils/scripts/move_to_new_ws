@@ -1,10 +1,10 @@
 #!/bin/zsh
 
 # Find the first available workspace number
-workspaces=$(/opt/homebrew/bin/aerospace list-workspaces --all)
+workspaces=$(aerospace list-workspaces --all)
 candidate=0
 while [[ $workspaces == *"$candidate"* ]]; do
   candidate=$((candidate+1))
 done
 
-/opt/homebrew/bin/aerospace move-node-to-workspace $candidate && /opt/homebrew/bin/aerospace workspace $candidate
+aerospace move-node-to-workspace $candidate && aerospace workspace $candidate
