@@ -11,6 +11,7 @@ return {
     { "<leader>ng", ":Neogit cwd=%:h<cr>", { silent = true, noremap = true } },
   },
   opts = {
+    disable_hint = true,
     kind = "tab",
     mappings = {
       commit_editor = {
