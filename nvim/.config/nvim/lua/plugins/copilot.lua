@@ -1,1 +1,1 @@
-return { "github/copilot.vim", event="InsertEnter" }
+return { "github/copilot.vim", event="InsertEnter", cmd="Copilot" }
