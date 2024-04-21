@@ -73,9 +73,7 @@ return {
         }),
         formatting = {
           format = function(entry, vim_item)
-            -- Kind icons
-            vim_item.kind = string.format("%s %s", kind_icons[vim_item.kind], vim_item.kind) -- This concatonates the icons with the name of the item kind
-            -- Source
+            vim_item.kind = string.format("%s %s", kind_icons[vim_item.kind], vim_item.kind)
             vim_item.menu = ({
               buffer = "[Buffer]",
               nvim_lsp = "[LSP]",
@@ -101,6 +99,44 @@ return {
         }, {
           { name = "cmdline" },
         }),
+      })
+    end,
+  },
+  {
+    "neovim/nvim-lspconfig",
+    dependencies = { "hrsh7th/cmp-nvim-lsp", "folke/neodev.nvim" },
+    event = { "BufReadPre", "BufNewFile" },
+    config = function()
+      local lspconfig = require("lspconfig")
+      local capabilities = require("cmp_nvim_lsp").default_capabilities()
+      local servers = {
+        "pyright",
+        "clangd",
+        "texlab",
+        "tsserver",
+        "eslint",
+        "cssls",
+        "svlangserver",
+        "html",
+        "gopls",
+      }
+      for _, server in ipairs(servers) do
+        lspconfig[server].setup({
+          capabilities = capabilities,
+        })
+      end
+
+      require("neodev").setup()
+
+      lspconfig.lua_ls.setup({
+        capabilities = capabilities,
+        settings = {
+          Lua = {
+            diagnostics = {
+              globals = { "vim", "use" },
+            },
+          },
+        },
       })
     end,
   },

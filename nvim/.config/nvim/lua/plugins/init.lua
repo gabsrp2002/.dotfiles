@@ -21,15 +21,36 @@ return {
     },
   },
   -- Git diff
-  { "sindrets/diffview.nvim", commands = {
+  { "sindrets/diffview.nvim", cmd = {
     "DiffviewFileHistory",
     "DiffviewOpen",
   } },
 
-  { "ggandor/lightspeed.nvim" },
+  {
+    "ggandor/leap.nvim",
+    init = function()
+      local leap = require("leap")
+      leap.create_default_mappings()
+      leap.opts.highlight_unlabeled_phase_one_targets = true
+      leap.opts.equivalence_classes = { " \t\r\n", "aáàãâ", "eéê", "oóôõ", "ií", "uú" }
+    end,
+  },
   {
     "kylechui/nvim-surround",
     version = "*",
+    keys = {
+      { "<C-g>s", nil, mode = "i" },
+      { "<C-g>S", nil, mode = "i" },
+      { "ys", nil, mode = "n" },
+      { "yss", nil, mode = "n" },
+      { "yS", nil, mode = "n" },
+      { "ySS", nil, mode = "n" },
+      { "<leader>s", nil, mode = "v" },
+      { "g<leader>s", nil, mode = "v" },
+      { "ds", nil, mode = "n" },
+      { "cs", nil, mode = "n" },
+      { "cS", nil, mode = "n" },
+    },
     opts = {
       keymaps = {
         insert = "<C-g>s",
@@ -49,6 +70,10 @@ return {
   {
     "numToStr/Comment.nvim",
     opts = {},
+    keys = {
+      { "gc", nil, mode = { "n", "v" } },
+      { "gb", nil, mode = { "n", "v" } },
+    },
   },
   {
     "chrisgrieser/nvim-spider",
@@ -58,34 +83,6 @@ return {
       { "b", "<cmd>lua require('spider').motion('b')<CR>", mode = { "n", "o", "x" }, { desc = "Spider-b" } },
       { "ge", "<cmd>lua require('spider').motion('ge')<CR>", mode = { "n", "o", "x" }, { desc = "Spider-ge" } },
     },
-  },
-
-  {
-    "neovim/nvim-lspconfig",
-    dependencies = { "hrsh7th/cmp-nvim-lsp", "folke/neodev.nvim" },
-    config = function()
-      local lspconfig = require("lspconfig")
-      local capabilities = require("cmp_nvim_lsp").default_capabilities()
-      local servers = { "pyright", "clangd", "texlab", "tsserver", "eslint", "cssls", "svlangserver", "html", "gopls" }
-      for _, server in ipairs(servers) do
-        lspconfig[server].setup({
-          capabilities = capabilities,
-        })
-      end
-
-      require("neodev").setup()
-
-      lspconfig.lua_ls.setup({
-        capabilities = capabilities,
-        settings = {
-          Lua = {
-            diagnostics = {
-              globals = { "vim", "use" },
-            },
-          },
-        },
-      })
-    end,
   },
 
   -- Bufferline
@@ -115,7 +112,7 @@ return {
   {
     "toppair/peek.nvim",
     build = "deno task --quiet build:fast",
-    commands = {
+    cmd = {
       "PeekOpen",
       "PeekClose",
     },
@@ -130,6 +127,48 @@ return {
   -- Focus
   {
     "nvim-focus/focus.nvim",
+    event = "WinEnter",
+    keys = {
+      {
+        "<leader>l",
+        function()
+          if not vim.t.maximized then
+            require("focus").split_nicely()
+          end
+        end,
+        { desc = "split nicely" },
+      },
+    },
+    init = function()
+      local ignore_filetypes = { "TelescopePrompt", "alpha", "oil" }
+      local ignore_buftypes = { "nofile", "prompt", "popup" }
+
+      local augroup = vim.api.nvim_create_augroup("FocusDisable", { clear = true })
+
+      vim.api.nvim_create_autocmd("WinEnter", {
+        group = augroup,
+        callback = function(_)
+          if vim.tbl_contains(ignore_buftypes, vim.bo.buftype) then
+            vim.w.focus_disable = true
+          else
+            vim.w.focus_disable = false
+          end
+        end,
+        desc = "Disable focus autoresize for BufType",
+      })
+
+      vim.api.nvim_create_autocmd("FileType", {
+        group = augroup,
+        callback = function(_)
+          if vim.tbl_contains(ignore_filetypes, vim.bo.filetype) then
+            vim.w.focus_disable = true
+          else
+            vim.w.focus_disable = false
+          end
+        end,
+        desc = "Disable focus autoresize for FileType",
+      })
+    end,
     config = function()
       require("focus").setup({
         enable = true, -- Enable module
@@ -162,41 +201,6 @@ return {
           winhighlight = false, -- Auto highlighting for focussed/unfocussed windows
         },
       })
-      local ignore_filetypes = { "TelescopePrompt", "alpha", "oil" }
-      local ignore_buftypes = { "nofile", "prompt", "popup" }
-
-      local augroup = vim.api.nvim_create_augroup("FocusDisable", { clear = true })
-
-      vim.api.nvim_create_autocmd("WinEnter", {
-        group = augroup,
-        callback = function(_)
-          if vim.tbl_contains(ignore_buftypes, vim.bo.buftype) then
-            vim.w.focus_disable = true
-          else
-            vim.w.focus_disable = false
-          end
-        end,
-        desc = "Disable focus autoresize for BufType",
-      })
-
-      vim.api.nvim_create_autocmd("FileType", {
-        group = augroup,
-        callback = function(_)
-          if vim.tbl_contains(ignore_filetypes, vim.bo.filetype) then
-            vim.w.focus_disable = true
-          else
-            vim.w.focus_disable = false
-          end
-        end,
-        desc = "Disable focus autoresize for FileType",
-      })
-
-      -- Keymaps
-      vim.keymap.set("n", "<leader>l", function()
-        if not vim.t.maximized then
-          require("focus").split_nicely()
-        end
-      end, { desc = "split nicely" })
     end,
   },
 
@@ -220,6 +224,7 @@ return {
   -- Tree-sitter
   {
     "nvim-treesitter/nvim-treesitter",
+    event = { "BufReadPre", "BufNewFile" },
     build = ":TSUpdate",
     dependencies = { "windwp/nvim-ts-autotag" },
     init = function()
@@ -243,6 +248,7 @@ return {
   -- Rainbow
   {
     "hiphish/rainbow-delimiters.nvim",
+    event = { "BufReadPre", "BufNewFile" },
     config = function()
       -- This module contains a number of default definitions
       local rainbow_delimiters = require("rainbow-delimiters")
