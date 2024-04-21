@@ -28,7 +28,7 @@ return {
 
   {
     "ggandor/leap.nvim",
-    init = function()
+    config = function()
       local leap = require("leap")
       leap.create_default_mappings()
       leap.opts.highlight_unlabeled_phase_one_targets = true
