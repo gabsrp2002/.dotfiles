@@ -1,7 +1,7 @@
 return {
   "echasnovski/mini.files",
   version = "*",
-  lazy = false,
+  lazy = true,
   opts = {
     mappings = {
       close = "q",
@@ -21,7 +21,7 @@ return {
     {
       "-",
       function()
-        require("mini.files").open(vim.api.nvim_buf_get_name(0), false)
+        require("mini.files").open(vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p:h"), false)
       end,
       { noremap = true, silent = true },
     },

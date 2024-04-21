@@ -87,7 +87,7 @@ return {
               args = {
                 "-l",
                 "-m",
-                '-y="modifyLineBreaks:textWrapOptions:columns: 80,defaultIndent: \'    \'"',
+                '-y="modifyLineBreaks:textWrapOptions:columns: 120,defaultIndent: \'    \'"',
               },
               stdin = true,
             }

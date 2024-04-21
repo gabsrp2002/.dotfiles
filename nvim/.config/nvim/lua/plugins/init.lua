@@ -21,7 +21,10 @@ return {
     },
   },
   -- Git diff
-  { "sindrets/diffview.nvim" },
+  { "sindrets/diffview.nvim", commands = {
+    "DiffviewFileHistory",
+    "DiffviewOpen",
+  } },
 
   { "ggandor/lightspeed.nvim" },
   {
@@ -111,54 +114,16 @@ return {
   -- Markdown Preview
   {
     "toppair/peek.nvim",
-    event = { "VeryLazy" },
     build = "deno task --quiet build:fast",
+    commands = {
+      "PeekOpen",
+      "PeekClose",
+    },
     config = function()
       require("peek").setup({ app = "browser" })
       -- refer to `configuration to change defaults`
       vim.api.nvim_create_user_command("PeekOpen", require("peek").open, {})
       vim.api.nvim_create_user_command("PeekClose", require("peek").close, {})
-    end,
-  },
-
-  -- Moves text around
-  {
-    "fedepujol/move.nvim",
-    keys = {
-      { "J", ":MoveBlock(1)<CR>", mode = "v", { noremap = true, silent = true } },
-      { "K", ":MoveBlock(-1)<CR>", mode = "v", { noremap = true, silent = true } },
-      { "L", ":MoveHBlock(1)<CR>", mode = "v", { noremap = true, silent = true } },
-      { "H", ":MoveHBlock(-1)<CR>", mode = "v", { noremap = true, silent = true } },
-    },
-  },
-
-  -- Harpoon
-  {
-    "ThePrimeagen/harpoon",
-    dependencies = { "nvim-lua/plenary.nvim", "nvim-telescope/telescope.nvim" },
-    keys = {
-      { "<leader>ha", nil },
-      { "<leader>hh", nil },
-      { "<C-n>", nil },
-      { "<C-p>", nil },
-      { "<leader>ht", nil },
-    },
-    config = function()
-      require("harpoon").setup({
-        save_on_change = false,
-        enter_on_sendcmd = true,
-        excluded_filetypes = { "harpoon", "alpha", "nerdtree" },
-      })
-
-      -- Maps
-      local mark = require("harpoon.mark")
-      local mark_ui = require("harpoon.ui")
-      local cmd_ui = require("harpoon.cmd-ui")
-      vim.keymap.set("n", "<leader>ha", mark.add_file, { noremap = true, silent = true })
-      vim.keymap.set("n", "<leader>hh", ":Telescope harpoon marks<CR>", { noremap = true, silent = true })
-      vim.keymap.set("n", "<C-n>", mark_ui.nav_next, { noremap = true, silent = true })
-      vim.keymap.set("n", "<C-p>", mark_ui.nav_prev, { noremap = true, silent = true })
-      vim.keymap.set("n", "<leader>ht", cmd_ui.toggle_quick_menu, { noremap = true, silent = true })
     end,
   },
 
@@ -308,5 +273,10 @@ return {
   {
     "aymericbeaumet/vim-symlink",
     dependencies = { "moll/vim-bbye" },
+  },
+  {
+    "mcauley-penney/visual-whitespace.nvim",
+    event = "ModeChanged *:[vV\x16]",
+    config = true,
   },
 }
