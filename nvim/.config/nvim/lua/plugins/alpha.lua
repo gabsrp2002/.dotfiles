@@ -2,7 +2,7 @@ return {
   "goolord/alpha-nvim",
   dependencies = { "kyazdani42/nvim-web-devicons" },
   config = function()
-    vim.keymap.set("n", "<leader>aa", ":Alpha<cr>", { noremap = true, silent = true })
+    vim.keymap.set("n", "<leader>in", ":Alpha<cr>", { noremap = true, silent = true })
     local alpha = require("alpha")
     local dashboard = require("alpha.themes.dashboard")
 

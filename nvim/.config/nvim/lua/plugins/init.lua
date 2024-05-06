@@ -282,7 +282,7 @@ return {
   },
   {
     "mcauley-penney/visual-whitespace.nvim",
-    event = "ModeChanged *:[vV\x16]",
+    event = "ModeChanged *:[vV]",
     config = true,
   },
 }
