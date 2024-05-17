@@ -88,7 +88,6 @@ return {
   -- Bufferline
   {
     "akinsho/bufferline.nvim",
-    version = "v3.*",
     dependencies = { "kyazdani42/nvim-web-devicons" },
     after = "catppuccin",
     config = function()
