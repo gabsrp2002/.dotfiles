@@ -4,13 +4,17 @@ return {
     "nvim-lua/plenary.nvim",
     "sindrets/diffview.nvim",
   },
+  commit = "d6b80dc",
   cmd = { "Neogit" },
   keys = {
     { "<leader>ng", ":Neogit cwd=%:h<cr>", { silent = true, noremap = true } },
   },
   opts = {
-    disable_hint = true,
     kind = "tab",
+    integrations = {
+      telescope = true,
+      diffview = true,
+    },
     mappings = {
       commit_editor = {
         ["q"] = "Close",
@@ -79,13 +83,12 @@ return {
         ["u"] = "Unstage",
         ["U"] = "UnstageStaged",
         ["$"] = "CommandHistory",
-        ["#"] = "Console",
         ["Y"] = "YankSelected",
         ["<c-r>"] = "RefreshBuffer",
-        ["g"] = "GoToFile",
+        ["gt"] = "GoToFile",
         ["<c-v>"] = "VSplitOpen",
         ["<c-x>"] = "SplitOpen",
-        ["<c-t>"] = false,
+        ["<c-t>"] = "TabOpen",
         ["{"] = "GoToPreviousHunkHeader",
         ["}"] = "GoToNextHunkHeader",
       },
