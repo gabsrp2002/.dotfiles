@@ -4,10 +4,9 @@ return {
     "nvim-lua/plenary.nvim",
     "sindrets/diffview.nvim",
   },
-  commit = "d6b80dc",
   cmd = { "Neogit" },
   keys = {
-    { "<leader>ng", ":Neogit cwd=%:h<cr>", { silent = true, noremap = true } },
+    { "<leader>ng", ":Neogit<cr>", { silent = true, noremap = true } },
   },
   opts = {
     integrations = {
