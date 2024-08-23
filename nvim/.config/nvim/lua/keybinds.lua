@@ -11,8 +11,8 @@ local opts = { silent = true }
 -- Fast saving and quiting
 map("n", "<leader><leader>", ":silent! w<CR>", opts)
 map("n", "<leader>w", ":w !sudo tee %", opts) -- Saves with sudo
-map("n", "<leader>q", ":q<CR>")
-map("n", "<leader>Q", ":wqall<CR>")
+map("n", "<leader>q", ":q<CR>", opts)
+map("n", "<leader>Q", ":wqall<CR>", opts)
 
 -- Switch CWD to current directory
 map("n", "<leader>cd", ":cd %:p:h<CR>:pwd<CR>")
