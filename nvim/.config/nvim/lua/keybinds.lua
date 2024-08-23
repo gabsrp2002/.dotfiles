@@ -27,9 +27,6 @@ map("n", "<S-Tab>", ":bprev<CR>", opts)
 -- Disable highlight faster
 map("n", "<leader><CR>", "<cmd>noh<CR>", opts)
 
--- Opens link in default browser
-map("n", "<leader>of", "gf:!open %<CR><c-o>:bd #<CR>", opts)
-
 map("n", "<leader>tt", ":silent !tmux split-window -v \\; resize-pane -D 10<CR>", opts)
 
 -- Just for fun, makes a game ui
