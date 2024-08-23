@@ -274,11 +274,6 @@ return {
       }
     end,
   },
-
-  {
-    "aymericbeaumet/vim-symlink",
-    dependencies = { "moll/vim-bbye" },
-  },
   {
     "mcauley-penney/visual-whitespace.nvim",
     event = "ModeChanged *:[vV]",
