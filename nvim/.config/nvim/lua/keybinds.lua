@@ -25,7 +25,7 @@ map("n", "<Tab>", ":bnext<CR>", opts)
 map("n", "<S-Tab>", ":bprev<CR>", opts)
 
 -- Disable highlight faster
-map("n", "<leader><CR>", "<cmd>noh<CR>", opts)
+map("n", "<Esc>", "<cmd>nohlsearch<CR>", opts)
 
 map("n", "<leader>tt", ":silent !tmux split-window -v \\; resize-pane -D 10<CR>", opts)
 
