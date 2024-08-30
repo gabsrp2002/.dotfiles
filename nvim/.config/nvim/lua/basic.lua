@@ -12,15 +12,13 @@ vim.opt.so = 7
 vim.g.python3_host_prog = "/opt/homebrew/bin/python3.11"
 
 -- Copys to clipboard
-vim.opt.clipboard = "unnamedplus"
+vim.schedule(function()
+  vim.opt.clipboard = "unnamedplus"
+end)
 
 -- Sets leader
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
-
--- wild menu
-vim.opt.wildmenu = true
-vim.opt.wildignore = { "*.o", "*.pyc", "*/.git/*", "*/.DS_Store" }
 
 -- Better spliting
 vim.opt.splitbelow = true
@@ -39,7 +37,21 @@ vim.opt.encoding = "UTF-8"
 -- Disable mouse
 vim.opt.mouse = ""
 
-vim.o.undofile = true
+-- Case-insensitive searching
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
+
+-- Preview substitutions in a split window
+vim.opt.inccommand = 'split'
+
+-- Decrease updatetime
+vim.opt.updatetime = 250
+
+-- keep cursor in the same indent level
+vim.opt.breakindent = true
+
+-- Set undofile
+vim.opt.undofile = true
 
 -- Go to previous location when editing a file
 vim.api.nvim_create_autocmd("BufRead", {
