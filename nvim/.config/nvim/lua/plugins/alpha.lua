@@ -23,8 +23,6 @@ return {
     dashboard.section.buttons.val = {
       dashboard.button("r", "󱋡  Recent files", ":Telescope oldfiles<cr>"),
 
-      dashboard.button("s", "󰈞  Search file", ":Telescope find_files<cr>"),
-
       dashboard.button("u", "󰚰  Sync plugins", ":Lazy sync<cr>"),
 
       dashboard.button(

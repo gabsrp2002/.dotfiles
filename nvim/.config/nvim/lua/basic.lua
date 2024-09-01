@@ -42,7 +42,7 @@ vim.opt.ignorecase = true
 vim.opt.smartcase = true
 
 -- Preview substitutions in a split window
-vim.opt.inccommand = 'split'
+vim.opt.inccommand = "split"
 
 -- Decrease updatetime
 vim.opt.updatetime = 250
@@ -53,9 +53,9 @@ vim.opt.breakindent = true
 -- Set undofile
 vim.opt.undofile = true
 
-vim.api.nvim_create_autocmd('TextYankPost', {
-  desc = 'Highlight when yanking (copying) text',
-  group = vim.api.nvim_create_augroup('highlight-yank', { clear = true }),
+vim.api.nvim_create_autocmd("TextYankPost", {
+  desc = "Highlight when yanking (copying) text",
+  group = vim.api.nvim_create_augroup("highlight-yank", { clear = true }),
   callback = function()
     vim.highlight.on_yank()
   end,
@@ -75,7 +75,7 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
-require("lazy").setup("plugins")
+require("lazy").setup({ spec = "plugins", change_detection = { notify = false } })
 
 -- LSP signs
 local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
