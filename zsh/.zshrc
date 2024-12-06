@@ -45,6 +45,3 @@ export PATH=/opt/homebrew/sbin:$PATH
 # Scripts path
 export PATH=$HOME/scripts:$PATH
 export PATH=$HOME/eda/oss-cad-suite/bin:$PATH
-
-export LDFLAGS="-L/opt/homebrew/opt/llvm/lib -Wl,-rpath,/opt/homebrew/opt/llvm/lib"
-export CPPFLAGS="-I/opt/homebrew/opt/llvm/include"
