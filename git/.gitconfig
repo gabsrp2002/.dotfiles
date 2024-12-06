@@ -2,7 +2,7 @@
 	email = gabrielpaiva2002@gmail.com
 	name = Gabriel Ribeiro Paiva
 [pull]
-	rebase = false
+	rebase = true
 [difftool]
     prompt = false
 [diff]
