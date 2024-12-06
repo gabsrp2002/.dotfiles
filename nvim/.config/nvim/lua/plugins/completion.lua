@@ -113,7 +113,7 @@ return {
         "pyright",
         "clangd",
         "texlab",
-        "tsserver",
+        "ts_ls",
         "eslint",
         "cssls",
         "svlangserver",

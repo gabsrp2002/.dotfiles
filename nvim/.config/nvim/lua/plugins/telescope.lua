@@ -19,7 +19,7 @@ return {
       { "<leader>tg", ":Telescope live_grep<CR>" },
       {
         "<leader>dd",
-        ":Telescope diagnostics",
+        ":Telescope diagnostics<CR>",
       },
       { "gd", ":Telescope lsp_definitions<CR>" },
       { "gi", ":Telescope lsp_implementations<CR>" },
