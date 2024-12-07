@@ -6,8 +6,6 @@ local function map(mode, lhs, rhs, opts)
 	vim.api.nvim_set_keymap(mode, lhs, rhs, options)
 end
 
-map("i", "<C-l>", [[<Esc>/[)}"'\]>$]<CR>:nohl<CR>a]], {silent = true})
-
 -- Compile and preview tex file
 map("n", "<leader>pp", ":w <CR> :split<CR> :res 8<CR> :terminal latexmk -pdf -pv -bibtex %<CR>")
 map("n", "<leader>pl", ":w <CR> :split<CR> :res 8<CR> :terminal latexmk -pdf -pvc -bibtex %<CR><ESC>:q<CR>")

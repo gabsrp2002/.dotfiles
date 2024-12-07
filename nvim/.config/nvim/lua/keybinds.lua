@@ -17,9 +17,6 @@ map("n", "<leader>Q", ":wqall<CR>", opts)
 -- Switch CWD to current directory
 map("n", "<leader>cd", ":cd %:p:h<CR>:pwd<CR>")
 
--- Getting out of surroundings fast
-map("i", "<C-l>", "<Esc>/[)}\"'\\]>]<CR>:silent! nohl<CR>a", opts)
-
 -- Move between buffers
 map("n", "<Tab>", ":bnext<CR>", opts)
 map("n", "<S-Tab>", ":bprev<CR>", opts)
