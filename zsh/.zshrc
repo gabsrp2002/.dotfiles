@@ -45,3 +45,4 @@ export PATH=/opt/homebrew/sbin:$PATH
 # Scripts path
 export PATH=$HOME/scripts:$PATH
 export PATH=$HOME/eda/oss-cad-suite/bin:$PATH
+export PATH=/usr/local/bin:$PATH
