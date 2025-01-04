@@ -31,6 +31,8 @@ gaps.outer.bottom =     0
 gaps.outer.top =        0
 gaps.outer.right =      0
 
+on-focus-changed = ['move-mouse window-lazy-center']
+
 [[on-window-detected]]
 if.app-id = 'com.apple.weather'
 run = 'layout floating'
