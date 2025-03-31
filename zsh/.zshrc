@@ -46,3 +46,11 @@ export PATH=/opt/homebrew/sbin:$PATH
 export PATH=$HOME/scripts:$PATH
 export PATH=$HOME/eda/oss-cad-suite/bin:$PATH
 export PATH=/usr/local/bin:$PATH
+
+# pnpm
+export PNPM_HOME="/Users/gabriel/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end

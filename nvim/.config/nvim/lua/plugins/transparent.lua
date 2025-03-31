@@ -29,7 +29,7 @@ return {
         "StatusLineNC",
         "EndOfBuffer",
       },
-      extra_groups = { "NormalFloat", "FloatBorder" },
+      extra_groups = { "NormalFloat", "FloatBorder", "TabLineFill" },
       exclude_groups = {},
     })
     require("transparent").clear_prefix("BufferLine")

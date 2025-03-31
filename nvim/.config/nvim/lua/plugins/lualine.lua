@@ -114,7 +114,7 @@ return {
       end,
       color = "LualineMode",
       padding = { right = 1, left = 1 },
-      cond = conditions.start_up_dashboard
+      cond = conditions.start_up_dashboard,
     })
 
     -- ins_left({
@@ -139,7 +139,7 @@ return {
       "progress",
       color = { fg = colors.text, gui = "bold" },
       padding = { left = 1 },
-      cond = conditions.start_up_dashboard
+      cond = conditions.start_up_dashboard,
     })
 
     ins_left({
@@ -205,7 +205,7 @@ return {
       end,
       icon = " LSP:",
       color = { fg = "#ffffff", gui = "bold" },
-      cond = conditions.start_up_dashboard
+      cond = conditions.start_up_dashboard,
     })
 
     -- Add components to right sections
@@ -249,7 +249,7 @@ return {
       end,
       color = "LualineEndMode",
       padding = { left = 0 },
-      cond = conditions.start_up_dashboard
+      cond = conditions.start_up_dashboard,
     })
 
     -- Now don't forget to initialize lualine
