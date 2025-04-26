@@ -50,8 +50,17 @@ run = 'layout floating'
 if.app-id = 'net.whatsapp.WhatsApp'
 run = 'move-node-to-workspace comm'
 
+[[on-window-detected]]
+if.app-id = 'com.tinyspeck.slackmacgap'
+run = 'move-node-to-workspace comm'
+
+[[on-window-detected]]
+if.app-id = 'com.hnc.Discord'
+run = 'move-node-to-workspace comm'
+
 [mode.main.binding]
 
+# Open a new terminal in a tmux session
 ctrl-shift-t = 'exec-and-forget kitty --single-instance -d ~ -e tmux new -A -s default'
 
 alt-slash = 'layout tiles horizontal vertical'
