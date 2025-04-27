@@ -10,9 +10,9 @@ if [ -z "${FOCUSED_WORKSPACE+x}" ]; then
 fi
 
 if [ "$1" = "$FOCUSED_WORKSPACE" ]; then
-    sketchybar --set $NAME background.drawing=on
+    sketchybar --set $NAME background.color=0xffB4BEFE label.color=0xff1E1E2E
 else
-    sketchybar --set $NAME background.drawing=off
+    sketchybar --set $NAME background.color=0xff313244 label.color=0xffA6ADC8
 fi
 
 was_removed=true

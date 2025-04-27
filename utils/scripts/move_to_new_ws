@@ -30,10 +30,7 @@ for monitor in $(aerospace list-monitors --format %{monitor-id}); do
             --subscribe space.$sid aerospace_workspace_change \
             --set space.$sid \
             display=$monitor \
-            background.color=0x44ffffff \
-            background.corner_radius=5 \
-            background.height=20 \
-            background.drawing=off \
+            background.color=0xff313244 \
             label.padding_left=0 \
             label.padding_right=10 \
             label="$sid" \
@@ -42,4 +39,5 @@ for monitor in $(aerospace list-monitors --format %{monitor-id}); do
     done
 done
 
-sketchybar --set space.$candidate background.drawing=on
+
+sketchybar --set space.$(aerospace list-workspaces --focused) background.drawing=on label.color=0xff1E1E2E background.color=0xffB4BEFE
