@@ -11,7 +11,7 @@ Using homebrew:
 brew install git
 ```
 
-2. Clone the repository:
+2. Clone the repository in your root directory:
 
 ```sh
 git clone https://github.com/gabsrp2002/.dotfiles.git
