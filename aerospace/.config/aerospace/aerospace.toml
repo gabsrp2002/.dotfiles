@@ -35,7 +35,7 @@ on-focus-changed = ['move-mouse window-lazy-center']
 
 # Makes sure that comm has always accordion vertical layout
 exec-on-workspace-change = ['/bin/bash', '-c',
-    '[ "$AEROSPACE_FOCUSED_WORKSPACE" = "comm" ] && aerospace layout accordion vertical'
+    '[ "$AEROSPACE_FOCUSED_WORKSPACE" = "comm" ] && aerospace layout accordion vertical && aerospace flatten-workspace-tree'
 ]
 
 [[on-window-detected]]
@@ -56,6 +56,10 @@ run = 'move-node-to-workspace comm'
 
 [[on-window-detected]]
 if.app-id = 'com.hnc.Discord'
+run = 'move-node-to-workspace comm'
+
+[[on-window-detected]]
+if.app-id = 'com.spotify.client'
 run = 'move-node-to-workspace comm'
 
 [mode.main.binding]
