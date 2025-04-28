@@ -1,6 +1,7 @@
 #!/bin/bash
 
 PLUGIN_DIR="$CONFIG_DIR/plugins"
+source "$CONFIG_DIR/colors.sh"
 
 ##### Bar Appearance #####
 # Catppuccin Mocha Base, consistent styling
@@ -9,7 +10,7 @@ sketchybar --bar position=top \
                  blur_radius=20 \
                  padding_left=6 \
                  padding_right=6 \
-                 color=0x441E1E2E
+                 color=$BAR_COLOR
 
 ##### Changing Defaults #####
 # Explicit padding to prevent changes
@@ -18,13 +19,13 @@ default=(
   padding_right=5
   icon.font="JetBrainsMono Nerd Font:Bold:16.0"
   label.font="JetBrainsMono Nerd Font:Bold:13.0"
-  icon.color=0xffCDD6F4
-  label.color=0xffA6ADC8
+  icon.color=$TEXT_COLOR
+  label.color=$SUBTEXT_COLOR
   icon.padding_left=4
   icon.padding_right=4
   label.padding_left=4
   label.padding_right=4
-  background.color=0xff313244
+  background.color=$SURFACE_COLOR
   background.height=22
   background.corner_radius=6
 )
@@ -35,50 +36,49 @@ sketchybar --default "${default[@]}"
 
 sketchybar --add item apple.logo left                                                      \
               --set apple.logo icon=􀣺                                                         \
-                               icon.font="SF Pro:Black:17.0"                                  \
-                               icon.color=0xffF5E0DC \
+                               icon.color=$ROSEWATER \
                                icon.padding_left=5 \
                                icon.padding_right=7 \
                                icon.y_offset=1 \
                                label.drawing=off                                              \
-                               background.color=0xff1E1E2E \
-  background.height=26 \
-  background.corner_radius=26 \
+                               background.color=$BASE_COLOR \
+                               background.height=26 \
+                               background.corner_radius=26 \
                                click_script="sketchybar -m --set \$NAME popup.drawing=toggle" \
                                popup.background.border_width=2          \
                                popup.background.corner_radius=10         \
-                               popup.background.border_color=0xffe1e3e4 \
-                               popup.background.color=0xff1E1E2E \
+                               popup.background.border_color=$BORDER_COLOR \
+                               popup.background.color=$BASE_COLOR \
                                popup.blur_radius=20 \
                                popup.y_offset=6 \
                                                                                               \
               --add item apple.preferences popup.apple.logo                                   \
               --set apple.preferences icon=􀺽                                                  \
-                               icon.color=0xffB4BEFE \
+                               icon.color=$LAVENDER \
                                label="Preferences"                                            \
-                               background.color=0x00000000 \
-                               label.color=0xffA6ADC8 \
+                               background.color=$TRANSPARENT \
+                               label.color=$SUBTEXT_COLOR \
                                click_script="open -a 'System Preferences';sketchybar -m --set apple.logo popup.drawing=off"\
               --add item apple.activity popup.apple.logo                                      \
               --set apple.activity icon=􀒓                                                     \
-                               icon.color=0xffF9E2AF \
+                               icon.color=$YELLOW \
                                label="Activity"                                               \
-                               background.color=0x00000000 \
-                               label.color=0xffA6ADC8 \
+                               background.color=$TRANSPARENT \
+                               label.color=$SUBTEXT_COLOR \
                                click_script="open -a 'Activity Monitor';sketchybar -m --set apple.logo popup.drawing=off"\
               --add item apple.lock popup.apple.logo                                          \
               --set apple.lock icon=􀒳                                                         \
-                               icon.color=0xffF38BA8 \
+                               icon.color=$RED \
                                label="Lock Screen"                                            \
-                               background.color=0x00000000 \
-                               label.color=0xffA6ADC8 \
+                               background.color=$TRANSPARENT \
+                               label.color=$SUBTEXT_COLOR \
                                click_script="pmset displaysleepnow;sketchybar -m --set apple.logo popup.drawing=off"
 
 sketchybar --add item front_app left \
            --set front_app script="$PLUGIN_DIR/front_app.sh" \
             icon= \
-            label.color=0xffA6ADC8 \
-            background.color=0xff585B70 \
+            label.color=$SUBTEXT_COLOR \
+            background.color=$OVERLAY_COLOR \
             background.corner_radius=5 \
             background.height=20 \
            --subscribe front_app front_app_switched
@@ -91,23 +91,23 @@ for monitor in $(aerospace list-monitors --format %{monitor-id}); do
             --subscribe space.$sid aerospace_workspace_change \
             --set space.$sid \
             display=$monitor \
-            background.color=0xff313244 \
+            background.color=$SURFACE_COLOR \
             label.padding_left=0 \
             label.padding_right=10 \
             label="$sid" \
-            label.color=0xffA6ADC8 \
+            label.color=$SUBTEXT_COLOR \
             click_script="aerospace workspace $sid" \
             script="$CONFIG_DIR/plugins/aerospace.sh $sid"
     done
 done
 
-sketchybar --set space.$(aerospace list-workspaces --focused) label.color=0xff1E1E2E background.color=0xffB4BEFE
+sketchybar --set space.$(aerospace list-workspaces --focused) label.color=$BASE_COLOR background.color=$LAVENDER
 
 ##### Adding Center Items #####
 
 sketchybar --add item love center \
            --set love icon=󰋑 \
-                      icon.color=0xffF5C2E7 \
+                      icon.color=$PINK \
                       icon.padding_left=5 \
                       icon.padding_right=5 \
                       background.height=24 \
@@ -116,8 +116,8 @@ sketchybar --add item love center \
                                click_script="sketchybar -m --set \$NAME popup.drawing=toggle" \
                                popup.background.border_width=2          \
                                popup.background.corner_radius=3         \
-                               popup.background.border_color=0xffe1e3e4 \
-                               popup.background.color=0x40000000 \
+                               popup.background.border_color=$BORDER_COLOR \
+                               popup.background.color=$TRANSPARENT_DARK \
                                popup.blur_radius=30 \
                                popup.y_offset=6 \
                                popup.horizontal=on \
@@ -126,34 +126,32 @@ sketchybar --add item love center \
 popup.background.image.scale=0.4 \
            --add item popup_item popup.love \
            --set popup_item label="Minha gatinha!❤️" \
-                            label.color=0xffffffff \
+                            label.color=$WHITE \
                             y_offset=-150 \
                             align=center
 
 ##### Adding Right Items #####
 
-##### Adding Right Items #####
 # Clock: Blue icon, explicit padding
 sketchybar --add item clock right \
            --set clock update_freq=10 \
                        icon= \
-                       icon.color=0xff89B4FA \
-                       label.color=0xffA6ADC8 \
+                       icon.color=$BLUE \
+                       label.color=$SUBTEXT_COLOR \
                        script="$PLUGIN_DIR/clock.sh"
 
 # Volume: Green icon
 sketchybar --add item volume right \
            --set volume script="$PLUGIN_DIR/volume.sh" \
-                        icon.color=0xffA6E3A1 \
-                        label.color=0xffA6ADC8 \
+                        icon.color=$GREEN \
+                        label.color=$SUBTEXT_COLOR \
            --subscribe volume volume_change
 
 # Battery: Yellow icon
 sketchybar --add item battery right \
            --set battery update_freq=120 \
                          script="$PLUGIN_DIR/battery.sh" \
-                         icon.color=0xffF9E2AF \
-                         label.color=0xffA6ADC8 \
+                         label.color=$SUBTEXT_COLOR \
            --subscribe battery system_woke power_source_change
 
 # Bluetooth: Blue icon
@@ -162,17 +160,17 @@ sketchybar --add item bluetooth right \
             --subscribe bluetooth system_woke bluetooth_update \
            --set bluetooth script="$PLUGIN_DIR/bluetooth.sh" \
                            click_script="$PLUGIN_DIR/click_bluetooth.sh" \
-                               label.drawing=off \
-                           icon.color=0xff89B4FA \
-                           label.color=0xffA6ADC8
+                           label.drawing=off \
+                           icon.color=$BLUE \
+                           label.color=$SUBTEXT_COLOR
 
 # WiFi: Blue icon
 sketchybar --add item wifi right \
            --set wifi update_freq=2 \
                       script="$PLUGIN_DIR/wifi.sh" \
                       click_script="open /System/Library/PreferencePanes/Network.prefPane" \
-                      icon.color=0xff89B4FA \
-                      label.color=0xffA6ADC8
+                      icon.color=$BLUE \
+                      label.color=$SUBTEXT_COLOR
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update
