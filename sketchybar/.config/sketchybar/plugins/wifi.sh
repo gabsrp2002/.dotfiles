@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source "$CONFIG_DIR/colors.sh"
+
 # Path to store previous stats
 STATS_FILE="$HOME/.wifi_stats"
 
@@ -21,8 +23,8 @@ UPLOAD_BYTES=$(echo "$NET_STATS" | awk '{print $10}' | head -n 1)
 
 # Validate stats
 if [ -z "$DOWNLOAD_BYTES" ] || [ -z "$UPLOAD_BYTES" ] || [ "$DOWNLOAD_BYTES" -eq 0 ] || [ "$UPLOAD_BYTES" -eq 0 ]; then
-    DOWNLOAD_SPEED="N/A"
-    UPLOAD_SPEED="N/A"
+    DOWNLOAD_SPEED=""
+    UPLOAD_SPEED=""
 else
     # Read previous stats if available
     if [ -f "$STATS_FILE" ]; then
@@ -78,28 +80,41 @@ else
     UPLOAD_SPEED=$(format_speed $UPLOAD_SPEED "↑")
 fi
 
-# Set icon and color based on connection status
-if [[ $IS_VPN = *"Connected"* ]]; then
-    ICON_COLOR=$(getcolor red)
-    ICON=􀎡
-elif [[ $SSID = "TODO" ]]; then
-    ICON_COLOR=$(getcolor white)
-    ICON=􀉤
-elif [[ -n $SSID ]]; then
-    ICON_COLOR=$(getcolor white)
-    ICON=􀐿
-elif [[ $CURRENT_WIFI = *"AirPort: Off"* ]]; then
-    ICON=􀐾
-    DOWNLOAD_SPEED="N/A"
-    UPLOAD_SPEED="N/A"
-else
-    ICON_COLOR=$(getcolor white 25)
-    ICON=􀐾
-    DOWNLOAD_SPEED="N/A"
-    UPLOAD_SPEED="N/A"
+LABEL="$SSID | $DOWNLOAD_SPEED $UPLOAD_SPEED"
+
+if [ $DOWNLOAD_SPEED="" ] || [ $UPLOAD_SPEED="" ]; then
+    LABEL="$SSID"
 fi
 
-# Update sketchybar
-sketchybar --set "$NAME" \
-    icon="$ICON" \
-    label="$SSID | $DOWNLOAD_SPEED $UPLOAD_SPEED"
+should_draw_label=true
+
+# Set icon and color based on connection status
+if [[ $IS_VPN = *"Connected"* ]]; then
+    ICON_COLOR=$GREEN
+    ICON=􀎡
+elif [[ $SSID = "iPhone do Gabriel" ]]; then
+    ICON_COLOR=$LAVENDER
+    ICON=􀉤
+elif [[ -n $SSID ]]; then
+    ICON_COLOR=$BLUE
+    ICON=􀐿
+else
+    ICON_COLOR=$RED
+    ICON=􀐾
+    should_draw_label=false
+fi
+
+if $should_draw_label; then
+    sketchybar --set "$NAME" \
+        icon="$ICON" \
+        icon.color="$ICON_COLOR" \
+        icon.padding_right=4 \
+        label.drawing="on" \
+        label="$LABEL"
+else
+    sketchybar --set "$NAME" \
+        icon="$ICON" \
+        icon.color="$ICON_COLOR" \
+        icon.padding_right=7 \
+        label.drawing="off"
+fi
