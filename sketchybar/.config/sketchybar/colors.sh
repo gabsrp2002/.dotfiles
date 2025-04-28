@@ -14,6 +14,13 @@ YELLOW=0xffF9E2AF
 GREEN=0xffA6E3A1
 BLUE=0xff89B4FA
 PINK=0xffF5C2E7
+MAUVE=0xffCBA6F7              # Mauve for accents or highlights
+SAPPHIRE=0xff74C7EC           # Sapphire for alternate icons
+SKY=0xff89DCEB               # Sky for bright accents
+PEACH=0xffFAB387              # Peach for warnings or highlights
+MAROON=0xffEBA0AC            # Maroon for deeper red tones
+TEAL=0xff94E2D5               # Teal for additional accents
+
 BORDER_COLOR=0xffe1e3e4
 
 TRANSPARENT=0x00000000

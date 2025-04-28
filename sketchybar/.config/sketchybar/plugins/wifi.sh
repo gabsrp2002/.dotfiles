@@ -93,10 +93,10 @@ if [[ $IS_VPN = *"Connected"* ]]; then
     ICON_COLOR=$GREEN
     ICON=􀎡
 elif [[ $SSID = "iPhone do Gabriel" ]]; then
-    ICON_COLOR=$LAVENDER
+    ICON_COLOR=$ROSEWATER
     ICON=􀉤
 elif [[ -n $SSID ]]; then
-    ICON_COLOR=$BLUE
+    ICON_COLOR=$MAUVE
     ICON=􀐿
 else
     ICON_COLOR=$RED

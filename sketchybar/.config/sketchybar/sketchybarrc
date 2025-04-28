@@ -136,14 +136,14 @@ popup.background.image.scale=0.4 \
 sketchybar --add item clock right \
            --set clock update_freq=10 \
                        icon= \
-                       icon.color=$BLUE \
+                       icon.color=$PEACH \
                        label.color=$SUBTEXT_COLOR \
                        script="$PLUGIN_DIR/clock.sh"
 
 # Volume: Green icon
 sketchybar --add item volume right \
            --set volume script="$PLUGIN_DIR/volume.sh" \
-                        icon.color=$GREEN \
+                        icon.color=$SAPPHIRE \
                         label.color=$SUBTEXT_COLOR \
            --subscribe volume volume_change
 
