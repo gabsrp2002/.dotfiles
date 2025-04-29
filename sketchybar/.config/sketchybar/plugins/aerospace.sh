@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# make sure it's executable with:
-# chmod +x ~/.config/sketchybar/plugins/aerospace.sh
-
 # Check if it's the initialization
 if [ -z "${FOCUSED_WORKSPACE+x}" ]; then
     exit
