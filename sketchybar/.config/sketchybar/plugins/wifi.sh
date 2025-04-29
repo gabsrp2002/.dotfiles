@@ -82,7 +82,7 @@ fi
 
 LABEL="$SSID | $DOWNLOAD_SPEED $UPLOAD_SPEED"
 
-if [ $DOWNLOAD_SPEED="" ] || [ $UPLOAD_SPEED="" ]; then
+if [ -z "$DOWNLOAD_SPEED" ] || [ -z "$UPLOAD_SPEED" ]; then
     LABEL="$SSID"
 fi
 
