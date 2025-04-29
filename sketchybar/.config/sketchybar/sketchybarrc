@@ -138,7 +138,8 @@ sketchybar --add item clock right \
                        icon= \
                        icon.color=$PEACH \
                        label.color=$SUBTEXT_COLOR \
-                       script="$PLUGIN_DIR/clock.sh"
+                       script="$PLUGIN_DIR/clock.sh" \
+                       click_script="open -a Calendar"
 
 # Volume: Green icon
 sketchybar --add item volume right \
