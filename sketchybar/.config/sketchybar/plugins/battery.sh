@@ -22,7 +22,7 @@ case "${PERCENTAGE}" in
 esac
 
 case "${PERCENTAGE}" in
-  [6-8][0-9]|100) ICON_COLOR=$GREEN
+  [6-9][0-9]|100) ICON_COLOR=$GREEN
   ;;
   [3-5][0-9]) ICON_COLOR=$YELLOW
   ;;
