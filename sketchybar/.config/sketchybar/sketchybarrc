@@ -89,8 +89,6 @@ sketchybar --add item front_app left \
             icon= \
             label.color=$SUBTEXT_COLOR \
             background.color=$OVERLAY_COLOR \
-            background.corner_radius=5 \
-            background.height=20 \
            --subscribe front_app front_app_switched
 
 sketchybar --add event aerospace_workspace_change
@@ -99,13 +97,13 @@ for monitor in $(aerospace list-monitors --format %{monitor-id}); do
     for workspace in $(aerospace list-workspaces --monitor $monitor); do
         icons=""
 
-        for sid in $(aerospace list-windows --workspace "$workspace" --format "%{app-name}"); do
+        for sid in $(aerospace list-windows --workspace "$workspace" --format "%{app-name}" | sort -u); do
           icons+=$("$PLUGIN_DIR/icon_map_fn.sh" "$sid")
           icons+="  "
         done
 
         sketchybar --add item space.$workspace left \
-            --subscribe space.$workspace aerospace_workspace_change display_change \
+            --subscribe space.$workspace aerospace_workspace_change display_change space_windows_change front_app_switched \
             --set space.$workspace \
             display=$monitor \
             background.color=$SURFACE_COLOR \

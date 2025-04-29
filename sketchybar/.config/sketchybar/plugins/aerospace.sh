@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-# Check if it's the initialization
-if [ -z "${FOCUSED_WORKSPACE+x}" ]; then
-    exit
-fi
-
 was_removed=true
 for sid in $(aerospace list-workspaces --all); do
     if [ "$1" = "$sid" ]; then
@@ -22,7 +17,7 @@ fi
 icons=""
 
 IFS=$'\n'
-for sid in $(aerospace list-windows --workspace "$1" --format "%{app-name}"); do
+for sid in $(aerospace list-windows --workspace "$1" --format "%{app-name}" | sort -u); do
   icons+=$("$CONFIG_DIR/plugins/icon_map_fn.sh" "$sid")
   icons+="  "
 done
@@ -35,6 +30,13 @@ for monitor_id in $(aerospace list-monitors --format %{monitor-id}); do
         fi
     done
 done
+
+# If a workspace was not focused, then only update icons
+if [ -z "${FOCUSED_WORKSPACE+x}" ]; then
+    sketchybar --set $NAME display="$monitor" label="$icons"
+    exit
+fi
+
 
 if [ "$1" = "$FOCUSED_WORKSPACE" ]; then
     sketchybar --set $NAME background.color=0xffB4BEFE icon.color=0xff1E1E2E label.color=0xff1E1E2E display="$monitor" label="$icons"
