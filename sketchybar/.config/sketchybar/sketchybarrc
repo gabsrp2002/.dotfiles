@@ -97,7 +97,7 @@ for monitor in $(aerospace list-monitors --format %{monitor-id}); do
     for workspace in $(aerospace list-workspaces --monitor $monitor); do
         icons=""
 
-        for sid in $(aerospace list-windows --workspace "$workspace" --format "%{app-name}" | sort -u); do
+        for sid in $(aerospace list-windows --workspace "$workspace" --format "%{app-name}"); do
           icons+=$("$PLUGIN_DIR/icon_map_fn.sh" "$sid")
           icons+="  "
         done

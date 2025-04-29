@@ -17,7 +17,7 @@ fi
 icons=""
 
 IFS=$'\n'
-for sid in $(aerospace list-windows --workspace "$1" --format "%{app-name}" | sort -u); do
+for sid in $(aerospace list-windows --workspace "$1" --format "%{app-name}"); do
   icons+=$("$CONFIG_DIR/plugins/icon_map_fn.sh" "$sid")
   icons+="  "
 done
