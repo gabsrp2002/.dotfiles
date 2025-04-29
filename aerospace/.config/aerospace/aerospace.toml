@@ -81,8 +81,8 @@ alt-p = 'workspace --wrap-around prev'
 alt-shift-n = ['move-node-to-workspace --wrap-around next', 'workspace --wrap-around next']
 alt-shift-p = ['move-node-to-workspace --wrap-around prev', 'workspace --wrap-around prev']
 
-ctrl-alt-cmd-h = 'move-workspace-to-monitor --wrap-around prev'
-ctrl-alt-cmd-l = 'move-workspace-to-monitor --wrap-around next'
+ctrl-alt-cmd-h = 'exec-and-forget ~/scripts/move_to_monitor prev'
+ctrl-alt-cmd-l = 'exec-and-forget ~/scripts/move_to_monitor next'
 alt-cmd-h = ['move-node-to-monitor --wrap-around left', 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors left']
 alt-cmd-l = ['move-node-to-monitor --wrap-around right', 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors right']
 

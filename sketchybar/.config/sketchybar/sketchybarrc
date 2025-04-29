@@ -32,6 +32,16 @@ default=(
 
 sketchybar --default "${default[@]}"
 
+# Animation
+sketchybar --add event lock   "com.apple.screenIsLocked"   \
+           --add event unlock "com.apple.screenIsUnlocked" \
+                                                           \
+           --add item         animator left                \
+           --set animator     drawing=off                  \
+                              updates=on                   \
+                              script="$PLUGIN_DIR/wake.sh" \
+           --subscribe        animator lock unlock
+
 ##### Adding Left Items #####
 
 sketchybar --add item apple.logo left                                                      \
@@ -86,22 +96,33 @@ sketchybar --add item front_app left \
 sketchybar --add event aerospace_workspace_change
 
 for monitor in $(aerospace list-monitors --format %{monitor-id}); do
-    for sid in $(aerospace list-workspaces --monitor $monitor); do
-        sketchybar --add item space.$sid left \
-            --subscribe space.$sid aerospace_workspace_change \
-            --set space.$sid \
+    for workspace in $(aerospace list-workspaces --monitor $monitor); do
+        icons=""
+
+        APPS_INFO=$(aerospace list-windows --workspace "$workspace" --json --format "%{monitor-appkit-nsscreen-screens-id}%{app-name}")
+
+        IFS=$'\n'
+        for sid in $(echo "$APPS_INFO" | jq -r "map ( .\"app-name\" ) | .[]"); do
+          icons+=$("$PLUGIN_DIR/icon_map_fn.sh" "$sid")
+          icons+="  "
+        done
+
+        sketchybar --add item space.$workspace left \
+            --subscribe space.$workspace aerospace_workspace_change display_change \
+            --set space.$workspace \
             display=$monitor \
             background.color=$SURFACE_COLOR \
-            label.padding_left=0 \
-            label.padding_right=10 \
-            label="$sid" \
-            label.color=$SUBTEXT_COLOR \
-            click_script="aerospace workspace $sid" \
-            script="$CONFIG_DIR/plugins/aerospace.sh $sid"
+            icon="$workspace" \
+            label="$icons" \
+            icon.color=$SUBTEXT_COLOR \
+            label.font="sketchybar-app-font:Regular:15.0" \
+            label.y_offset=-1 \
+            click_script="aerospace workspace $workspace" \
+            script="$CONFIG_DIR/plugins/aerospace.sh $workspace"
     done
 done
 
-sketchybar --set space.$(aerospace list-workspaces --focused) label.color=$BASE_COLOR background.color=$LAVENDER
+sketchybar --set space.$(aerospace list-workspaces --focused) icon.color=$BASE_COLOR label.color=$BASE_COLOR background.color=$LAVENDER
 
 ##### Adding Center Items #####
 
