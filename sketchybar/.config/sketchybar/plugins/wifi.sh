@@ -89,10 +89,10 @@ fi
 should_draw_label=true
 
 # Set icon and color based on connection status
-if [[ $IS_VPN = *"Connected"* ]]; then
+if [[ $IS_VPN = *"Connected"* ]] && [[ -n $SSID ]]; then
     ICON_COLOR=$GREEN
     ICON=􀎡
-elif [[ $SSID = "iPhone do Gabriel" ]]; then
+elif [[ $SSID = *"iPhone"* ]]; then
     ICON_COLOR=$ROSEWATER
     ICON=􀉤
 elif [[ -n $SSID ]]; then
