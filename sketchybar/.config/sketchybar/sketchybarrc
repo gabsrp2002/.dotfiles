@@ -8,8 +8,8 @@ source "$CONFIG_DIR/colors.sh"
 sketchybar --bar position=top \
                  height=30 \
                  blur_radius=20 \
-                 padding_left=6 \
-                 padding_right=6 \
+                 padding_left=5 \
+                 padding_right=5 \
                  color=$BAR_COLOR
 
 ##### Changing Defaults #####
@@ -48,19 +48,19 @@ sketchybar --add item apple.logo left                                           
               --set apple.logo icon=􀣺                                                         \
                                icon.color=$ROSEWATER \
                                icon.padding_left=5 \
-                               icon.padding_right=7 \
+                               icon.padding_right=6 \
                                icon.y_offset=1 \
                                label.drawing=off                                              \
                                background.color=$BASE_COLOR \
-                               background.height=26 \
-                               background.corner_radius=26 \
+                               background.height=24 \
+                               background.corner_radius=1000 \
                                click_script="sketchybar -m --set \$NAME popup.drawing=toggle" \
                                popup.background.border_width=2          \
                                popup.background.corner_radius=10         \
                                popup.background.border_color=$BORDER_COLOR \
                                popup.background.color=$BASE_COLOR \
                                popup.blur_radius=20 \
-                               popup.y_offset=6 \
+                               popup.y_offset=5 \
                                                                                               \
               --add item apple.preferences popup.apple.logo                                   \
               --set apple.preferences icon=􀺽                                                  \
@@ -114,6 +114,13 @@ for monitor in $(aerospace list-monitors --format %{monitor-id}); do
             label.y_offset=-1 \
             click_script="aerospace workspace $workspace" \
             script="$CONFIG_DIR/plugins/aerospace.sh $workspace"
+
+        if [ -n "$icons" ]; then
+            sketchybar --set $NAME label.drawing=on
+        else
+            sketchybar --set $NAME label.drawing=off \
+                icon.padding_right=6
+        fi
     done
 done
 
@@ -127,7 +134,7 @@ sketchybar --add item love center \
                       icon.padding_left=5 \
                       icon.padding_right=5 \
                       background.height=24 \
-                      background.corner_radius=24 \
+                      background.corner_radius=1000 \
                                label.drawing=off                                              \
                                click_script="sketchybar -m --set \$NAME popup.drawing=toggle" \
                                popup.background.border_width=2          \
@@ -139,7 +146,7 @@ sketchybar --add item love center \
                                popup.horizontal=on \
                                popup.align=center \
                                popup.background.image="~/.gatinha.jpeg" \
-popup.background.image.scale=0.4 \
+                               popup.background.image.scale=0.4 \
            --add item popup_item popup.love \
            --set popup_item label="Minha gatinha!❤️" \
                             label.color=$WHITE \

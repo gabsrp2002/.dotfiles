@@ -31,6 +31,13 @@ for monitor_id in $(aerospace list-monitors --format %{monitor-id}); do
     done
 done
 
+if [ -n "$icons" ]; then
+    sketchybar --set $NAME label.drawing=on
+else
+    sketchybar --set $NAME label.drawing=off \
+        icon.padding_right=6
+fi
+
 # If a workspace was not focused, then only update icons
 if [ -z "${FOCUSED_WORKSPACE+x}" ]; then
     sketchybar --set $NAME display="$monitor" label="$icons"
