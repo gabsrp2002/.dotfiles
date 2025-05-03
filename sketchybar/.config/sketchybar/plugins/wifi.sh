@@ -91,16 +91,16 @@ should_draw_label=true
 # Set icon and color based on connection status
 if [[ $IS_VPN = *"Connected"* ]] && [[ -n $SSID ]]; then
     ICON_COLOR=$GREEN
-    ICON=􀎡
+    ICON=󰤪
 elif [[ $SSID = *"iPhone"* ]]; then
     ICON_COLOR=$ROSEWATER
     ICON=􀉤
 elif [[ -n $SSID ]]; then
     ICON_COLOR=$MAUVE
-    ICON=􀐿
+    ICON=󰤨
 else
     ICON_COLOR=$RED
-    ICON=􀐾
+    ICON=󰤮
     should_draw_label=false
 fi
 
@@ -115,6 +115,6 @@ else
     sketchybar --set "$NAME" \
         icon="$ICON" \
         icon.color="$ICON_COLOR" \
-        icon.padding_right=7 \
+        icon.padding_right=3 \
         label.drawing="off"
 fi

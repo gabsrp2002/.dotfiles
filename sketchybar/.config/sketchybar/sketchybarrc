@@ -10,6 +10,7 @@ sketchybar --bar position=top \
                  blur_radius=20 \
                  padding_left=5 \
                  padding_right=5 \
+                 topmost=on \
                  color=$BAR_COLOR
 
 ##### Changing Defaults #####
@@ -92,18 +93,20 @@ sketchybar --add item front_app left \
            --subscribe front_app front_app_switched
 
 sketchybar --add event aerospace_workspace_change
+sketchybar --add event aerospace_focus_change
 
 for monitor in $(aerospace list-monitors --format %{monitor-id}); do
     for workspace in $(aerospace list-workspaces --monitor $monitor); do
         icons=""
 
+        IFS=$'\n'
         for sid in $(aerospace list-windows --workspace "$workspace" --format "%{app-name}"); do
           icons+=$("$PLUGIN_DIR/icon_map_fn.sh" "$sid")
           icons+="  "
         done
 
         sketchybar --add item space.$workspace left \
-            --subscribe space.$workspace aerospace_workspace_change display_change space_windows_change front_app_switched \
+            --subscribe space.$workspace aerospace_workspace_change aerospace_focus_change display_change space_windows_change front_app_switched \
             --set space.$workspace \
             display=$monitor \
             background.color=$SURFACE_COLOR \
@@ -192,7 +195,7 @@ sketchybar --add item bluetooth right \
 sketchybar --add item wifi right \
            --set wifi update_freq=2 \
                       script="$PLUGIN_DIR/wifi.sh" \
-                      click_script="open /System/Library/PreferencePanes/Network.prefPane" \
+                      click_script="$PLUGIN_DIR/click_wifi.sh" \
                       icon.color=$BLUE \
                       label.color=$SUBTEXT_COLOR
 

@@ -29,7 +29,7 @@ gaps.outer.bottom =     8
 gaps.outer.top =        38
 gaps.outer.right =      8
 
-on-focus-changed = ['move-mouse window-lazy-center']
+on-focus-changed = ['move-mouse window-lazy-center', 'exec-and-forget sketchybar --trigger aerospace_focus_change']
 
 [[on-window-detected]]
 if.app-id = 'com.apple.weather'
@@ -98,6 +98,7 @@ enter = 'mode main'
 esc = 'mode main'
 
 [mode.service.binding]
+b = ['exec-and-forget sketchybar --bar topmost=toggle', 'mode main']
 r = ['flatten-workspace-tree', 'mode main'] # reset layout
 f = ['layout floating tiling', 'mode main'] # Toggle between floating and tiling layout
 esc = ['reload-config', 'mode main']

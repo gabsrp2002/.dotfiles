@@ -9,27 +9,15 @@ done
 
 aerospace move-node-to-workspace $candidate && aerospace workspace $candidate
 
-
-for monitor in $(aerospace list-monitors --format %{monitor-id}); do
-    should_destroy=false
-    for sid in $(aerospace list-workspaces --monitor $monitor); do
-        if [ "$sid" = "$candidate" ]; then
-            should_destroy=true
-            continue
-        fi
-
-        if $should_destroy; then
-            sketchybar --remove space.$sid
-        fi
-    done
-done
-
 source ~/.config/sketchybar/colors.sh
 
 for monitor in $(aerospace list-monitors --format %{monitor-id}); do
     for workspace in $(aerospace list-workspaces --monitor $monitor); do
+        if [ $workspace -ne $candidate ]; then
+            continue
+        fi
         sketchybar --add item space.$workspace left \
-            --subscribe space.$workspace aerospace_workspace_change space_windows_change display_change front_app_switched \
+            --subscribe space.$workspace aerospace_workspace_change aerospace_focus_change space_windows_change display_change front_app_switched \
             --set space.$workspace \
             display=$monitor \
             background.color=$SURFACE_COLOR \
@@ -39,7 +27,17 @@ for monitor in $(aerospace list-monitors --format %{monitor-id}); do
             label.y_offset=-1 \
             click_script="aerospace workspace $workspace" \
             script="~/.config/sketchybar/plugins/aerospace.sh $workspace"
+        break
     done
 done
 
+for monitor in $(aerospace list-monitors --format %{monitor-id}); do
+    reorder_array=()
+    for sid in $(aerospace list-workspaces --monitor "$monitor"); do
+        reorder_array+=("space.$sid")
+    done
+    sketchybar --reorder "${reorder_array[@]}"
+done
+
 sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$(aerospace list-workspaces --focused)
+sketchybar --trigger aerospace_focus_change
