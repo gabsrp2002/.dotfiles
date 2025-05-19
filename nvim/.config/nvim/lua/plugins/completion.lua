@@ -138,6 +138,24 @@ return {
           },
         },
       })
+
+      lspconfig.sourcekit.setup({
+        cmd = { "sourcekit-lsp" },
+        root_dir = lspconfig.util.root_pattern("Package.swift", ".git"),
+        capabilities = {
+          workspace = {
+            didChangeWatchedFiles = {
+              dynamicRegistration = true,
+            },
+          },
+          textDocument = {
+            diagnostic = {
+              dynamicRegistration = true,
+              relatedDocumentSupport = true,
+            },
+          },
+        },
+      })
     end,
   },
   {

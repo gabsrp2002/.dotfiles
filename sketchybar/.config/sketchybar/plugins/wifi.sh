@@ -66,13 +66,13 @@ else
             bytes=0 # Handle negative diffs
         fi
         if [ $bytes -lt 1024 ]; then
-            printf "%6sB/s $icon\n" "$bytes"
+            printf "%4sB/s $icon\n" "$bytes"
         elif [ $bytes -lt 1048576 ]; then
-            printf "%5sKB/s $icon\n" "$((bytes / 1024))"
+            printf "%3sKB/s $icon\n" "$((bytes / 1024))"
         else
             # For MB, we keep one decimal, so we'll format it separately
             local mb=$(bc <<< "scale=1; $bytes/1048576")
-            printf "%5sMB/s $icon\n" "$mb"
+            printf "%3sMB/s $icon\n" "$mb"
         fi
     }
 
@@ -89,12 +89,15 @@ fi
 should_draw_label=true
 
 # Set icon and color based on connection status
-if [[ $IS_VPN = *"Connected"* ]] && [[ -n $SSID ]]; then
+if [[ $IS_VPN = *"Connected"* ]] && [[ $SSID = *"iPhone"* ]]; then
+    ICON_COLOR=$GREEN
+    ICON=󰴳
+elif [[ $IS_VPN = *"Connected"* ]] && [[ -n $SSID ]]; then
     ICON_COLOR=$GREEN
     ICON=󰤪
 elif [[ $SSID = *"iPhone"* ]]; then
     ICON_COLOR=$ROSEWATER
-    ICON=􀉤
+    ICON=󰌹
 elif [[ -n $SSID ]]; then
     ICON_COLOR=$MAUVE
     ICON=󰤨

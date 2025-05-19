@@ -92,6 +92,16 @@ sketchybar --add item front_app left \
             background.color=$OVERLAY_COLOR \
            --subscribe front_app front_app_switched
 
+sketchybar --add event aerospace_mode_change
+
+sketchybar --add item aerospace_mode left \
+           --set aerospace_mode script="$PLUGIN_DIR/aerospace_mode.sh" \
+           icon.drawing=off \
+           label.color=$BASE_COLOR \
+           background.color=$YELLOW \
+           label="main" \
+           --subscribe aerospace_mode aerospace_mode_change
+
 sketchybar --add event aerospace_workspace_change
 sketchybar --add event aerospace_focus_change
 

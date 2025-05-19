@@ -3,7 +3,7 @@ after-login-command = []
 after-startup-command = [
     'workspace comm', 'layout v_accordion',
     'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0',
-    'exec-and-forget sketchybar'
+    'exec-and-forget sketchybar || sketchybar --reload'
 ]
 
 # Notify Sketchybar about workspace change
@@ -30,6 +30,7 @@ gaps.outer.top =        38
 gaps.outer.right =      8
 
 on-focus-changed = ['move-mouse window-lazy-center', 'exec-and-forget sketchybar --trigger aerospace_focus_change']
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 
 [[on-window-detected]]
 if.app-id = 'com.apple.weather'
@@ -61,7 +62,7 @@ run = 'move-node-to-workspace comm'
 ctrl-shift-t = 'exec-and-forget kitty --single-instance -d ~ -e tmux new -A -s default'
 
 alt-slash = 'layout tiles horizontal vertical'
-alt-semicolon = 'layout accordion horizontal'
+alt-semicolon = 'layout v_accordion'
 
 alt-h = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors left'
 alt-j = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors down'
@@ -76,6 +77,7 @@ alt-shift-l = 'move right'
 alt-f = 'fullscreen'
 
 alt-c = 'exec-and-forget ~/scripts/move_to_new_ws'
+alt-shift-c = 'exec-and-forget ~/scripts/move_to_new_named_ws'
 alt-n = 'workspace --wrap-around next'
 alt-p = 'workspace --wrap-around prev'
 alt-shift-n = ['move-node-to-workspace --wrap-around next', 'workspace --wrap-around next']
@@ -83,25 +85,25 @@ alt-shift-p = ['move-node-to-workspace --wrap-around prev', 'workspace --wrap-ar
 
 ctrl-alt-cmd-h = 'exec-and-forget ~/scripts/move_to_monitor prev'
 ctrl-alt-cmd-l = 'exec-and-forget ~/scripts/move_to_monitor next'
-alt-cmd-h = ['move-node-to-monitor --wrap-around left', 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors left']
-alt-cmd-l = ['move-node-to-monitor --wrap-around right', 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors right']
+alt-cmd-h = ['move-node-to-monitor left --focus-follows-window']
+alt-cmd-l = ['move-node-to-monitor right --focus-follows-window']
 
-alt-shift-semicolon = 'mode service'
-alt-r = 'mode resize'
+alt-shift-semicolon = ['mode service', 'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=service']
+alt-r = ['mode resize', 'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=resize']
 
 [mode.resize.binding]
 h = 'resize width -50'
 j = 'resize height +50'
 k = 'resize height -50'
 l = 'resize width +50'
-enter = 'mode main'
-esc = 'mode main'
+enter = ['mode main', 'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=main']
+esc = ['mode main', 'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=main']
 
 [mode.service.binding]
-b = ['exec-and-forget sketchybar --bar topmost=toggle', 'mode main']
-r = ['flatten-workspace-tree', 'mode main'] # reset layout
-f = ['layout floating tiling', 'mode main'] # Toggle between floating and tiling layout
-esc = ['reload-config', 'mode main']
+b = ['exec-and-forget sketchybar --bar topmost=toggle', 'mode main', 'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=main']
+r = ['flatten-workspace-tree', 'mode main', 'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=main'] # reset layout
+f = ['layout floating tiling', 'mode main',  'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=main'] # Toggle between floating and tiling layout
+esc = ['reload-config', 'mode main', 'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=main']
 
 [workspace-to-monitor-force-assignment]
 comm = 'secondary'

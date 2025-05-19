@@ -1,0 +1,43 @@
+#!/bin/zsh
+
+workspace_name=$(osascript <<EOF
+set dialogText to ""
+set defaultResponse to ""
+display dialog dialogText with title "New Workspace" default answer defaultResponse buttons {"Cancel", "Create"} default button "Create"
+text returned of result
+EOF
+)
+
+if [[ -z "$workspace_name" ]]; then
+  echo "No input received. Cancelled or closed."
+  exit
+fi
+
+workspace_name="${workspace_name// /_}"
+
+aerospace move-node-to-workspace $workspace_name && aerospace workspace $workspace_name
+
+source ~/.config/sketchybar/colors.sh
+
+sketchybar --add item space.$workspace_name left \
+    --subscribe space.$workspace_name aerospace_workspace_change aerospace_focus_change space_windows_change display_change front_app_switched \
+    --set space.$workspace_name \
+    display="1" \
+    background.color=$SURFACE_COLOR \
+    icon="$workspace_name" \
+    icon.color=$SUBTEXT_COLOR \
+    label.font="sketchybar-app-font:Regular:15.0" \
+    label.y_offset=-1 \
+    click_script="aerospace workspace $workspace_name" \
+    script="~/.config/sketchybar/plugins/aerospace.sh $workspace_name"
+
+for monitor in $(aerospace list-monitors --format %{monitor-id}); do
+    reorder_array=()
+    for sid in $(aerospace list-workspaces --monitor "$monitor"); do
+        reorder_array+=("space.$sid")
+    done
+    sketchybar --reorder "${reorder_array[@]}"
+done
+
+sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$(aerospace list-workspaces --focused)
+sketchybar --trigger aerospace_focus_change

@@ -87,7 +87,7 @@ return {
               args = {
                 "-l",
                 "-m",
-                '-y="modifyLineBreaks:textWrapOptions:columns: 120,defaultIndent: \'    \'"',
+                "-y=\"modifyLineBreaks:textWrapOptions:columns: 120,defaultIndent: '    '\"",
               },
               stdin = true,
             }
@@ -95,6 +95,31 @@ return {
         },
         go = {
           require("formatter.filetypes.go").gofmt,
+        },
+        swift = {
+          swift = {
+            function()
+              local current_file = util.get_current_buffer_file_path()
+              local config_path = util.find_config_file(".swiftformat", current_file)
+
+              local args = {
+                util.escape_path(current_file),
+                "--output",
+                "stdout",
+              }
+
+              if config_path then
+                table.insert(args, "--config")
+                table.insert(args, config_path)
+              end
+
+              return {
+                exe = "swiftformat",
+                args = args,
+                stdin = true,
+              }
+            end,
+          },
         },
         ["*"] = {
           require("formatter.filetypes.any").remove_trailing_whitespace,
