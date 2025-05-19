@@ -11,12 +11,14 @@ fi
 
 sketchybar --set $NAME label="$MODE"
 
-# If a workspace was focused, then update space coloring
-if [ "$MODE" = "main" ]; then
+case "$MODE" in
+  main)
     sketchybar --set $NAME background.color=$YELLOW label="$MODE"
-elif [ "$MODE" = "service" ]; then
+    ;;
+  service)
     sketchybar --set $NAME background.color=$BLUE label="$MODE"
-else
+    ;;
+  *)
     sketchybar --set $NAME background.color=$RED label="$MODE"
-fi
-
+    ;;
+esac
