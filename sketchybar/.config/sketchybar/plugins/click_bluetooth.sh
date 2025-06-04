@@ -1,3 +1,5 @@
+#!/bin/bash
+
 if [ "$MODIFIER" = "cmd" ]; then
     open /System/Library/PreferencePanes/Bluetooth.prefPane
     exit

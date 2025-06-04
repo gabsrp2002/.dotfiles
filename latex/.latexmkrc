@@ -1,2 +1,2 @@
 # latexmkrc
-$pdflatex = 'pdflatex -synctex=1 -interaction=nonstopmode';
+$pdflatex = 'lualatex -file-line-error %O %S';

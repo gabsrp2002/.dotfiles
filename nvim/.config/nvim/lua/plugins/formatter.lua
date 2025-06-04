@@ -83,7 +83,7 @@ return {
         tex = {
           function()
             return {
-              exe = "latexindent",
+              exe = "/opt/homebrew/bin/latexindent",
               args = {
                 "-l",
                 "-m",

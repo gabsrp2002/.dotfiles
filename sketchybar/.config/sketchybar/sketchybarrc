@@ -98,7 +98,7 @@ sketchybar --add item aerospace_mode left \
            --set aerospace_mode script="$PLUGIN_DIR/aerospace_mode.sh" \
            icon.drawing=off \
            label.color=$BASE_COLOR \
-           background.color=$YELLOW \
+           background.color=$GREEN \
            label="main" \
            --subscribe aerospace_mode aerospace_mode_change
 
@@ -168,7 +168,7 @@ sketchybar --add item love center \
 
 ##### Adding Right Items #####
 
-# Clock: Blue icon, explicit padding
+# Clock
 sketchybar --add item clock right \
            --set clock update_freq=10 \
                        icon= \
@@ -177,21 +177,21 @@ sketchybar --add item clock right \
                        script="$PLUGIN_DIR/clock.sh" \
                        click_script="open -a Calendar"
 
-# Volume: Green icon
+# Volume
 sketchybar --add item volume right \
            --set volume script="$PLUGIN_DIR/volume.sh" \
                         icon.color=$SAPPHIRE \
                         label.color=$SUBTEXT_COLOR \
            --subscribe volume volume_change
 
-# Battery: Yellow icon
+# Battery
 sketchybar --add item battery right \
            --set battery update_freq=120 \
                          script="$PLUGIN_DIR/battery.sh" \
                          label.color=$SUBTEXT_COLOR \
            --subscribe battery system_woke power_source_change
 
-# Bluetooth: Blue icon
+# Bluetooth
 sketchybar --add item bluetooth right \
             --add event bluetooth_update "com.apple.bluetooth.status" \
             --subscribe bluetooth system_woke bluetooth_update \
@@ -201,13 +201,21 @@ sketchybar --add item bluetooth right \
                            icon.color=$BLUE \
                            label.color=$SUBTEXT_COLOR
 
-# WiFi: Blue icon
+# WiFi
 sketchybar --add item wifi right \
            --set wifi update_freq=2 \
                       script="$PLUGIN_DIR/wifi.sh" \
                       click_script="$PLUGIN_DIR/click_wifi.sh" \
                       icon.color=$BLUE \
                       label.color=$SUBTEXT_COLOR
+
+# CPU
+sketchybar --add item cpu right \
+           --set cpu  update_freq=2 \
+                      icon=􀧓  \
+                      icon.color=$TEAL \
+                      click_script="open -a 'Activity Monitor'" \
+                      script="$PLUGIN_DIR/cpu.sh"
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update
