@@ -17,6 +17,19 @@ return {
         try_node_modules = true,
       }
     end
+
+    local search_ancestors = function(filename, pattern)
+      local current_dir = vim.fn.fnamemodify(filename, ":p:h")
+      while current_dir ~= "/" do
+        local file_path = current_dir .. "/" .. pattern
+        if vim.fn.filereadable(file_path) == 1 then
+          return file_path
+        end
+        current_dir = vim.fn.fnamemodify(current_dir, ":h")
+      end
+      return nil
+    end
+
     require("formatter").setup({
       -- Enable or disable logging
       logging = true,
@@ -97,29 +110,35 @@ return {
           require("formatter.filetypes.go").gofmt,
         },
         swift = {
-          swift = {
-            function()
-              local current_file = util.get_current_buffer_file_path()
-              local config_path = util.find_config_file(".swiftformat", current_file)
+          function()
+            local current_file = util.get_current_buffer_file_path()
+            -- Search for a configuration file in the current directory or parent directories
+            -- Does not use util
+            local config_path = search_ancestors(current_file, ".swiftformat")
 
-              local args = {
-                util.escape_path(current_file),
-                "--output",
-                "stdout",
-              }
 
-              if config_path then
-                table.insert(args, "--config")
-                table.insert(args, config_path)
-              end
+            local args = {
+              util.escape_path(current_file),
+              "--output",
+              "stdout",
+            }
 
-              return {
-                exe = "swiftformat",
-                args = args,
-                stdin = true,
-              }
-            end,
-          },
+            if config_path then
+              table.insert(args, "--config")
+              table.insert(args, config_path)
+            end
+
+            local binary_path = search_ancestors(current_file, ".deps/swiftformat/swiftformat")
+
+            print("Formatting Swift file with args: " .. vim.inspect(args))
+            print("Using binary path: " .. (binary_path or "swiftformat"))
+
+            return {
+              exe = binary_path or "swiftformat",
+              args = args,
+              stdin = true,
+            }
+          end,
         },
         ["*"] = {
           require("formatter.filetypes.any").remove_trailing_whitespace,
