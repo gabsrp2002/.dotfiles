@@ -31,6 +31,7 @@ return {
           -- disable adding a newline when you press <cr>
           :with_cr(cond.none()),
         Rule("\\[", "\\]", textypes):with_cr(cond.none()):with_pair(ts_conds.is_not_ts_node({ "comment" })),
+        Rule("\\(", "\\)", textypes):with_cr(cond.none()):with_pair(ts_conds.is_not_ts_node({ "comment" })),
         npairs.get_rule("{"):replace_endpair(function(opts)
           -- Checks if current filetype is a tex one
           local is_tex = false

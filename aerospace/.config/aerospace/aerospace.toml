@@ -64,10 +64,10 @@ ctrl-shift-t = 'exec-and-forget kitty --single-instance -d ~ -e tmux new -A -s d
 alt-slash = 'layout tiles horizontal vertical'
 alt-semicolon = 'layout v_accordion'
 
-alt-h = 'focus --boundaries all-monitors-outer-frame left'
-alt-j = 'focus --boundaries all-monitors-outer-frame down'
-alt-k = 'focus --boundaries all-monitors-outer-frame up'
-alt-l = 'focus --boundaries all-monitors-outer-frame right'
+alt-h = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-the-workspace left'
+alt-j = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-the-workspace down'
+alt-k = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-the-workspace up'
+alt-l = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-the-workspace right'
 
 alt-shift-h = 'move --boundaries all-monitors-outer-frame left'
 alt-shift-j = 'move --boundaries all-monitors-outer-frame down'

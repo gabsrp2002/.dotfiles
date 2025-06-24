@@ -327,7 +327,7 @@ function icon_map() {
     icon_result=":parallels:"
     ;;
   "Preview" | "预览" | "Skim" | "zathura")
-    icon_result=":pdf:"
+    icon_result=":pdf_old:"
     ;;
   "Pi-hole Remote")
     icon_result=":pihole:"
