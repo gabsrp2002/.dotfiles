@@ -7,7 +7,8 @@ while [[ $workspaces == *"$candidate"* ]]; do
   candidate=$((candidate+1))
 done
 
-aerospace move-node-to-workspace $candidate && aerospace workspace $candidate
+aerospace move-node-to-workspace $candidate
+aerospace workspace $candidate
 
 source ~/.config/sketchybar/colors.sh
 

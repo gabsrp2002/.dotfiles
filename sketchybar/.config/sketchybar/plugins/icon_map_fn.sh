@@ -506,6 +506,9 @@ function icon_map() {
   "Zulip")
     icon_result=":zulip:"
     ;;
+  "Gemini")
+    icon_result=":openai:"
+    ;;
   *)
     icon_result=":default:"
     ;;
