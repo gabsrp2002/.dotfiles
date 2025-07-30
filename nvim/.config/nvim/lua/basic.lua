@@ -9,7 +9,12 @@ vim.opt.softtabstop = 4
 vim.opt.so = 7
 
 -- Sets path for pynvim
-vim.g.python3_host_prog = "/opt/homebrew/bin/python3.13"
+local cpath_extension = package.cpath:match("%.(%a+)$")
+if cpath_extension == "so" then
+  vim.g.python3_host_prog = "/usr/bin/python3"
+else
+  vim.g.python3_host_prog = "/opt/homebrew/bin/python3.13"
+end
 
 -- Copys to clipboard
 vim.schedule(function()
