@@ -15,7 +15,8 @@ fi
 
 workspace_name="${workspace_name// /_}"
 
-aerospace move-node-to-workspace $workspace_name && aerospace workspace $workspace_name
+aerospace move-node-to-workspace $workspace_name
+aerospace workspace $workspace_name
 
 source ~/.config/sketchybar/colors.sh
 
