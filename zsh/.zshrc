@@ -28,10 +28,9 @@ function acp() {
   git push
 }
 
-export HOMEBREW_NO_ENV_HINTS=1
-
 # Basic paths
 if [[ $(uname) == "Darwin" ]]; then
+    export HOMEBREW_NO_ENV_HINTS=1
     export PATH=/bin
     export PATH=/sbin:$PATH
     export PATH=/usr/bin:$PATH
