@@ -57,7 +57,7 @@
       "title",
       "artist"
     ],
-    "max-length": 80
+    "max-length": 70
   },
   "hyprland/window": {
     "format": "{class}",
