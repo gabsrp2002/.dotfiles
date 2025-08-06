@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# Check if script is already running
+check="$(pgrep -fl wf-recorder)"
+if [ -n "$check" ]; then
+  notify-send -t 1000 "Screen Recording has been stopped"
+  killall --user $USER  --ignore-case  --signal INT wf-recorder
+else
+  notify-send -t 1000 "Screen Recording has been started"
+  wf-recorder -f $HOME/Videos/"$(date +%d_%m_%H:%M)".mp4 -c h264_vaapi -d /dev/dri/renderD128
+fi
