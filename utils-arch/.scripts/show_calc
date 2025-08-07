@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if [[ -z "$1" ]]; then
+    echo "Calculator"
+else
+    pkill rofi 
+    # so rofi doesn't complain "can't launch rofi inside rofi"
+    rofi -show calc -modi calc -no-show-match -no-sort -no-history -lines 0 -calc-command "wl-copy {result}"
+fi
