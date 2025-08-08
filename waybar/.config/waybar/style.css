@@ -123,6 +123,7 @@ window#waybar.empty #window {
 
 window#waybar.empty #workspaces {
   border-radius: 13px;
+  padding-right: 6px;
 }
 
 #workspaces {

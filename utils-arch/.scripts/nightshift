@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# Check if script is already running
+check="$(pgrep -fl gammastep)"
+if [ -n "$check" ]; then
+  killall --user $USER  --ignore-case  --signal INT gammastep
+else
+  gammastep -O "$1K"
+fi
