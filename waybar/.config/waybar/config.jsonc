@@ -80,6 +80,7 @@
       "warning": 40,
       "critical": 15
     },
+    "interval": 15,
     "format": "{icon} <span color='#cdd6f4'>{capacity}%</span>",
     "format-charging": "󰂄 <span color='#cdd6f4'>{capacity}%</span>",
     "format-icons": [
