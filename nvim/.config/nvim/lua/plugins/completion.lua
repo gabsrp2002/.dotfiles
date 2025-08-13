@@ -114,7 +114,6 @@ return {
         "clangd",
         "texlab",
         "ts_ls",
-        "eslint",
         "cssls",
         "svlangserver",
         "html",

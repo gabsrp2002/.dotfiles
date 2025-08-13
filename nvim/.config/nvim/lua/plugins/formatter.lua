@@ -79,7 +79,7 @@ return {
           require("formatter.filetypes.css").prettier,
         },
         typescript = {
-          require("formatter.filetypes.typescript").prettier,
+          require("formatter.filetypes.typescript").eslint_d,
         },
         typescriptreact = {
           require("formatter.filetypes.typescriptreact").prettier,
