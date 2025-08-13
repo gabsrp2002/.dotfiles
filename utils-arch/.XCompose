@@ -1,0 +1,70 @@
+# UTF-8 (Unicode) Compose sequences
+#
+# Spacing versions of accents (mostly)
+<dead_diaeresis> : "\"" quotedbl
+<dead_tilde> <space>		: "~"	asciitilde # TILDE
+<dead_tilde> <dead_tilde>	: "~"	asciitilde # TILDE
+<dead_acute> <space>		: "'"	apostrophe # APOSTROPHE
+<dead_grave> <space>		: "`"	grave # GRAVE ACCENT
+<dead_grave> <dead_grave>	: "`"	grave # GRAVE ACCENT
+<dead_circumflex> <space>	: "^"	asciicircum # CIRCUMFLEX ACCENT
+<dead_circumflex> <dead_circumflex>	: "^"	asciicircum # CIRCUMFLEX ACCENT
+# Latin-1 Supplement
+<dead_circumflex> <1>		: "¹"	onesuperior # SUPERSCRIPT ONE
+<dead_circumflex> <KP_1>	: "¹"	onesuperior # SUPERSCRIPT ONE
+<dead_circumflex> <2>		: "²"	twosuperior # SUPERSCRIPT TWO
+<dead_circumflex> <KP_2>	: "²"	twosuperior # SUPERSCRIPT TWO
+<dead_circumflex> <3>		: "³"	threesuperior # SUPERSCRIPT THREE
+<dead_circumflex> <KP_3>	: "³"	threesuperior # SUPERSCRIPT THREE
+<dead_grave> <A>			: "À"	Agrave # LATIN CAPITAL LETTER A WITH GRAVE
+<dead_acute> <A>			: "Á"	Aacute # LATIN CAPITAL LETTER A WITH ACUTE
+<dead_circumflex> <A>		: "Â"	Acircumflex # LATIN CAPITAL LETTER A WITH CIRCUMFLEX
+<dead_tilde> <A>			: "Ã"	Atilde # LATIN CAPITAL LETTER A WITH TILDE
+<dead_cedilla> <C>			: "Ç"	Ccedilla # LATIN CAPITAL LETTER C WITH CEDILLA
+<dead_acute> <E>			: "É"	Eacute # LATIN CAPITAL LETTER E WITH ACUTE
+<dead_circumflex> <E>		: "Ê"	Ecircumflex # LATIN CAPITAL LETTER E WITH CIRCUMFLEX
+<dead_acute> <I>			: "Í"	Iacute # LATIN CAPITAL LETTER I WITH ACUTE
+<dead_tilde> <N>			: "Ñ"	Ntilde # LATIN CAPITAL LETTER N WITH TILDE
+<dead_acute> <O>			: "Ó"	Oacute # LATIN CAPITAL LETTER O WITH ACUTE
+<dead_circumflex> <O>		: "Ô"	Ocircumflex # LATIN CAPITAL LETTER O WITH CIRCUMFLEX
+<dead_tilde> <O>			: "Õ"	Otilde # LATIN CAPITAL LETTER O WITH TILDE
+<dead_acute> <U>			: "Ú"	Uacute # LATIN CAPITAL LETTER U WITH ACUTE
+<dead_circumflex> <U>		: "Û"	Ucircumflex # LATIN CAPITAL LETTER U WITH CIRCUMFLEX
+<dead_grave> <a>			: "à"	agrave # LATIN SMALL LETTER A WITH GRAVE
+<dead_acute> <a>			: "á"	aacute # LATIN SMALL LETTER A WITH ACUTE
+<dead_circumflex> <a>		: "â"	acircumflex # LATIN SMALL LETTER A WITH CIRCUMFLEX
+<dead_tilde> <a>			: "ã"	atilde # LATIN SMALL LETTER A WITH TILDE
+<dead_cedilla> <c>			: "ç"	ccedilla # LATIN SMALL LETTER C WITH CEDILLA
+<dead_acute> <e>			: "é"	eacute # LATIN SMALL LETTER E WITH ACUTE
+<dead_circumflex> <e>		: "ê"	ecircumflex # LATIN SMALL LETTER E WITH CIRCUMFLEX
+<dead_acute> <i>			: "í"	iacute # LATIN SMALL LETTER I WITH ACUTE
+<dead_tilde> <n>			: "ñ"	ntilde # LATIN SMALL LETTER N WITH TILDE
+<dead_acute> <o>			: "ó"	oacute # LATIN SMALL LETTER O WITH ACUTE
+<dead_circumflex> <o>		: "ô"	ocircumflex # LATIN SMALL LETTER O WITH CIRCUMFLEX
+<dead_tilde> <o>			: "õ"	otilde # LATIN SMALL LETTER O WITH TILDE
+<dead_stroke> <o>			: "ø"	oslash # LATIN SMALL LETTER O WITH STROKE
+<dead_acute> <u>			: "ú"	uacute # LATIN SMALL LETTER U WITH ACUTE
+<dead_circumflex> <u>		: "û"	ucircumflex # LATIN SMALL LETTER U WITH CIRCUMFLEX
+<dead_acute> <C>			: "Ç"	U0106
+<dead_acute> <c>			: "ç"	U0107
+<dead_acute> <dead_acute>	: "'"	acute
+<dead_acute> <b>			: "'b"
+<dead_acute> <d>			: "'d"
+<dead_acute> <f>			: "'f"
+<dead_acute> <g>			: "'g"
+<dead_acute> <h>			: "'h"
+<dead_acute> <j>			: "'j"
+<dead_acute> <k>			: "'k"
+<dead_acute> <l>			: "'l"
+<dead_acute> <m>			: "'m"
+<dead_acute> <n>			: "'n"
+<dead_acute> <p>			: "'p"
+<dead_acute> <q>			: "'q"
+<dead_acute> <r>			: "'r"
+<dead_acute> <s>			: "'s"
+<dead_acute> <t>			: "'t"
+<dead_acute> <v>			: "'v"
+<dead_acute> <w>			: "'w"
+<dead_acute> <x>			: "'x"
+<dead_acute> <y>			: "'y"
+<dead_acute> <z>			: "'z"
