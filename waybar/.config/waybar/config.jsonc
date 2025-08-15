@@ -26,7 +26,6 @@
     "power-profiles-daemon",
     "battery",
     "clock",
-    "tray"
   ],
   "power-profiles-daemon": {
     "format": "{icon}",
@@ -38,10 +37,6 @@
       "balanced": "",
       "power-saver": ""
     }
-  },
-  "tray": {
-    "icon-size": 16,
-    "spacing": 2
   },
   "mpris": {
     "format": "{player_icon} {dynamic}",

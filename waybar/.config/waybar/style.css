@@ -66,7 +66,6 @@ tooltip {
 #pulseaudio,
 #battery,
 #workspaces,
-#tray,
 #memory,
 #disk,
 #mpris,
@@ -96,11 +95,6 @@ menu {
 
 menuitem {
   border-radius: 15px;
-}
-
-#tray {
-  padding-left: 7px;
-  padding-right: 7px;
 }
 
 #mpris {
