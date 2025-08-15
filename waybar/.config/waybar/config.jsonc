@@ -21,6 +21,8 @@
   "modules-right": [
     "hyprland/language",
     "pulseaudio",
+    "bluetooth",
+    "network",
     "power-profiles-daemon",
     "battery",
     "clock",
@@ -31,15 +33,14 @@
     "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
     "tooltip": true,
     "format-icons": {
-      "default": " ",
-      "performance": " ",
-      "balanced": " ",
-      "power-saver": " "
+      "default": "",
+      "performance": "",
+      "balanced": "",
+      "power-saver": ""
     }
   },
   "tray": {
     "icon-size": 16,
-    "icon-theme": "Papirus",
     "spacing": 2
   },
   "mpris": {
@@ -47,6 +48,7 @@
     "format-paused": "{status_icon} <i>{dynamic}</i>",
     "player-icons": {
       "spotify": "",
+      "firefox": "",
       "default": "▶",
       "mpv": "🎵"
     },
@@ -149,6 +151,49 @@
     "path": "/home",
     "format": "<span color='#a6e3a1'> </span><span color='#cdd6f4'>{free}</span>",
     "unit": "GB"
+  },
+  "bluetooth": {
+    "format": "󰂯",
+    "format-off": "󰂲",
+    "format-disabled": "󰂲",
+    "format-connected": "󰂱",
+    "format-connected-battery": "{icon}",
+    "tooltip-format": "{controller_alias}\t{controller_address}\n\n{num_connections} connected",
+    "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}",
+    "tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
+    "tooltip-format-enumerate-connected-battery": "{device_alias}\t{device_address}\t{device_battery_percentage}%",
+    "format-icons": [
+      "󰤾",
+      "󰤿",
+      "󰥀",
+      "󰥁",
+      "󰥂",
+      "󰥃",
+      "󰥄",
+      "󰥅",
+      "󰥆",
+      "󰥈"
+    ],
+    "on-click": "$HOME/.scripts/rofi-bluetooth -i"
+  },
+  "network": {
+    "interval": 15,
+    "format": "{icon}",
+    "format-ethernet": "󰈁",
+    "format-disconnected": "<span color='#f9e2af'>󰤯</span>",
+    "format-disabled": "<span color='#f38ba8'>󰤮</span>",
+    "tooltip-format": "{ifname}",
+    "tooltip-format-wifi": "{icon} {essid} ({signalStrength}%)",
+    "tooltip-format-ethernet": "󰈁 {ifname}",
+    "tooltip-format-disconnected": "Disconnected",
+    "tooltip-format-disabled": "Disabled",
+    "format-icons": [
+      "󰤟",
+      "󰤢",
+      "󰤥",
+      "󰤨"
+    ],
+    "on-click": "$HOME/.scripts/rofi-wifi-menu -i"
   },
   "custom/power": {
     "format": "⏻ ",

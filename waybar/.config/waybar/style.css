@@ -71,7 +71,9 @@ tooltip {
 #disk,
 #mpris,
 #power-profiles-daemon,
-#custom-power {
+#custom-power,
+#bluetooth,
+#network {
   background: #1e1e2e;
   opacity: 1;
   padding: 1.5px 4px 1.5px 4px;
@@ -141,17 +143,28 @@ window#waybar.empty #workspaces {
   margin-left: 0px;
 }
 
+#network,
+#memory,
+#pulseaudio,
+#power-profiles-daemon,
+#battery,
+#bluetooth {
+  border-radius: 0px 0px 0px 0px;
+  margin-left: 0px;
+  margin-right: 0px;
+}
+
+#bluetooth {
+  color: #89b4fa;
+}
+
 #network {
-  color: #f9e2af;
-  border-radius: 7px 7px 7px 7px;
-  margin-right: 5px;
+  color: #a6e3a1;
+  padding-right: 10px;
 }
 
 #memory {
   color: #89b4fa;
-  border-radius: 0px 0px 0px 0px;
-  margin-left: 0px;
-  margin-right: 0px;
 }
 
 #disk {
@@ -163,23 +176,15 @@ window#waybar.empty #workspaces {
 
 #pulseaudio {
   color: #89b4fa;
-  border-radius: 0px 0px 0px 0px;
-  margin-right: 0px;
-  margin-left: 0px;
 }
 
 #battery {
   color: #a6e3a1;
-  border-radius: 0px 0px 0px 0px;
-  margin-left: 0px;
-  margin-right: 0px;
 }
 
 #power-profiles-daemon {
   color: #a6e3a1;
-  border-radius: 0px 0px 0px 0px;
-  margin-left: 0px;
-  margin-right: 0px;
+  padding-right: 10px;
 }
 
 #battery.warning,
@@ -202,9 +207,4 @@ window#waybar.empty #workspaces {
   padding-left: 10px;
   margin-right: 0px;
   margin-left: 0px;
-}
-
-#custom-weather {
-  border-radius: 13px 13px 13px 13px;
-  margin-right: 0px;
 }

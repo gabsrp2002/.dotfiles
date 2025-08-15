@@ -37,7 +37,6 @@ configuration {
   normal-foreground:           @foreground;
   alternate-urgent-foreground: @red;
   alternate-active-foreground: @blue;
-
 }
 element {
     padding: 1px ;
