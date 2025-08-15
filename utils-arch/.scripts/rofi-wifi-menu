@@ -78,12 +78,11 @@ if [ ! -f "$cache_file" ]; then
 fi
 
 # Get the connected network in real-time
-connected_ssid=$(nmcli -t -f active,ssid dev wifi | grep '^yes' | cut -d':' -f2)
+connected_ssid=$(nmcli dev status | grep "wifi" | grep -w "connected" | awk '{print $4}')
 
 # Get the full line of the connected network from a new nmcli scan
 if [ -n "$connected_ssid" ]; then
-    connected_network_full=$(nmcli --fields "SECURITY,SSID" device wifi list | grep "$connected_ssid" | sed 1d | sed 's/  */ /g' | sed -E "s/WPA*.?\S/ /g" | sed "s/^--/ /g" | sed "s/  */ /g" | sed "/--/d")
-    connected_network=" $connected_network_full"
+    connected_network="  $connected_ssid"
 fi
 
 # Get the list of available networks from the cache file
@@ -95,7 +94,7 @@ if [ -n "$connected_ssid" ]; then
 fi
 
 # Construct the final list for Rofi
-final_list="󰑖 Refresh List\n󰖪  Disable Wi-Fi"
+final_list="󰑖  Refresh List\n󰖪  Disable Wi-Fi"
 if [ -n "$connected_network" ]; then
     final_list="$final_list\n$connected_network"
 fi
