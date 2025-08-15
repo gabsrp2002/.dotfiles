@@ -106,7 +106,7 @@ chosen_network=$(echo -e "$final_list" | uniq -u | rofi -dmenu -i -p "Wi-Fi SSID
 # Handle the selected option
 if [ "$chosen_network" = "" ]; then
     exit
-elif [[ "$chosen_network" = "󰑖 Refresh List" ]]; then
+elif [[ "$chosen_network" = "󰑖  Refresh List" ]]; then
     notify-send "Wi-Fi" "Refreshing network list..."
     get_full_wifi_list_for_cache > "$cache_file"
     exec "$0"
@@ -122,6 +122,14 @@ elif [[ "$chosen_network" =~ "󰖪" ]]; then
         notify-send "Wi-Fi Disabled" "Wi-Fi radio has been turned off."
     else
         notify-send "Error" "Failed to disable Wi-Fi radio."
+    fi
+# New logic to handle disconnecting
+elif [[ -n "$connected_ssid" && "$chosen_network" =~ "$connected_ssid" ]]; then
+    notify-send "Wi-Fi" "Disconnecting from network \"$connected_ssid\"..."
+    if nmcli dev disconnect wlan0 &> /dev/null; then
+        notify-send "Wi-Fi Disconnected" "You have been disconnected from \"$connected_ssid\"."
+    else
+        notify-send "Error" "Failed to disconnect from \"$connected_ssid\"."
     fi
 else
     connect_to_wifi "$chosen_network"
