@@ -25,7 +25,7 @@
     "network",
     "power-profiles-daemon",
     "battery",
-    "clock",
+    "clock"
   ],
   "power-profiles-daemon": {
     "format": "{icon}",
@@ -188,7 +188,7 @@
       "󰤥",
       "󰤨"
     ],
-    "on-click": "$HOME/.scripts/rofi-wifi-menu -i"
+    "on-click": "/usr/bin/networkmanager_dmenu -i"
   },
   "custom/power": {
     "format": "⏻ ",
