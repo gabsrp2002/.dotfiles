@@ -8,12 +8,16 @@ vim.opt.softtabstop = 4
 -- Set the scroll offset
 vim.opt.so = 7
 
--- Sets path for pynvim
-local cpath_extension = package.cpath:match("%.(%a+)$")
-if cpath_extension == "so" then
+-- Sets path for pynvim based on the operating system
+local sysname = vim.loop.os_uname().sysname
+print(sysname)
+
+if sysname == "Darwin" then
+  vim.g.python3_host_prog = "/opt/homebrew/bin/python3.13"
+elseif sysname == "Linux" then
   vim.g.python3_host_prog = "/usr/bin/python3"
 else
-  vim.g.python3_host_prog = "/opt/homebrew/bin/python3.13"
+  vim.g.python3_host_prog = "/usr/bin/python3"
 end
 
 -- Copys to clipboard
