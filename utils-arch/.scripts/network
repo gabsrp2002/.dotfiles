@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+get_information() {
+    echo -e "$1" | grep -w "$2" | awk '{ $1=""; sub(/^ +/, ""); print }'
+}
+
+main() {
+    connection_status=$(nmcli --fields "TYPE,STATE" d s)
+    connection_name=$(nmcli --fields "TYPE,CONNECTION" d s)
+
+    wifi_status=$(get_information "$connection_status" "wifi ")
+    ethernet_status=$(get_information "$connection_status" "ethernet ")
+
+    if [[ "$wifi_status" == "unavailable" ]]; then
+        if [[ "$ethernet_status" == "unavailable" ]]; then
+            echo "{\"text\": \"<span color='#f38ba8'>󰤮</span>\", \"tooltip\": \"Disabled\"}"
+            return
+        fi
+        ethernet_name=$(get_information "$connection_name" "ethernet ")
+
+        echo "{\"text\": \"󰈁\", \"tooltip\": \"󰈁 $ethernet_name\"}"
+        return
+    fi
+
+    if [[ "$wifi_status" == "disconnected" ]]; then
+        echo "{\"text\": \"<span color='#f9e2af'>󰤯</span>\", \"tooltip\": \"Disconnected\"}"
+        return
+    fi
+
+    wifi_name=$(get_information "$connection_name" "wifi ")
+
+    if [[ "$wifi_status" == *"connecting"* ]]; then
+        if [[ "$wifi_status" == *"configuring"* ]]; then
+            echo "{\"text\": \"<span color='#89b4fa'>󰤫</span>\", \"tooltip\": \"Configuring $wifi_name...\"}"
+        else
+            echo "{\"text\": \"<span color='#89b4fa'>󰤩</span>\", \"tooltip\": \"Getting IP for $wifi_name...\"}"
+        fi
+        return
+    fi
+
+    wifi_strength=$(awk 'NR==3 {printf "%.0f", (($3 / 70) * 100)}' /proc/net/wireless)
+
+    if (( $wifi_strength >= 75 )); then
+      icon="󰤨"
+    elif (( $wifi_strength >= 50 )); then
+      icon="󰤥"
+    elif (( $wifi_strength >= 25 )); then
+      icon="󰤢"
+    else
+      icon="󰤟"
+    fi
+
+    echo "{\"text\": \"$icon\", \"tooltip\": \"$icon $wifi_name ($wifi_strength%)\"}"
+}
+
+while true; do
+    echo $(main)
+    sleep 1
+done

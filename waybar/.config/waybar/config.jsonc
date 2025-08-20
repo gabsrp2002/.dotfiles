@@ -12,6 +12,7 @@
     "hyprland/window",
     "hyprland/workspaces",
     "cpu",
+    "temperature",
     "memory",
     "disk"
   ],
@@ -22,7 +23,7 @@
     "hyprland/language",
     "pulseaudio",
     "bluetooth",
-    "network",
+    "custom/network",
     "power-profiles-daemon",
     "battery",
     "clock"
@@ -120,7 +121,8 @@
     "format-bluetooth": "<span color='#cba6f7'>{icon}</span> <span color='#cdd6f4'>{volume}%</span>",
     "tooltip": false,
     "format-muted": "<span color='#f38ba8'>󰝟</span> <span color='#cdd6f4'>0%</span>",
-    "on-click": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
+    "on-click": "pavucontrol",
+    "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
     "on-scroll-up": "",
     "on-scroll-down": "",
     "format-icons": {
@@ -129,7 +131,6 @@
       "headset": "",
       "phone": "",
       "portable": "",
-      "car": "",
       "default": [
         "",
         "",
@@ -171,13 +172,13 @@
     ],
     "on-click": "$HOME/.scripts/rofi-bluetooth -i"
   },
-  "network": {
-    "interval": 15,
-    "format": "{icon}",
+  "custom/network": {
+    "format": "{text}",
+    "exec": "~/.scripts/network",
+    "return-type": "json",
     "format-ethernet": "󰈁",
     "format-disconnected": "<span color='#f9e2af'>󰤯</span>",
     "format-disabled": "<span color='#f38ba8'>󰤮</span>",
-    "tooltip-format": "{ifname}",
     "tooltip-format-wifi": "{icon} {essid} ({signalStrength}%)",
     "tooltip-format-ethernet": "󰈁 {ifname}",
     "tooltip-format-disconnected": "Disconnected",
@@ -189,6 +190,13 @@
       "󰤨"
     ],
     "on-click": "/usr/bin/networkmanager_dmenu -i"
+  },
+  "temperature": {
+    "critical-threshold": 80,
+    "warning-threshold": 70,
+    "format-critical": "<span color='#f38ba8'></span> {temperatureC}°C",
+    "format-warning": "<span color='#f9e2af'></span> {temperatureC}°C",
+    "format": "<span color='#89b4fa'></span> {temperatureC}°C"
   },
   "custom/power": {
     "format": "⏻ ",

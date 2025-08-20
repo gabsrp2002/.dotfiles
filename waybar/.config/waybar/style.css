@@ -59,6 +59,7 @@ tooltip {
 #workspaces button.urgent {
   color: #f38ba8;
 }
+
 #language,
 #cpu,
 #window,
@@ -72,7 +73,8 @@ tooltip {
 #power-profiles-daemon,
 #custom-power,
 #bluetooth,
-#network {
+#temperature,
+#custom-network {
   background: #1e1e2e;
   opacity: 1;
   padding: 1.5px 4px 1.5px 4px;
@@ -137,12 +139,13 @@ window#waybar.empty #workspaces {
   margin-left: 0px;
 }
 
-#network,
 #memory,
 #pulseaudio,
 #power-profiles-daemon,
 #battery,
-#bluetooth {
+#bluetooth,
+#temperature,
+#custom-network {
   border-radius: 0px 0px 0px 0px;
   margin-left: 0px;
   margin-right: 0px;
@@ -152,7 +155,7 @@ window#waybar.empty #workspaces {
   color: #89b4fa;
 }
 
-#network {
+#custom-network {
   color: #a6e3a1;
   padding-right: 10px;
 }
