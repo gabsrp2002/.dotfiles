@@ -56,3 +56,7 @@ if [[ $(uname) == "Darwin" ]]; then
     # End of Docker CLI completions
     eval "$(rbenv init -)"
 fi
+
+if [[ $(uname) == "Linux" ]]; then
+    alias open="xdg-open"
+fi
