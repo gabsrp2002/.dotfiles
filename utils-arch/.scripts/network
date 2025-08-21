@@ -53,7 +53,7 @@ main() {
       icon="󰤟"
     fi
 
-    echo "{\"text\": \"$icon\", \"tooltip\": \"$icon $wifi_name ($wifi_strength%)\", \"class\": \"connecting\"}"
+    echo "{\"text\": \"$icon\", \"tooltip\": \"$icon $wifi_name ($wifi_strength%)\"}"
 }
 
 while true; do
