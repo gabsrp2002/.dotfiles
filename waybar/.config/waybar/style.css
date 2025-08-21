@@ -155,9 +155,24 @@ window#waybar.empty #workspaces {
   color: #89b4fa;
 }
 
+@keyframes blinker {
+  0% {
+  }
+  50% {
+    color: rgba(21, 18, 27, 0);
+  }
+  100% {
+  }
+}
+
 #custom-network {
   color: #a6e3a1;
   padding-right: 10px;
+}
+
+#custom-network.connecting {
+  color: #89b4fa;
+  animation: blinker 1.5s linear infinite;
 }
 
 #memory {

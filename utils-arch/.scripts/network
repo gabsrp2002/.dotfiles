@@ -31,10 +31,13 @@ main() {
 
     if [[ "$wifi_status" == *"connecting"* ]]; then
         if [[ "$wifi_status" == *"configuring"* ]]; then
-            echo "{\"text\": \"<span color='#89b4fa'>󰤫</span>\", \"tooltip\": \"Configuring $wifi_name...\"}"
+            text="󰤢"
+            tooltip="Configuring $wifi_name..."
         else
-            echo "{\"text\": \"<span color='#89b4fa'>󰤩</span>\", \"tooltip\": \"Getting IP for $wifi_name...\"}"
+            text="󰤨"
+            tooltip="Getting IP for $wifi_name..."
         fi
+        echo "{\"text\": \"$text\", \"tooltip\": \"$tooltip\", \"class\": \"connecting\"}"
         return
     fi
 
@@ -50,7 +53,7 @@ main() {
       icon="󰤟"
     fi
 
-    echo "{\"text\": \"$icon\", \"tooltip\": \"$icon $wifi_name ($wifi_strength%)\"}"
+    echo "{\"text\": \"$icon\", \"tooltip\": \"$icon $wifi_name ($wifi_strength%)\", \"class\": \"connecting\"}"
 }
 
 while true; do

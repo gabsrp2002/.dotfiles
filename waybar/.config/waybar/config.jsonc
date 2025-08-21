@@ -176,19 +176,6 @@
     "format": "{text}",
     "exec": "~/.scripts/network",
     "return-type": "json",
-    "format-ethernet": "󰈁",
-    "format-disconnected": "<span color='#f9e2af'>󰤯</span>",
-    "format-disabled": "<span color='#f38ba8'>󰤮</span>",
-    "tooltip-format-wifi": "{icon} {essid} ({signalStrength}%)",
-    "tooltip-format-ethernet": "󰈁 {ifname}",
-    "tooltip-format-disconnected": "Disconnected",
-    "tooltip-format-disabled": "Disabled",
-    "format-icons": [
-      "󰤟",
-      "󰤢",
-      "󰤥",
-      "󰤨"
-    ],
     "on-click": "/usr/bin/networkmanager_dmenu -i"
   },
   "temperature": {
