@@ -10,7 +10,6 @@ vim.opt.so = 7
 
 -- Sets path for pynvim based on the operating system
 local sysname = vim.loop.os_uname().sysname
-print(sysname)
 
 if sysname == "Darwin" then
   vim.g.python3_host_prog = "/opt/homebrew/bin/python3.13"

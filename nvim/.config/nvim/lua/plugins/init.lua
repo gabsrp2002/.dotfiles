@@ -284,4 +284,22 @@ return {
     version = "*",
     config = true,
   },
+  {
+    "pysan3/fcitx5.nvim",
+    cond = vim.fn.executable("fcitx5-remote") == 1,
+    event = "ModeChanged",
+    config = function()
+      local en = "keyboard-us"
+      local ja = "mozc"
+
+      require("fcitx5").setup({
+        imname = {
+          norm = en,
+          ins = nil,
+          cmd = en,
+        },
+        remember_prior = true,
+      })
+    end,
+  },
 }
