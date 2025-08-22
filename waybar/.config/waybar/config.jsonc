@@ -20,7 +20,7 @@
     "mpris"
   ],
   "modules-right": [
-    "hyprland/language",
+    "custom/language",
     "pulseaudio",
     "bluetooth",
     "custom/network",
@@ -93,7 +93,7 @@
   "clock": {
     "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
     "format": "<span color='#89b4fa'>󰥔 </span><span color='#cdd6f4'>{:%H:%M}</span>",
-    "format-alt": "<span color='#89b4fa'>󰃭 </span><span color='#cdd6f4'>{:%Y-%m-%d}</span>"
+    "format-alt": "<span color='#89b4fa'>󰃭 </span><span color='#cdd6f4'>{:%d/%m}</span>"
   },
   "cpu": {
     "format": "<span color='#89b4fa'>󰍛</span> <span color='#cdd6f4'>{usage}%</span>",
@@ -138,10 +138,12 @@
       ]
     }
   },
-  "hyprland/language": {
-    "format": "<span color='#f9e2af'>󰌌</span> <span color='#cdd6f4'>{}</span>",
-    "format-en": "eng"
-  },
+    "custom/language": {
+        "format": "<span color='#f9e2af'>󰌌</span> <span color='#cdd6f4'>{}</span>",
+        "interval": 1,
+        "exec": "~/.scripts/keyboard-input",
+        "exec-if": "pgrep fcitx5"
+    },
   "disk": {
     "interval": 3,
     "path": "/home",

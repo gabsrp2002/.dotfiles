@@ -60,7 +60,7 @@ tooltip {
   color: #f38ba8;
 }
 
-#language,
+#custom-language,
 #cpu,
 #window,
 #clock,
@@ -208,7 +208,7 @@ window#waybar.empty #workspaces {
   color: #f38ba8;
 }
 
-#language {
+#custom-language {
   border-radius: 13px 0px 0px 13px;
   margin-right: 0px;
   padding-left: 7px;

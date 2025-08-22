@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+if [[ $(/usr/lib/qt6/bin/qdbus "org.fcitx.Fcitx5" "/controller" "org.fcitx.Fcitx.Controller1.CurrentInputMethod") == "mozc" ]]; then
+    echo "jp"
+else
+    echo "en" 
+fi
