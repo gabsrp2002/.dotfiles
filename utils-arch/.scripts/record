@@ -1,16 +1,46 @@
 #!/usr/bin/env bash
 
-# Check if script is already running
-check="$(pgrep -fl wf-recorder)"
-if [ -n "$check" ]; then
+if pgrep -fl wf-recorder > /dev/null; then
   notify-send -t 1000 "Screen Recording has been stopped"
-  killall --user $USER  --ignore-case  --signal INT wf-recorder
-else
-  notify-send -t 1000 "Screen Recording has been started"
-
-    # Get the name of the currently focused monitor
-  monitor_name=$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .name')
-  
-  # Record the selected monitor
-  wf-recorder -o "${monitor_name}" -f "$HOME/Videos/$(date +%d_%m_%H:%M)".mp4 -c h264_vaapi -d /dev/dri/renderD128
+  killall --user $USER --ignore-case --signal INT wf-recorder
+  exit 0
 fi
+
+area_option=$(echo -e "Entire monitor\nSelect area" | rofi -dmenu -p "Select recording area" -i)
+
+if [ -z "$area_option" ]; then
+  exit 1
+fi
+
+audio_option=$(echo -e "Record with audio\nRecord without audio" | rofi -dmenu -p "Select audio option" -i)
+
+if [ -z "$audio_option" ]; then
+  exit 1
+fi
+
+# Set common arguments for wf-recorder
+filename="$HOME/Videos/$(date +'%Y-%m-%d_%H-%M-%S').mp4"
+common_args=(-f "$filename" -c h264_vaapi -d /dev/dri/renderD128)
+
+if [ "$area_option" == "Entire monitor" ]; then
+  monitor_name=$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .name')
+  specific_args=(-o "${monitor_name}")
+else
+  geometry=$(slurp)
+  
+  if [ $? -ne 0 ]; then
+    notify-send -t 2000 "Recording cancelled"
+    exit 1
+  fi
+  
+  specific_args=(-g "$geometry")
+fi
+
+# Add audio argument if selected
+if [ "$audio_option" == "Record with audio" ]; then
+  specific_args+=(-a)
+fi
+
+# Start recording
+notify-send -t 1000 "Screen Recording has been started"
+wf-recorder "${specific_args[@]}" "${common_args[@]}"
