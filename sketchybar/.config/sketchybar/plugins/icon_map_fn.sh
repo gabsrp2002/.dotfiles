@@ -326,11 +326,14 @@ function icon_map() {
   "Parallels Desktop")
     icon_result=":parallels:"
     ;;
-  "Preview" | "预览" | "Skim" | "zathura")
-    icon_result=":pdf_old:"
+  "Preview" | "预览" | "zathura")
+    icon_result=":preview:"
     ;;
   "Pi-hole Remote")
     icon_result=":pihole:"
+    ;;
+  "Skim")
+    icon_result=":pdf_old:"
     ;;
   "Pine")
     icon_result=":pine:"
