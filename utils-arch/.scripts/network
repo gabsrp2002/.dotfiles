@@ -43,14 +43,16 @@ main() {
 
     wifi_strength=$(awk 'NR==3 {printf "%.0f", (($3 / 70) * 100)}' /proc/net/wireless)
 
-    if (( $wifi_strength >= 75 )); then
+    if (( $wifi_strength >= 80 )); then
       icon="󰤨"
-    elif (( $wifi_strength >= 50 )); then
+    elif (( $wifi_strength >= 60 )); then
       icon="󰤥"
-    elif (( $wifi_strength >= 25 )); then
+    elif (( $wifi_strength >= 40 )); then
       icon="󰤢"
-    else
+    elif (( $wifi_strength >= 20 )); then
       icon="󰤟"
+    else
+      icon="󰤯"
     fi
 
     echo "{\"text\": \"$icon\", \"tooltip\": \"$icon $wifi_name ($wifi_strength%)\"}"
