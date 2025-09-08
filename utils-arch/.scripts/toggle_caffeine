@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+if [[ -z "$1" ]]; then
+    if pgrep -fl hypridle > /dev/null; then
+        echo -en " Inject Caffeine\0meta\x1fcoffee idle inhibit\n"
+    else
+        echo -en "󰾫 Remove Caffeine\0meta\x1fcoffee idle inhibit\n"
+    fi
+else
+    if pgrep -fl hypridle > /dev/null; then
+        notify-send -t 5000 " System caffeinated"
+        pkill hypridle
+    else
+        notify-send -t 5000 "󰾫 Removed caffeine from the system"
+        hyprctl dispatch exec hypridle
+    fi
+fi

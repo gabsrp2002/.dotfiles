@@ -60,3 +60,5 @@ fi
 if [[ $(uname) == "Linux" ]]; then
     alias open="xdg-open"
 fi
+
+export PATH="$HOME/.deno/bin:$PATH"

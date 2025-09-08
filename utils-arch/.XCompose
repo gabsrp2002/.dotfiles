@@ -9,7 +9,11 @@
 <dead_grave> <dead_grave>	: "`"	grave # GRAVE ACCENT
 <dead_circumflex> <space>	: "^"	asciicircum # CIRCUMFLEX ACCENT
 <dead_circumflex> <dead_circumflex>	: "^"	asciicircum # CIRCUMFLEX ACCENT
+
 # Latin-1 Supplement
+
+<dead_circumflex> <underscore> <a>	: "ª"	ordfeminine # FEMININE ORDINAL INDICATOR
+<dead_circumflex> <underscore> <o>	: "º"	masculine # MASCULINE ORDINAL INDICATOR
 <dead_circumflex> <1>		: "¹"	onesuperior # SUPERSCRIPT ONE
 <dead_circumflex> <KP_1>	: "¹"	onesuperior # SUPERSCRIPT ONE
 <dead_circumflex> <2>		: "²"	twosuperior # SUPERSCRIPT TWO

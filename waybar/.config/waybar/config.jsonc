@@ -22,8 +22,8 @@
   "modules-right": [
     "custom/language",
     "pulseaudio",
-    "bluetooth",
     "custom/network",
+    "bluetooth",
     "power-profiles-daemon",
     "battery",
     "clock"
@@ -120,7 +120,7 @@
     "format": "<span color='#cba6f7'>{icon}</span> <span color='#cdd6f4'>{volume}%</span>",
     "format-bluetooth": "<span color='#cba6f7'>{icon}</span> <span color='#cdd6f4'>{volume}%</span>",
     "tooltip": false,
-    "format-muted": "<span color='#f38ba8'>󰝟</span> <span color='#cdd6f4'>0%</span>",
+    "format-muted": "<span color='#f38ba8'></span> <span color='#cdd6f4'>0%</span>",
     "on-click": "pavucontrol",
     "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
     "on-scroll-up": "",
