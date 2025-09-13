@@ -116,7 +116,6 @@ return {
             -- Does not use util
             local config_path = search_ancestors(current_file, ".swiftformat")
 
-
             local args = {
               util.escape_path(current_file),
               "--output",
@@ -136,6 +135,18 @@ return {
             return {
               exe = binary_path or "swiftformat",
               args = args,
+              stdin = true,
+            }
+          end,
+        },
+        xml = {
+          function()
+            return {
+              exe = "xmllint",
+              args = {
+                "--format",
+                util.escape_path(util.get_current_buffer_file_path()),
+              },
               stdin = true,
             }
           end,

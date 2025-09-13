@@ -5,6 +5,9 @@ vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.softtabstop = 4
 
+-- Auto update when file changes
+vim.opt.autoread = true
+
 -- Set the scroll offset
 vim.opt.so = 7
 

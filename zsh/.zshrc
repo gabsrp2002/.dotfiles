@@ -58,7 +58,12 @@ if [[ $(uname) == "Darwin" ]]; then
 fi
 
 if [[ $(uname) == "Linux" ]]; then
-    alias open="xdg-open"
+    function open() {
+        xdg-open "$@" > /dev/null 2>&1 &!
+    }
 fi
 
 export PATH="$HOME/.deno/bin:$PATH"
+
+# uv
+export PATH="$HOME/.local/bin:$PATH"
