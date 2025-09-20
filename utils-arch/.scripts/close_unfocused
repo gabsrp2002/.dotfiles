@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Define an array of window classes you want to close automatically on unfocus.
+WINDOW_CLASSES_TO_CLOSE=("org.pulseaudio.pavucontrol")
+
+# Get the path to the Hyprland IPC socket.
+SOCKET_PATH="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
+
+# Initialize a variable to store the address of the window we want to monitor.
+MONITORED_WINDOW_CLASS=""
+
+# Use a loop to continuously listen for events from the IPC socket.
+socat -u UNIX-CONNECT:$SOCKET_PATH - | while read -r line; do
+    # Check if a new window has opened.
+    if [[ "$line" == "openwindow>>"* ]]; then
+        # The 'openwindow' event format is "openwindow>>address,workspace,class,title".
+        WINDOW_INFO=$(echo "$line" | sed 's/^openwindow>>//')
+        WINDOW_CLASS=$(echo "$WINDOW_INFO" | cut -d',' -f3)
+
+        # Check if the new window's class is in our list.
+        for target_class in "${WINDOW_CLASSES_TO_CLOSE[@]}"; do
+            if [[ "$WINDOW_CLASS" == "$target_class" ]]; then
+                MONITORED_WINDOW_CLASS="$WINDOW_CLASS"
+                break
+            fi
+        done
+    fi
+
+    # Check for the 'activewindowv2' event, which contains the address.
+    if [[ "$line" == "activewindow>>"* ]]; then
+        # The 'activewindowv2' event format is "activewindowv2>>address".
+        WINDOW_INFO=$(echo "$line" | sed 's/^activewindow>>//')
+        NEW_ACTIVE_CLASS=$(echo "$WINDOW_INFO" | cut -d',' -f1)
+
+        # Check if the previously active window was one we were monitoring.
+        if [[ -n "$MONITORED_WINDOW_CLASS" && "$NEW_ACTIVE_CLASS" != "$MONITORED_WINDOW_CLASS" ]]; then
+            # Dispatch the 'closewindow' command to Hyprland.
+            hyprctl dispatch closewindow "class:$MONITORED_WINDOW_CLASS"
+            
+            # Clear the monitored window address to stop tracking it after the command is issued.
+            MONITORED_WINDOW_CLASS=""
+        fi
+    fi
+
+done
