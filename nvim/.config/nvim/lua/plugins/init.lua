@@ -93,7 +93,7 @@ return {
     config = function()
       vim.opt.termguicolors = true
       require("bufferline").setup({
-        highlights = require("catppuccin.groups.integrations.bufferline").get(),
+        highlights = require("catppuccin.groups.integrations.bufferline").get_theme(),
         options = {
           mode = "buffers",
           buffer_close_icon = "",
@@ -290,7 +290,6 @@ return {
     event = "ModeChanged",
     config = function()
       local en = "keyboard-us"
-      local ja = "mozc"
 
       require("fcitx5").setup({
         imname = {

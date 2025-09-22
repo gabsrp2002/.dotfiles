@@ -107,6 +107,21 @@ return {
     dependencies = { "hrsh7th/cmp-nvim-lsp", "folke/neodev.nvim" },
     event = { "BufReadPre", "BufNewFile" },
     config = function()
+      local root_pattern = function(root_markers, single_file_support)
+        return function(bufnr, on_dir)
+          local project_root = vim.fs.root(bufnr, root_markers)
+
+          if project_root then
+            on_dir(project_root)
+            return
+          end
+
+          if single_file_support then
+            print("Single file support enabled for " .. bufnr)
+            on_dir(vim.fn.getcwd())
+          end
+        end
+      end
       local lspconfig = require("lspconfig")
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
       local servers = {
@@ -118,15 +133,15 @@ return {
         "html",
         "gopls",
       }
+
       for _, server in ipairs(servers) do
-        lspconfig[server].setup({
-          capabilities = capabilities,
-        })
+        vim.lsp.config(server, { capabilities = capabilities })
+        vim.lsp.enable(server)
       end
 
       require("neodev").setup()
 
-      lspconfig.lua_ls.setup({
+      vim.lsp.config("lua_ls", {
         capabilities = capabilities,
         settings = {
           Lua = {
@@ -137,9 +152,9 @@ return {
         },
       })
 
-      lspconfig.sourcekit.setup({
+      vim.lsp.config("sourcekit", {
         cmd = { "sourcekit-lsp" },
-        root_dir = lspconfig.util.root_pattern("Package.swift", ".git"),
+        root_dir = root_pattern({ "Package.swift", ".git" }),
         capabilities = {
           workspace = {
             didChangeWatchedFiles = {
@@ -155,16 +170,17 @@ return {
         },
       })
 
-    lspconfig.denols.setup {
-      capabilities = capabilities,
-      root_dir = lspconfig.util.root_pattern("deno.json", "deno.jsonc"),
-    }
+      vim.lsp.config("denols", {
+        capabilities = capabilities,
+        root_dir = root_pattern({ "deno.json", "deno.jsonc" }),
+      })
 
-    lspconfig.ts_ls.setup {
-      capabilities = capabilities,
-      root_dir = lspconfig.util.root_pattern("package.json"),
-      single_file_support = false
-    }
+      vim.lsp.config("ts_ls", {
+        capabilities = capabilities,
+        root_dir = root_pattern({ "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lockb", "bun.lock" }),
+      })
+
+      vim.lsp.enable({ "lua_ls", "sourcekit", "denols", "ts_ls" })
     end,
   },
   {
