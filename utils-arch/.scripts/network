@@ -41,6 +41,26 @@ main() {
         return
     fi
 
+    ping -c 1 8.8.8.8 > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        wifi_strength=$(awk 'NR==3 {printf "%.0f", (($3 / 70) * 100)}' /proc/net/wireless)
+
+        if (( $wifi_strength >= 80 )); then
+          icon="󰤩"
+        elif (( $wifi_strength >= 60 )); then
+          icon="󰤦"
+        elif (( $wifi_strength >= 40 )); then
+          icon="󰤣"
+        elif (( $wifi_strength >= 20 )); then
+          icon="󰤠"
+        else
+          icon="󰤫"
+        fi
+
+        echo "{\"text\": \"<span color='#f9e2af'>$icon</span>\", \"tooltip\": \"$icon $wifi_name ($wifi_strength%)\nNo Internet Connection\"}"
+        return
+    fi
+
     wifi_strength=$(awk 'NR==3 {printf "%.0f", (($3 / 70) * 100)}' /proc/net/wireless)
 
     if (( $wifi_strength >= 80 )); then
