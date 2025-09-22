@@ -59,6 +59,7 @@ return {
           ["<CR>"] = cmp.mapping.confirm({ select = false }),
         }),
         sources = cmp.config.sources({
+          { name = "lazydev", group_index = 0 },
           { name = "nvim_lsp" },
           { name = "ultisnips" },
           { name = "path" },
@@ -103,8 +104,17 @@ return {
     end,
   },
   {
+    "folke/lazydev.nvim",
+    ft = "lua",
+    opts = {
+      library = {
+        { path = "${3rd}/luv/library", words = { "vim%.uv" } },
+      },
+    },
+  },
+  {
     "neovim/nvim-lspconfig",
-    dependencies = { "hrsh7th/cmp-nvim-lsp", "folke/neodev.nvim" },
+    dependencies = { "hrsh7th/cmp-nvim-lsp" },
     event = { "BufReadPre", "BufNewFile" },
     config = function()
       local root_pattern = function(root_markers, single_file_support)
@@ -122,7 +132,6 @@ return {
           end
         end
       end
-      local lspconfig = require("lspconfig")
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
       local servers = {
         "pyright",
@@ -138,8 +147,6 @@ return {
         vim.lsp.config(server, { capabilities = capabilities })
         vim.lsp.enable(server)
       end
-
-      require("neodev").setup()
 
       vim.lsp.config("lua_ls", {
         capabilities = capabilities,
