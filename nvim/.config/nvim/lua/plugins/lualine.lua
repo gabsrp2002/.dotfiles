@@ -18,7 +18,7 @@ return {
         return gitdir and #gitdir > 0 and #gitdir < #filepath
       end,
       start_up_dashboard = function()
-        local buf_ft = vim.api.nvim_buf_get_option(0, "filetype")
+        local buf_ft = vim.bo.filetype
         return buf_ft ~= "snacks_dashboard"
       end,
     }
@@ -133,7 +133,7 @@ return {
     --   padding = { left = 1 },
     -- })
 
-    -- ins_left({ "location", padding = { left = 1 } })
+    ins_left({ "location", padding = { left = 1 } })
 
     ins_left({
       "progress",
@@ -173,35 +173,26 @@ return {
       -- Lsp server name .
       function()
         local msg = "No Active Lsp"
-        local buf_ft = vim.api.nvim_buf_get_option(0, "filetype")
-        local clients = vim.lsp.get_clients()
-        if next(clients) == nil then
+        local clients = vim.lsp.get_clients({
+          bufnr = vim.api.nvim_get_current_buf(),
+          _uninitialized = true
+        })
+        if clients == nil or next(clients) == nil then
           return msg
         end
 
-        -- Get active clients for current buffer
-        local function is_in(array, element)
-          for _, item in ipairs(array) do
-            if item == element then
-              return true
-            end
-          end
+        local abbreviations = {
+          ["GitHub Copilot"] = "",
+        }
 
-          return false
-        end
         local curr_buf_clients = {}
         for _, client in ipairs(clients) do
-          local filetypes = client.config.filetypes
-          if filetypes and vim.fn.index(filetypes, buf_ft) ~= -1 then
-            if not is_in(curr_buf_clients, client.name) then
-              table.insert(curr_buf_clients, client.name)
-            end
+          if not curr_buf_clients[client.name] then
+            table.insert(curr_buf_clients, abbreviations[client.name] or client.name)
           end
         end
-        if next(curr_buf_clients) == nil then
-          return msg
-        end
-        return "[" .. table.concat(curr_buf_clients, " ") .. "]"
+
+        return "[" .. table.concat(curr_buf_clients, ", ") .. "]"
       end,
       icon = " LSP:",
       color = { fg = "#ffffff", gui = "bold" },
