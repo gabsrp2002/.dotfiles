@@ -44,6 +44,7 @@ return {
           alpha = true,
           harpoon = true,
           lightspeed = true,
+          copilot_vim = true,
           telescope = {
             enabled = true,
           },

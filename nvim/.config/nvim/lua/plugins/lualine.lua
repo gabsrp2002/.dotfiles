@@ -109,7 +109,7 @@ return {
       -- mode component
       function()
         -- auto change color according to neovims mode
-        vim.api.nvim_command("hi! LualineMode guifg=#000000 guibg=" .. mode_color[vim.fn.mode()])
+        vim.api.nvim_command("hi! LualineMode guifg=" .. colors.surface0 .. " guibg=" .. mode_color[vim.fn.mode()])
         return mode_name[vim.fn.mode()]
       end,
       color = "LualineMode",
@@ -135,12 +135,12 @@ return {
 
     ins_left({ "location", padding = { left = 1 } })
 
-    ins_left({
-      "progress",
-      color = { fg = colors.text, gui = "bold" },
-      padding = { left = 1 },
-      cond = conditions.start_up_dashboard,
-    })
+    -- ins_left({
+    --   "progress",
+    --   color = { fg = colors.text, gui = "bold" },
+    --   padding = { left = 1 },
+    --   cond = conditions.start_up_dashboard,
+    -- })
 
     ins_left({
       function()
@@ -175,7 +175,7 @@ return {
         local msg = "No Active Lsp"
         local clients = vim.lsp.get_clients({
           bufnr = vim.api.nvim_get_current_buf(),
-          _uninitialized = true
+          _uninitialized = true,
         })
         if clients == nil or next(clients) == nil then
           return msg
@@ -194,8 +194,8 @@ return {
 
         return "[" .. table.concat(curr_buf_clients, ", ") .. "]"
       end,
-      icon = " LSP:",
-      color = { fg = "#ffffff", gui = "bold" },
+      icon = " ",
+      color = { fg = colors.text, gui = "bold" },
       cond = conditions.start_up_dashboard,
     })
 
