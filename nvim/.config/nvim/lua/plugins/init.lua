@@ -134,6 +134,11 @@ return {
         function()
           if not vim.t.maximized then
             require("focus").split_nicely()
+          elseif vim.notify then
+            -- Show as a warning with nvim notify if available
+            vim.notify("Cannot split a maximized window", vim.log.levels.WARN)
+          else
+              print("Cannot split a maximized window")
           end
         end,
         { desc = "split nicely" },
