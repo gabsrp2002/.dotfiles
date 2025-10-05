@@ -25,7 +25,6 @@ return {
     },
     notifier = {
       enabled = true,
-      timeout = 3000,
     },
     quickfile = { enabled = true },
     statuscolumn = { enabled = true },

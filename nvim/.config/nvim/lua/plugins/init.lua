@@ -3,7 +3,15 @@ return {
   {
     "folke/noice.nvim",
     event = "VeryLazy",
-    opts = {},
+    opts = {
+      lsp = {
+        override = {
+          ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+          ["vim.lsp.util.stylize_markdown"] = true,
+          ["cmp.entry.get_documentation"] = true, -- requires hrsh7th/nvim-cmp
+        },
+      },
+    },
     dependencies = {
       -- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
       "MunifTanjim/nui.nvim",
@@ -138,7 +146,7 @@ return {
             -- Show as a warning with nvim notify if available
             vim.notify("Cannot split a maximized window", vim.log.levels.WARN)
           else
-              print("Cannot split a maximized window")
+            print("Cannot split a maximized window")
           end
         end,
         { desc = "split nicely" },

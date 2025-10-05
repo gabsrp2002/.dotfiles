@@ -22,6 +22,8 @@ else
   vim.g.python3_host_prog = "/usr/bin/python3"
 end
 
+vim.g.loaded_perl_provider = 0
+
 -- Copys to clipboard
 vim.schedule(function()
   vim.opt.clipboard = "unnamedplus"
@@ -64,6 +66,7 @@ vim.opt.breakindent = true
 -- Set undofile
 vim.opt.undofile = true
 
+-- Highlight when yanking (copying) text
 vim.api.nvim_create_autocmd("TextYankPost", {
   desc = "Highlight when yanking (copying) text",
   group = vim.api.nvim_create_augroup("highlight-yank", { clear = true }),
@@ -74,7 +77,7 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 
 -- Setup lazy plugin to load plugins
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
+if not vim.uv.fs_stat(lazypath) then
   vim.fn.system({
     "git",
     "clone",
