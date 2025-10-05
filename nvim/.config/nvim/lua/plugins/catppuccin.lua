@@ -3,9 +3,13 @@ return {
   name = "catppuccin",
   priority = 1000,
   config = function()
-    require("catppuccin").setup({
+    require("catppuccin").setup(
       {
         flavour = "mocha", -- latte, frappe, macchiato, mocha
+        float = {
+          transparent = true,
+          solid = false,
+        },
         transparent_background = true,
         show_end_of_buffer = false,
         term_colors = false,
@@ -45,8 +49,8 @@ return {
           },
           rainbow_delimiters = true,
         },
-      },
-    })
+      }
+    )
     vim.cmd.colorscheme("catppuccin")
   end,
 }

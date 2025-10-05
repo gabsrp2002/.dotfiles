@@ -93,7 +93,7 @@ return {
     config = function()
       vim.opt.termguicolors = true
       require("bufferline").setup({
-        highlights = require("catppuccin.groups.integrations.bufferline").get_theme(),
+        highlights = require("catppuccin.special.bufferline").get_theme(),
         options = {
           mode = "buffers",
           buffer_close_icon = "",
