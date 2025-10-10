@@ -98,6 +98,7 @@ return {
   {
     "akinsho/bufferline.nvim",
     dependencies = { "kyazdani42/nvim-web-devicons" },
+    event = "BufReadPre",
     after = "catppuccin",
     config = function()
       vim.opt.termguicolors = true
@@ -225,6 +226,10 @@ return {
         "<leader>m",
         function()
           require("windex").toggle_maximize()
+          vim.api.nvim_exec_autocmds("User", {
+            pattern = "WindowMaximized",
+            modeline = false,
+          })
         end,
         { desc = "toggle maximize window" },
       },

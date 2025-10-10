@@ -1,6 +1,49 @@
 return {
   "nvim-lualine/lualine.nvim",
   dependencies = { "kyazdani42/nvim-web-devicons", opt = true },
+  init = function()
+    local refresh_callback = function()
+      -- Requires lualine now to lazyload it
+      vim.defer_fn(function()
+        local ft = vim.bo.filetype
+        local ignore_filetypes = {
+          "TelescopePrompt",
+          "help",
+          "qf",
+          "lazy",
+          "minifiles",
+        }
+
+        if vim.tbl_contains(ignore_filetypes, ft) then
+          return
+        end
+        require("lualine").refresh()
+      end, 50)
+    end
+
+    local refresh_group = vim.api.nvim_create_augroup("LualineRefresh", { clear = true })
+
+    vim.api.nvim_create_autocmd({
+      "BufReadPost",
+      "BufWritePost",
+      "FileChangedShellPost",
+      "VimResized",
+      "ModeChanged",
+      "LspAttach",
+      "LspDetach",
+    }, {
+      group = refresh_group,
+      desc = "Lualine refresh group",
+      callback = refresh_callback,
+    })
+
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "WindowMaximized",
+      group = refresh_group,
+      desc = "Lualine Refresh group",
+      callback = refresh_callback,
+    })
+  end,
   config = function()
     local lualine = require("lualine")
 
@@ -8,9 +51,6 @@ return {
     local conditions = {
       buffer_not_empty = function()
         return vim.fn.empty(vim.fn.expand("%:t")) ~= 1
-      end,
-      hide_in_width = function()
-        return vim.fn.winwidth(0) > 80
       end,
       check_git_workspace = function()
         local filepath = vim.fn.expand("%:p:h")
@@ -73,6 +113,13 @@ return {
         section_separators = "",
         theme = catppuccin_mocha_theme,
         globalstatus = true,
+        refresh = {
+          statusline = 999999999,
+          tabline = 999999999,
+          winbar = 999999999,
+          refresh_time = 16, -- ~60fps
+          events = { "VimEnter" },
+        },
       },
       sections = {
         -- these are to remove the defaults
@@ -175,21 +222,26 @@ return {
         local msg = "No Active Lsp"
         local clients = vim.lsp.get_clients({
           bufnr = vim.api.nvim_get_current_buf(),
-          _uninitialized = true,
         })
         if clients == nil or next(clients) == nil then
           return msg
         end
 
-        local abbreviations = {
-          ["GitHub Copilot"] = "",
+        local ignore = {
+          "GitHub Copilot",
         }
 
         local curr_buf_clients = {}
         for _, client in ipairs(clients) do
           if not curr_buf_clients[client.name] then
-            table.insert(curr_buf_clients, abbreviations[client.name] or client.name)
+            if not vim.tbl_contains(ignore, client.name) then
+              table.insert(curr_buf_clients, client.name)
+            end
           end
+        end
+
+        if next(curr_buf_clients) == nil then
+          return msg
         end
 
         return "[" .. table.concat(curr_buf_clients, ", ") .. "]"
@@ -199,25 +251,26 @@ return {
       cond = conditions.start_up_dashboard,
     })
 
-    -- Add components to right sections
-    -- ins_right({
-    --   "o:encoding",
-    --   fmt = string.upper,
-    --   cond = conditions.hide_in_width,
-    --   color = { fg = colors.green, gui = "bold" },
-    -- })
+    ins_right({
+      function()
+        local result = vim.api.nvim_exec2("Copilot status", { output = true })
+        local output = result.output or ""
 
-    -- ins_right({
-    --   "fileformat",
-    --   fmt = string.upper,
-    --   icons_enabled = false,
-    --   color = { fg = colors.green, gui = "bold" },
-    -- })
+        if output:match("Ready") then
+          return ""
+        end
+
+        return ""
+      end,
+      color = { fg = colors.text, gui = "bold" },
+      cond = conditions.start_up_dashboard,
+    })
 
     ins_right({
       "branch",
       icon = "",
       color = { fg = colors.teal, gui = "bold" },
+      cond = conditions.check_git_workspace,
     })
 
     ins_right({
@@ -229,7 +282,7 @@ return {
         modified = { fg = colors.blue },
         removed = { fg = colors.red },
       },
-      cond = conditions.hide_in_width,
+      cond = conditions.check_git_workspace,
     })
 
     ins_right({
@@ -243,7 +296,6 @@ return {
       cond = conditions.start_up_dashboard,
     })
 
-    -- Now don't forget to initialize lualine
     lualine.setup(config)
   end,
 }
