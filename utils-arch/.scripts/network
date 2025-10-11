@@ -22,6 +22,14 @@ main() {
         return
     fi
 
+
+    if [[ "$ethernet_status" == "connected" ]]; then
+        ethernet_name=$(get_information "$connection_name" "ethernet ")
+
+        echo "{\"text\": \"󰈁\", \"tooltip\": \"󰈁 $ethernet_name\"}"
+        return
+    fi
+
     if [[ "$wifi_status" == "disconnected" ]]; then
         echo "{\"text\": \"<span color='#f9e2af'>󰤯</span>\", \"tooltip\": \"Disconnected\"}"
         return
