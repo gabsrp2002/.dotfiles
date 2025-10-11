@@ -141,6 +141,7 @@ return {
         "svlangserver",
         "html",
         "gopls",
+        "rust_analyzer"
       }
 
       for _, server in ipairs(servers) do
