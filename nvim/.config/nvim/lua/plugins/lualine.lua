@@ -252,21 +252,6 @@ return {
     })
 
     ins_right({
-      function()
-        local result = vim.api.nvim_exec2("Copilot status", { output = true })
-        local output = result.output or ""
-
-        if output:match("Ready") then
-          return ""
-        end
-
-        return ""
-      end,
-      color = { fg = colors.text, gui = "bold" },
-      cond = conditions.start_up_dashboard,
-    })
-
-    ins_right({
       "branch",
       icon = "",
       color = { fg = colors.teal, gui = "bold" },
