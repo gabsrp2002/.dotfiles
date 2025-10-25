@@ -39,9 +39,11 @@ return {
     "ggandor/leap.nvim",
     config = function()
       local leap = require("leap")
-      leap.create_default_mappings()
       leap.opts.highlight_unlabeled_phase_one_targets = true
       leap.opts.equivalence_classes = { " \t\r\n", "aáàãâ", "eéê", "oóôõ", "ií", "uú" }
+
+      vim.keymap.set({'n', 'x', 'o'}, 's', '<Plug>(leap)')
+      vim.keymap.set('n',             'S', '<Plug>(leap-from-window)')
     end,
   },
   {
