@@ -8,7 +8,6 @@
   "margin-right": 4,
   "height": 30,
   "modules-left": [
-    "custom/power",
     "hyprland/window",
     "hyprland/workspaces",
     "cpu",
@@ -187,9 +186,4 @@
     "format-warning": "<span color='#f9e2af'></span> {temperatureC}°C",
     "format": "<span color='#89b4fa'></span> {temperatureC}°C"
   },
-  "custom/power": {
-    "format": "⏻ ",
-    "tooltip": false,
-    "on-click": "wlogout"
-  }
 }
