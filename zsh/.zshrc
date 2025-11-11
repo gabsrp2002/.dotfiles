@@ -54,7 +54,7 @@ if [[ $(uname) == "Darwin" ]]; then
     autoload -Uz compinit
     compinit
     # End of Docker CLI completions
-    eval "$(rbenv init -)"
+    # eval "$(rbenv init -)"
 fi
 
 if [[ $(uname) == "Linux" ]]; then

@@ -6,10 +6,10 @@ source "$CONFIG_DIR/colors.sh"
 ##### Bar Appearance #####
 # Catppuccin Mocha Base, consistent styling
 sketchybar --bar position=top \
-                 height=30 \
+                 height=32 \
                  blur_radius=20 \
-                 padding_left=5 \
-                 padding_right=5 \
+                 padding_left=8 \
+                 padding_right=8 \
                  topmost=on \
                  color=$BAR_COLOR
 
@@ -46,7 +46,7 @@ sketchybar --add event lock   "com.apple.screenIsLocked"   \
 ##### Adding Left Items #####
 
 sketchybar --add item apple.logo left                                                      \
-              --set apple.logo icon=􀣺                                                         \
+              --set apple.logo icon=                                                         \
                                icon.color=$ROSEWATER \
                                icon.padding_left=5 \
                                icon.padding_right=6 \
@@ -64,21 +64,21 @@ sketchybar --add item apple.logo left                                           
                                popup.y_offset=5 \
                                                                                               \
               --add item apple.preferences popup.apple.logo                                   \
-              --set apple.preferences icon=􀺽                                                  \
+              --set apple.preferences icon=                                                  \
                                icon.color=$LAVENDER \
                                label="Preferences"                                            \
                                background.color=$TRANSPARENT \
                                label.color=$SUBTEXT_COLOR \
                                click_script="open -a 'System Preferences';sketchybar -m --set apple.logo popup.drawing=off"\
               --add item apple.activity popup.apple.logo                                      \
-              --set apple.activity icon=􀒓                                                     \
+              --set apple.activity icon=󱎴                                                     \
                                icon.color=$YELLOW \
                                label="Activity"                                               \
                                background.color=$TRANSPARENT \
                                label.color=$SUBTEXT_COLOR \
-                               click_script="open -a 'Activity Monitor';sketchybar -m --set apple.logo popup.drawing=off"\
+                               click_script="kitty -e btop & sketchybar -m --set apple.logo popup.drawing=off"\
               --add item apple.lock popup.apple.logo                                          \
-              --set apple.lock icon=􀒳                                                         \
+              --set apple.lock icon=                                                         \
                                icon.color=$RED \
                                label="Lock Screen"                                            \
                                background.color=$TRANSPARENT \
@@ -141,7 +141,7 @@ sketchybar --set space.$(aerospace list-workspaces --focused) icon.color=$BASE_C
 
 ##### Adding Center Items #####
 
-sketchybar --add item love center \
+sketchybar --add item love q \
            --set love icon=󰋑 \
                       icon.color=$PINK \
                       icon.padding_left=5 \
@@ -165,6 +165,17 @@ sketchybar --add item love center \
                             label.color=$WHITE \
                             y_offset=-150 \
                             align=center
+
+
+# # CPU
+sketchybar --add item cpu e \
+           --set cpu  update_freq=2 \
+                      icon=  \
+                      icon.color=$TEAL \
+                      click_script="kitty -e btop" \
+                      script="$PLUGIN_DIR/cpu.sh"
+
+
 
 ##### Adding Right Items #####
 
@@ -208,14 +219,6 @@ sketchybar --add item wifi right \
                       click_script="$PLUGIN_DIR/click_wifi.sh" \
                       icon.color=$BLUE \
                       label.color=$SUBTEXT_COLOR
-
-# CPU
-sketchybar --add item cpu right \
-           --set cpu  update_freq=2 \
-                      icon=􀧓  \
-                      icon.color=$TEAL \
-                      click_script="open -a 'Activity Monitor'" \
-                      script="$PLUGIN_DIR/cpu.sh"
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update

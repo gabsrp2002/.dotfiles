@@ -15,7 +15,7 @@ vim.opt.so = 7
 local sysname = vim.loop.os_uname().sysname
 
 if sysname == "Darwin" then
-  vim.g.python3_host_prog = "/opt/homebrew/bin/python3.13"
+  vim.g.python3_host_prog = vim.fn.expand('$HOME/.config/nvim/venv/bin/python')
 elseif sysname == "Linux" then
   vim.g.python3_host_prog = "/usr/bin/python3"
 else
