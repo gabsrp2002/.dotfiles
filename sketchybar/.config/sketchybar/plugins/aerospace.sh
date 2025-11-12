@@ -41,6 +41,15 @@ if [ -z "${FOCUSED_WORKSPACE+x}" ]; then
     fi
 
     sketchybar --set $NAME display="$monitor" label="$icons"
+
+
+    for monitor in $(aerospace list-monitors --format %{monitor-id}); do
+        reorder_array=()
+        for sid in $(aerospace list-workspaces --monitor "$monitor"); do
+            reorder_array+=("space.$sid")
+        done
+        sketchybar --reorder "${reorder_array[@]}"
+    done
     exit
 fi
 
