@@ -4,7 +4,8 @@ after-startup-command = [
     'workspace comm', 'layout v_accordion',
     'exec-and-forget pgrep borders || borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0',
     'exec-and-forget sketchybar || sketchybar --reload',
-    'exec-and-forget menuanywhere'
+    'exec-and-forget menuanywhere',
+    'exec-and-forget AutoRaise'
 ]
 
 # Notify Sketchybar about workspace change
@@ -65,10 +66,10 @@ ctrl-shift-t = 'exec-and-forget kitty --single-instance -d ~ -e tmux new -A -s d
 alt-slash = 'layout tiles horizontal vertical'
 alt-semicolon = 'layout v_accordion'
 
-alt-h = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-the-workspace left'
-alt-j = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-the-workspace down'
-alt-k = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-the-workspace up'
-alt-l = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-the-workspace right'
+alt-h = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors left'
+alt-j = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors down'
+alt-k = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors up'
+alt-l = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors right'
 
 alt-shift-h = 'move --boundaries all-monitors-outer-frame left'
 alt-shift-j = 'move --boundaries all-monitors-outer-frame down'
