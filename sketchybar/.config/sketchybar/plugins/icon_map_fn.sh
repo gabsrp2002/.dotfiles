@@ -38,6 +38,9 @@ function icon_map() {
   "Android Studio")
     icon_result=":android_studio:"
     ;;
+  "Antigravity")
+    icon_result=":gemini:"
+    ;;
   "Anytype")
     icon_result=":anytype:"
     ;;
