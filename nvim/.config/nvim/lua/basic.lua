@@ -11,16 +11,7 @@ vim.opt.autoread = true
 -- Set the scroll offset
 vim.opt.so = 7
 
--- Sets path for pynvim based on the operating system
-local sysname = vim.loop.os_uname().sysname
-
-if sysname == "Darwin" then
-  vim.g.python3_host_prog = vim.fn.expand('$HOME/.config/nvim/venv/bin/python')
-elseif sysname == "Linux" then
-  vim.g.python3_host_prog = "/usr/bin/python3"
-else
-  vim.g.python3_host_prog = "/usr/bin/python3"
-end
+vim.g.python3_host_prog = vim.fn.expand('$HOME/.config/nvim/venv/bin/python')
 
 vim.g.loaded_perl_provider = 0
 
@@ -71,7 +62,7 @@ vim.api.nvim_create_autocmd("TextYankPost", {
   desc = "Highlight when yanking (copying) text",
   group = vim.api.nvim_create_augroup("highlight-yank", { clear = true }),
   callback = function()
-    vim.highlight.on_yank({ higroup = "IncSearch", timeout = 300 })
+    vim.hl.on_yank({ higroup = "IncSearch", timeout = 300 })
   end,
 })
 
