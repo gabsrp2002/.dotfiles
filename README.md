@@ -4,22 +4,22 @@ My dotfiles managed with `stow`
 
 ## Packages
 
-| Package | Platform | Description |
-|---------|----------|-------------|
-| `aerospace` | macOS | Aerospace window manager configuration |
-| `git` | Cross-platform | Git configuration and aliases |
-| `hypr` | Linux | Hyprland (Wayland compositor) configuration |
-| `kitty` | Cross-platform | Kitty terminal emulator configuration |
-| `latex` | Cross-platform | LaTeX configuration for writing documents |
-| `nvim` | Cross-platform | Neovim text editor configuration |
-| `rofi` | Cross-platform | Rofi application launcher configuration |
-| `sketchybar` | macOS | Sketchybar (macOS status bar) configuration |
-| `tmux` | Cross-platform | Tmux terminal multiplexer configuration |
-| `utils` | macOS | macOS utility scripts |
-| `utils-arch` | Linux | Arch Linux-specific utility scripts |
-| `waybar` | Linux | Waybar (Wayland status bar) configuration |
-| `wlogout` | Linux | Wlogout (Wayland logout menu) configuration |
-| `zsh` | Cross-platform | Zsh shell configuration |
+| Package      | Platform       | Description                                 |
+| ------------ | -------------- | ------------------------------------------- |
+| `aerospace`  | macOS          | Aerospace window manager configuration      |
+| `git`        | Cross-platform | Git configuration and aliases               |
+| `hypr`       | Linux          | Hyprland (Wayland compositor) configuration |
+| `kitty`      | Cross-platform | Kitty terminal emulator configuration       |
+| `latex`      | Cross-platform | LaTeX configuration for writing documents   |
+| `nvim`       | Cross-platform | Neovim text editor configuration            |
+| `rofi`       | Cross-platform | Rofi application launcher configuration     |
+| `sketchybar` | macOS          | Sketchybar (macOS status bar) configuration |
+| `tmux`       | Cross-platform | Tmux terminal multiplexer configuration     |
+| `utils`      | macOS          | macOS utility scripts                       |
+| `utils-arch` | Linux          | Arch Linux-specific utility scripts         |
+| `waybar`     | Linux          | Waybar (Wayland status bar) configuration   |
+| `wlogout`    | Linux          | Wlogout (Wayland logout menu) configuration |
+| `zsh`        | Cross-platform | Zsh shell configuration                     |
 
 ## Installation
 
