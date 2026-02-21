@@ -67,3 +67,6 @@ export PATH="$HOME/.deno/bin:$PATH"
 
 # uv
 export PATH="$HOME/.local/bin:$PATH"
+
+# OB1 dev tools
+export PATH="$HOME/.ob1/bin:$PATH"

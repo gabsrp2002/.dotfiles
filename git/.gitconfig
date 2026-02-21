@@ -3,9 +3,5 @@
 	name = Gabriel Ribeiro Paiva
 [pull]
 	rebase = true
-[difftool]
-    prompt = false
-[diff]
-    tool = nvimdiff
-[difftool "nvimdiff"]
-    cmd = "nvim -d \"$LOCAL\" \"$REMOTE\""
+[includeIf "gitdir:~/openblock/"]
+    path = ~/openblock/.gitconfig
