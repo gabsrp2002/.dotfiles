@@ -85,6 +85,11 @@ sketchybar --add item apple.logo left                                           
                                label.color=$SUBTEXT_COLOR \
                                click_script="pmset displaysleepnow;sketchybar -m --set apple.logo popup.drawing=off"
 
+sketchybar --add item disk left \
+           --set disk script="$PLUGIN_DIR/disk.sh" \
+            icon="" \
+            label.color=$SUBTEXT_COLOR \
+
 sketchybar --add item front_app left \
            --set front_app script="$PLUGIN_DIR/front_app.sh" \
             icon= \
