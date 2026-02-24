@@ -14,18 +14,31 @@ else
     echo "${GREEN}Homebrew installed!${NC}"
 fi
 
+# Install stow
+echo "\n=> Step 2: Install stow"
+if [ -x "$(command -v stow)" ]; then
+    echo "${GREEN}stow already installed!${NC}"
+else
+    brew install stow
+    echo "${GREEN}stow installed!${NC}"
+fi
+
+# Stow dotfiles
+echo "\n=> Step 3: Stow dotfiles"
+stow aerospace git kitty latex nvim sketchybar tmux utils zsh
+echo "${GREEN}Dotfiles stowed!${NC}"
+
 # Install oh-my-zsh
-echo "\n=> Step 2: Install oh-my-zsh"
+echo "\n=> Step 4: Install oh-my-zsh"
 if [ -d "$HOME/.oh-my-zsh" ]; then
     echo "${GREEN}oh-my-zsh already installed!${NC}"
 else
     echo "\nInstalling oh-my-zsh..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-    mv .zshrc.pre-oh-my-zsh .zshrc # Keep .zshrc file
     echo "${GREEN}oh-my-zsh installed!${NC}"
 fi
 
-echo "\n=> Step 3: Install oh-my-zsh plugin(s)"
+echo "\n=> Step 5: Install oh-my-zsh plugin(s)"
 if [ -d "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" ]; then
     echo "${GREEN}zsh-syntax-highlighting already installed!${NC}"
 else
@@ -35,44 +48,47 @@ else
 fi
 
 # Sourcing zshrc
-echo "\n=> Step 4: Source .zshrc"
+echo "\n=> Step 6: Source .zshrc"
 source ~/.zshrc
 echo "${GREEN}.zshrc sourced!${NC}"
 
 # Install homebrew packages
-echo "\n=> Step 5: Install homebrew packages"
+echo "\n=> Step 7: Install homebrew packages"
 echo "\nInstalling casks..."
 brew install --cask kitty # Terminal
 brew install --cask raycast # Better spotlight
-brew install --cask font-hack-nerd-font # Nice font for kitty and neovim
 brew install --cask skim # For pdf preview
 brew install --cask spotify # For music
 brew install --cask nikitabobko/tap/aerospace # For WM
 
+echo "\nInstalling fonts..."
+brew install --cask font-jetbrains-mono-nerd-font
+brew install --cask font-sketchybar-app-font
+
+echo "\nInstalling general packages..."
+brew install blueutil
+brew install btop
+brew install felixkratz/formulae/borders
+brew install felixkratz/formulae/sketchybar
+brew install lazygit
+
 echo "\nInstalling developer tools for neovim..."
-brew install nvim # Best editor ever brew install stylua # For lua formatting
+brew install nvim
+brew install stylua # For lua formatting
 brew install lua-language-server # For lua language server
 brew install prettier # For a lot of languages formatting
-brew install python
+brew install uv
+# TODO: Install a python virtual environment at $HOME/.config/nvim/venv with uv and install pynvim there
 brew install node
-brew install yarn
-pip3 install pynvim
 npm install -g neovim
 brew install deno # For markdown preview
+brew install anomalyco/tap/opencode
+brew install tmux
 echo "${GREEN}Developer tools installed!${NC}"
 
-echo "\nInstalling funny terminal commands..."
-brew install fortune
-brew install asciiquarium
-brew install sl
-brew install cmatrix
-echo "${GREEN}Funny terminal commands installed!${NC}"
-
 # Give scripts permission to run
-echo "\n=> Step 6: Make scripts executable"
+echo "\n=> Step 8: Make scripts executable"
 chmod +x $HOME/scripts/*
 echo "${GREEN}Scripts are now executable!${NC}"
 
 echo "${GREEN}Installation complete!${NC}"
-
-echo "${GREEN}That's all folks! Enjoy your new setup!${NC}"
