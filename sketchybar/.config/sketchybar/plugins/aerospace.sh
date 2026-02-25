@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 
-was_removed=true
-for sid in $(aerospace list-workspaces --all); do
-    if [ "$1" = "$sid" ]; then
-        was_removed=false
-        break
-    fi
-done
-
-if $was_removed; then
-    sketchybar --remove $NAME
-    exit
-fi
-
 if [ -n "$FOCUSED_WORKSPACE" ]; then
+
+    # Check if the workspace was removed during focus change
+    was_removed=true
+    for sid in $(aerospace list-workspaces --all); do
+        if [ "$1" = "$sid" ]; then
+            was_removed=false
+            break
+        fi
+    done
+
+    if $was_removed; then
+        sketchybar --remove $NAME
+        exit
+    fi
+
     # If a workspace was focused, then update space coloring
     if [ "$1" = "$FOCUSED_WORKSPACE" ]; then
         sketchybar --set $NAME background.color=0xffB4BEFE icon.color=0xff1E1E2E label.color=0xff1E1E2E
