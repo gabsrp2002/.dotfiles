@@ -87,6 +87,7 @@ sketchybar --add item apple.logo left                                           
 
 sketchybar --add item disk left \
            --set disk script="$PLUGIN_DIR/disk.sh" \
+            update_freq=2 \
             icon="" \
             label.color=$SUBTEXT_COLOR \
 
@@ -180,6 +181,13 @@ sketchybar --add item cpu e \
                       click_script="kitty -e btop" \
                       script="$PLUGIN_DIR/cpu.sh"
 
+
+# # RAM
+sketchybar --add item ram e \
+           --set ram  update_freq=5 \
+                      icon=󰌢  \
+                      icon.color=$RED \
+                      script="$PLUGIN_DIR/ram.sh"
 
 
 ##### Adding Right Items #####
