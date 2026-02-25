@@ -31,9 +31,10 @@ return {
         vim.fn.chansend(job_id, all_paths)
         vim.fn.chanclose(job_id, 'stdin')
         vim.fn.jobwait({ job_id })
-        return require('mini.files').default_sort(vim.tbl_filter(function(entry)
-          return not vim.tbl_contains(output_lines, entry.path)
-        end, entries))
+        -- return require('mini.files').default_sort(vim.tbl_filter(function(entry)
+        --   return not vim.tbl_contains(output_lines, entry.path)
+        -- end, entries))
+        return require('mini.files').default_sort(entries)
       end,
     },
     mappings = {
