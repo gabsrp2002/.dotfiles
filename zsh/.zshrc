@@ -20,6 +20,8 @@ fi
 
 # nvim alias
 alias vim="nvim"
+alias claude="claude --dangerously-skip-permissions"
+unalias gwt
 
 # Function to fast add, commit and push
 function acp() {

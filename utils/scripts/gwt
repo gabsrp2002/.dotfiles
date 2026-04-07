@@ -1,0 +1,176 @@
+#!/bin/zsh
+
+set -e
+
+usage() {
+  echo "Usage: gwt <command> [args]"
+  echo ""
+  echo "Commands:"
+  echo "  gwt list              List all worktrees with tmux status"
+  echo "  gwt new <name>        Create new worktree and enter tmux session"
+  echo "  gwt delete <name>     Delete worktree and tmux session"
+  exit 1
+}
+
+is_tmux_running() {
+  tmux has-session -t "$1" 2>/dev/null
+}
+
+cmd_list() {
+  if ! git rev-parse --show-toplevel &>/dev/null; then
+    echo "Error: not inside a git repository" >&2
+    exit 1
+  fi
+
+  REPO_ROOT=$(git rev-parse --show-toplevel)
+  REPO_NAME=$(basename "$REPO_ROOT")
+
+  local worktree_data=()
+
+  while IFS= read -r line; do
+    worktree_path="${line%% *}"
+    worktree_branch=$(echo "$line" | sed 's/.*\[\([^]]*\)\].*/\1/')
+
+    if [[ "$worktree_path" == "$REPO_ROOT" ]]; then
+      continue
+    fi
+
+    worktree_name=$(basename "$worktree_path" | sed "s/^${REPO_NAME}-//")
+    session_name="${REPO_NAME}-${worktree_name}"
+
+    if is_tmux_running "$session_name" 2>/dev/null; then
+      tmux_status="✓"
+    else
+      tmux_status="✗"
+    fi
+
+    worktree_data+=("${worktree_name}|${worktree_path}|${worktree_branch}|${session_name}|${tmux_status}")
+    echo "${worktree_name} [tmux: ${tmux_status}] (${worktree_branch})"
+  done < <(git worktree list)
+
+  if [[ ${#worktree_data[@]} -eq 0 ]]; then
+    echo "No worktrees found (besides main)."
+    exit 0
+  fi
+
+  echo ""
+  echo "Current workspace: $current_branch"
+  echo ""
+
+  selected=$(printf '%s\n' "${worktree_data[@]}" | fzf --prompt="Select worktree: ")
+  [[ -z "$selected" ]] && return
+
+  sess=$(echo "$selected" | cut -d'|' -f4)
+
+  if [[ -z "$sess" ]]; then
+    echo "Cannot enter or delete the main workspace."
+    return
+  fi
+
+  action=$(printf "Enter\nDelete\nCancel" | fzf --prompt="Select action: ")
+
+  case "$action" in
+    Enter)
+      wpath=$(echo "$selected" | cut -d'|' -f2)
+
+      if is_tmux_running "$sess" 2>/dev/null; then
+        if [[ -n "$TMUX" ]]; then
+          tmux switch-client -t "$sess"
+        else
+          tmux attach-session -t "$sess"
+        fi
+      else
+        tmux new-session -d -s "$sess" -c "$wpath"
+        if [[ -n "$TMUX" ]]; then
+          tmux switch-client -t "$sess"
+        else
+          tmux attach-session -t "$sess"
+        fi
+      fi
+      ;;
+    Delete)
+      wpath=$(echo "$selected" | cut -d'|' -f2)
+
+      echo "Removing worktree: $wpath"
+      git worktree remove --force "$wpath" 2>/dev/null || true
+
+      if is_tmux_running "$sess" 2>/dev/null; then
+        echo "Killing tmux session: $sess"
+        tmux kill-session -t "$sess" 2>/dev/null || true
+      fi
+      echo "Done."
+      ;;
+    Cancel)
+      ;;
+  esac
+}
+
+cmd_delete() {
+  local name="$1"
+  [[ -z "$name" ]] && usage
+
+  if ! git rev-parse --show-toplevel &>/dev/null; then
+    echo "Error: not inside a git repository" >&2
+    exit 1
+  fi
+
+  REPO_ROOT=$(git rev-parse --show-toplevel)
+  REPO_NAME=$(basename "$REPO_ROOT")
+
+  WORKTREE_PATH="${REPO_ROOT}/../${REPO_NAME}-${name}"
+  SESSION_NAME="${REPO_NAME}-${name}"
+
+  if git worktree list | grep -q "${REPO_NAME}-${name}"; then
+    git worktree remove --force "$WORKTREE_PATH"
+    echo "Removed worktree: $WORKTREE_PATH"
+  else
+    echo "Warning: worktree $WORKTREE_PATH not found" >&2
+  fi
+
+  if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+    tmux kill-session -t "$SESSION_NAME"
+    echo "Killed tmux session: $SESSION_NAME"
+  else
+    echo "Warning: tmux session $SESSION_NAME not found" >&2
+  fi
+}
+
+cmd_new() {
+  local name="$1"
+  [[ -z "$name" ]] && usage
+
+  if ! git rev-parse --show-toplevel &>/dev/null; then
+    echo "Error: not inside a git repository" >&2
+    exit 1
+  fi
+
+  REPO_ROOT=$(git rev-parse --show-toplevel)
+  REPO_NAME=$(basename "$REPO_ROOT")
+
+  WORKTREE_PATH="${REPO_ROOT}/../${REPO_NAME}-${name}"
+  SESSION_NAME="${REPO_NAME}-${name}"
+
+  if git show-ref --verify --quiet "refs/heads/${name}"; then
+    git worktree add "$WORKTREE_PATH" "$name"
+  else
+    git worktree add -b "$name" "$WORKTREE_PATH"
+  fi
+
+  echo "Created worktree: $WORKTREE_PATH"
+
+  tmux new-session -d -s "$SESSION_NAME" -c "$WORKTREE_PATH"
+  echo "Created tmux session: $SESSION_NAME"
+
+  if [[ -n "$TMUX" ]]; then
+    tmux switch-client -t "$SESSION_NAME"
+  else
+    tmux attach-session -t "$SESSION_NAME"
+  fi
+}
+
+case "$1" in
+  list) cmd_list ;;
+  delete) cmd_delete "$2" ;;
+  new) cmd_new "$2" ;;
+  *) usage ;;
+esac
