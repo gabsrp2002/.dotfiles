@@ -3,5 +3,9 @@
 	name = Gabriel Ribeiro Paiva
 [pull]
 	rebase = true
-[includeIf "gitdir:~/openblock/"]
-    path = ~/openblock/.gitconfig
+[credential "https://github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
