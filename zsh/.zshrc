@@ -42,6 +42,7 @@ if [[ $(uname) == "Darwin" ]]; then
     export PATH=/Library/TeX/texbin:$PATH
 
     # Homebrew paths
+    export PATH=$HOME/.rbenv/shims:$PATH
     export PATH=/opt/homebrew/opt/llvm/bin:$PATH
     export PATH=/opt/homebrew/bin:$PATH
     export PATH=/opt/homebrew/sbin:$PATH
