@@ -42,8 +42,8 @@ return {
       leap.opts.highlight_unlabeled_phase_one_targets = true
       leap.opts.equivalence_classes = { " \t\r\n", "aáàãâ", "eéê", "oóôõ", "ií", "uú" }
 
-      vim.keymap.set({'n', 'x', 'o'}, 's', '<Plug>(leap)')
-      vim.keymap.set('n',             'S', '<Plug>(leap-from-window)')
+      vim.keymap.set({ "n", "x", "o" }, "s", "<Plug>(leap)")
+      vim.keymap.set("n", "S", "<Plug>(leap-from-window)")
     end,
   },
   {
@@ -121,18 +121,13 @@ return {
 
   -- Markdown Preview
   {
-    "toppair/peek.nvim",
-    build = "deno task --quiet build:fast",
-    cmd = {
-      "PeekOpen",
-      "PeekClose",
-    },
-    config = function()
-      require("peek").setup({ app = "browser" })
-      -- refer to `configuration to change defaults`
-      vim.api.nvim_create_user_command("PeekOpen", require("peek").open, {})
-      vim.api.nvim_create_user_command("PeekClose", require("peek").close, {})
+    "iamcco/markdown-preview.nvim",
+    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+    build = "cd app && yarn install",
+    init = function()
+      vim.g.mkdp_filetypes = { "markdown" }
     end,
+    ft = { "markdown" },
   },
 
   -- Focus
