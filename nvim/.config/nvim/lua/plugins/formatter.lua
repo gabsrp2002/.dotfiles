@@ -139,17 +139,8 @@ return {
             }
           end,
         },
-        xml = {
-          function()
-            return {
-              exe = "xmllint",
-              args = {
-                "--format",
-                util.escape_path(util.get_current_buffer_file_path()),
-              },
-              stdin = true,
-            }
-          end,
+        toml = {
+          require("formatter.filetypes.toml").taplo
         },
         ["*"] = {
           require("formatter.filetypes.any").remove_trailing_whitespace,
