@@ -3,14 +3,17 @@ config-version = 2
 after-login-command = []
 
 after-startup-command = [
-    'workspace comm', 'layout v_accordion',
-    'exec-and-forget pkill borders || borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0',
-    'exec-and-forget sketchybar || sketchybar --reload',
+  'workspace comm',
+  'layout v_accordion',
+  'exec-and-forget pkill borders || borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0',
+  'exec-and-forget sketchybar || sketchybar --reload',
 ]
 
 # Notify Sketchybar about workspace change
-exec-on-workspace-change = ['/bin/bash', '-c',
-    'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE'
+exec-on-workspace-change = [
+  '/bin/bash',
+  '-c',
+  'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE',
 ]
 
 start-at-login = true
@@ -25,44 +28,41 @@ default-root-container-layout = 'tiles'
 default-root-container-orientation = 'auto'
 
 gaps.inner.horizontal = 10
-gaps.inner.vertical =   10
-gaps.outer.left =       8
-gaps.outer.bottom =     8
-gaps.outer.top =        [{ monitor.built-in = 8 }, 40]
-gaps.outer.right =      8
+gaps.inner.vertical = 10
+gaps.outer.left = 8
+gaps.outer.bottom = 8
+gaps.outer.top = [{ monitor.built-in = 8 }, 40]
+gaps.outer.right = 8
 
 persistent-workspaces = ['0', 'comm']
 
-on-focus-changed = ['exec-and-forget sketchybar --trigger aerospace_focus_change']
+on-focus-changed = [
+  'exec-and-forget sketchybar --trigger aerospace_focus_change',
+]
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 
-[[on-window-detected]]
-if.app-id = 'com.apple.weather'
-run = 'layout floating'
+on-mode-changed = [
+  'exec-and-forget sketchybar --trigger aerospace_mode_change MODE="$(aerospace list-modes --current)"',
+]
 
-[[on-window-detected]]
-if.app-id = 'com.apple.finder'
-run = 'layout floating'
+focus-follows-mouse.enabled = true
 
-[[on-window-detected]]
-if.app-id = 'com.bitwarden.desktop'
-run = 'layout floating'
+on-window-detected = [
+  # Trigger sketchybar and keep evaluating filters
+  { if = 'true', run = 'exec-and-forget sketchybar --trigger aerospace_window_created', check-further-callbacks = true },
 
-[[on-window-detected]]
-if.app-id = 'net.whatsapp.WhatsApp'
-run = 'move-node-to-workspace comm'
+  # Floating Layouts
+  { if = 'test %{app-bundle-id} = com.apple.weather', run = 'layout floating' },
+  { if = 'test %{app-bundle-id} = com.apple.finder', run = 'layout floating' },
+  { if = 'test %{app-name} = mpv', run = 'layout floating' },
+  { if = 'test %{app-bundle-id} = com.bitwarden.desktop', run = 'layout floating' },
 
-[[on-window-detected]]
-if.app-id = 'com.tinyspeck.slackmacgap'
-run = 'move-node-to-workspace comm'
-
-[[on-window-detected]]
-if.app-id = 'com.hnc.Discord'
-run = 'move-node-to-workspace comm'
-
-[[on-window-detected]]
-if.app-id = 'com.spotify.client'
-run = 'move-node-to-workspace comm'
+  # Communication Workspace
+  { if = 'test %{app-bundle-id} = net.whatsapp.WhatsApp', run = 'move-node-to-workspace comm' },
+  { if = 'test %{app-bundle-id} = com.tinyspeck.slackmacgap', run = 'move-node-to-workspace comm' },
+  { if = 'test %{app-bundle-id} = com.hnc.Discord', run = 'move-node-to-workspace comm' },
+  { if = 'test %{app-bundle-id} = com.spotify.client', run = 'move-node-to-workspace comm' },
+]
 
 [mode.main.binding]
 
@@ -72,10 +72,27 @@ ctrl-shift-t = 'exec-and-forget kitty --single-instance -d ~ -e tmux new -A -s d
 alt-slash = 'layout tiles horizontal vertical'
 alt-semicolon = 'layout v_accordion'
 
-alt-h = ['focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors left', 'move-mouse window-lazy-center']
-alt-j = ['focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors down', 'move-mouse window-lazy-center']
-alt-k = ['focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors up', 'move-mouse window-lazy-center']
-alt-l = ['focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors right', 'move-mouse window-lazy-center']
+alt-o = '''exec-and-forget zsh -c '
+    if aerospace list-windows --all | grep -q "mpv"; then
+        id=$(aerospace list-windows --all | grep "mpv" | awk "{print \$1}")
+        aerospace focus --window-id "$id"
+    else
+        ~/scripts/onepace --recent
+    fi
+' '''
+
+alt-h = [
+  'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors left --fail-if-fullscreen && move-mouse window-lazy-center',
+]
+alt-j = [
+  'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors down --fail-if-fullscreen && move-mouse window-lazy-center',
+]
+alt-k = [
+  'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors up --fail-if-fullscreen && move-mouse window-lazy-center',
+]
+alt-l = [
+  'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors right --fail-if-fullscreen && move-mouse window-lazy-center',
+]
 
 alt-shift-h = 'move --boundaries all-monitors-outer-frame left'
 alt-shift-j = 'move --boundaries all-monitors-outer-frame down'
@@ -88,30 +105,39 @@ alt-c = 'exec-and-forget ~/scripts/move_to_new_ws'
 alt-shift-c = 'exec-and-forget ~/scripts/move_to_new_named_ws'
 alt-n = 'workspace --wrap-around next'
 alt-p = 'workspace --wrap-around prev'
-alt-shift-n = ['move-node-to-workspace --wrap-around next', 'workspace --wrap-around next']
-alt-shift-p = ['move-node-to-workspace --wrap-around prev', 'workspace --wrap-around prev']
+alt-shift-n = [
+  'move-node-to-workspace --wrap-around next',
+  'workspace --wrap-around next',
+]
+alt-shift-p = [
+  'move-node-to-workspace --wrap-around prev',
+  'workspace --wrap-around prev',
+]
 
 ctrl-alt-cmd-h = 'exec-and-forget ~/scripts/move_to_monitor prev'
 ctrl-alt-cmd-l = 'exec-and-forget ~/scripts/move_to_monitor next'
 alt-cmd-h = ['move-node-to-monitor left --focus-follows-window']
 alt-cmd-l = ['move-node-to-monitor right --focus-follows-window']
 
-alt-shift-semicolon = ['mode service', 'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=service']
-alt-r = ['mode resize', 'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=resize']
+alt-shift-semicolon = ['mode service']
+alt-r = ['mode resize']
 
 [mode.resize.binding]
 h = 'resize width -50'
 j = 'resize height +50'
 k = 'resize height -50'
 l = 'resize width +50'
-enter = ['mode main', 'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=main']
-esc = ['mode main', 'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=main']
+enter = ['mode main']
+esc = ['mode main']
 
 [mode.service.binding]
-b = ['exec-and-forget sketchybar --bar topmost=toggle', 'mode main', 'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=main']
-r = ['flatten-workspace-tree', 'mode main', 'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=main'] # reset layout
-f = ['layout floating tiling', 'mode main',  'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=main'] # Toggle between floating and tiling layout
-esc = ['reload-config', 'mode main', 'exec-and-forget sketchybar --trigger aerospace_mode_change MODE=main']
+b = ['exec-and-forget sketchybar --bar topmost=toggle', 'mode main']
+r = ['flatten-workspace-tree', 'mode main'] # reset layout
+f = [
+  'layout floating tiling',
+  'mode main',
+] # Toggle between floating and tiling layout
+esc = ['reload-config', 'mode main']
 
 [workspace-to-monitor-force-assignment]
 comm = 'secondary'

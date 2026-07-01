@@ -110,6 +110,7 @@ sketchybar --add item aerospace_mode left \
 
 sketchybar --add event aerospace_workspace_change
 sketchybar --add event aerospace_focus_change
+sketchybar --add event aerospace_window_created
 
 for monitor in $(aerospace list-monitors --format %{monitor-id}); do
     for workspace in $(aerospace list-workspaces --monitor $monitor); do
@@ -122,7 +123,7 @@ for monitor in $(aerospace list-monitors --format %{monitor-id}); do
         done
 
         sketchybar --add item space.$workspace left \
-            --subscribe space.$workspace aerospace_workspace_change aerospace_focus_change display_change space_windows_change front_app_switched \
+            --subscribe space.$workspace aerospace_workspace_change aerospace_focus_change aerospace_window_created display_change \
             --set space.$workspace \
             display=$monitor \
             background.color=$SURFACE_COLOR \
