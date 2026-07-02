@@ -123,7 +123,7 @@ for monitor in $(aerospace list-monitors --format %{monitor-id}); do
         done
 
         sketchybar --add item space.$workspace left \
-            --subscribe space.$workspace aerospace_workspace_change aerospace_focus_change aerospace_window_created display_change \
+            --subscribe space.$workspace aerospace_workspace_change aerospace_focus_change aerospace_window_created display_change space_windows_change front_app_switched \
             --set space.$workspace \
             display=$monitor \
             background.color=$SURFACE_COLOR \

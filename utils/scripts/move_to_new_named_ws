@@ -21,7 +21,7 @@ aerospace workspace $workspace_name
 source ~/.config/sketchybar/colors.sh
 
 sketchybar --add item space.$workspace_name left \
-    --subscribe space.$workspace aerospace_workspace_change aerospace_focus_change aerospace_window_created display_change \
+    --subscribe space.$workspace aerospace_workspace_change aerospace_focus_change aerospace_window_created display_change space_windows_change front_app_switched \
     --set space.$workspace_name \
     display="1" \
     background.color=$SURFACE_COLOR \
