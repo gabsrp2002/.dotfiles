@@ -127,7 +127,6 @@ return {
           end
 
           if single_file_support then
-            print("Single file support enabled for " .. bufnr)
             on_dir(vim.fn.getcwd())
           end
         end
