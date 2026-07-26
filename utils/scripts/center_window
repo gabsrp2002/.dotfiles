@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# 1. Ask AeroSpace for the layout of the currently focused window
+# (Outputs 'tiling' or 'floating')
+WINDOW_LAYOUT=$(aerospace list-windows --focused --format "%{window-layout}")
+
+# 2. If it's not floating, exit immediately without doing anything
+if [ "$WINDOW_LAYOUT" != "floating" ]; then
+    osascript -e "beep"
+    exit 0
+fi
+
+# 3. If it IS floating, proceed with the AppleScript centering logic
+ACTIVE_APP=$(osascript -e 'tell application "System Events" to get name of first process whose frontmost is true')
+
+osascript <<EOF
+tell application "System Events"
+    tell process "$ACTIVE_APP"
+        set frontmost to true
+        set tgtWindow to window 1
+        
+        tell application "Finder"
+            set screenBounds to bounds of window of desktop
+            set screenWidth to item 3 of screenBounds
+            set screenHeight to item 4 of screenBounds
+        end tell
+        
+        set winSize to size of tgtWindow
+        set winWidth to item 1 of winSize
+        set winHeight to item 2 of winSize
+        
+        set newX to (screenWidth - winWidth) / 2
+        set newY to (screenHeight - winHeight) / 2
+        
+        set position of tgtWindow to {newX, newY}
+    end tell
+end tell
+EOF

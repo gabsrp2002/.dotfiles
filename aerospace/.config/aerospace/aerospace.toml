@@ -3,10 +3,9 @@ config-version = 2
 after-login-command = []
 
 after-startup-command = [
-  'workspace comm',
-  'layout v_accordion',
   'exec-and-forget pkill borders || borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=5.0',
   'exec-and-forget sketchybar || sketchybar --reload',
+  'layout --workspace comm --root v_accordion',
 ]
 
 # Notify Sketchybar about workspace change
@@ -101,17 +100,17 @@ alt-shift-l = 'move --boundaries all-monitors-outer-frame right'
 
 alt-f = 'fullscreen'
 
+alt-enter = 'exec-and-forget ~/scripts/center_window'
+
 alt-c = 'exec-and-forget ~/scripts/move_to_new_ws'
 alt-shift-c = 'exec-and-forget ~/scripts/move_to_new_named_ws'
 alt-n = 'workspace --wrap-around next'
 alt-p = 'workspace --wrap-around prev'
 alt-shift-n = [
-  'move-node-to-workspace --wrap-around next',
-  'workspace --wrap-around next',
+  'move-node-to-workspace --wrap-around next && workspace --wrap-around next',
 ]
 alt-shift-p = [
-  'move-node-to-workspace --wrap-around prev',
-  'workspace --wrap-around prev',
+  'move-node-to-workspace --wrap-around prev && workspace --wrap-around prev',
 ]
 
 ctrl-alt-cmd-h = 'exec-and-forget ~/scripts/move_to_monitor prev'
