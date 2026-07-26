@@ -84,7 +84,7 @@ ARC_ORDER=(
   marineford
   post_war
   return_to_sabaody
-  fish_man_island
+  fishman_island
   punk_hazard
   dressrosa
   zou
@@ -183,6 +183,18 @@ if [[ "${1:-}" == "--import" ]]; then
   exit 0
 fi
 
+# Collect arc directories (sorted by name, which sorts by number prefix).
+arcs=()
+for d in "$ONE_PACE_DIR"/*/; do
+  [[ -d "$d" ]] || continue
+  arcs+=("$(basename "$d")")
+done
+
+if (( ${#arcs[@]} == 0 )); then
+  echo "No arc directories found in $ONE_PACE_DIR" >&2
+  exit 1
+fi
+
 # --recent: replay the last-watched episode immediately.
 selected_arc=""
 selected_episode=""
@@ -203,18 +215,6 @@ if [[ "${1:-}" == "--recent" ]]; then
 fi
 
 if [[ -z "$selected_arc" ]]; then
-  # Collect arc directories (sorted by name, which sorts by number prefix).
-  arcs=()
-  for d in "$ONE_PACE_DIR"/*/; do
-    [[ -d "$d" ]] || continue
-    arcs+=("$(basename "$d")")
-  done
-
-  if (( ${#arcs[@]} == 0 )); then
-    echo "No arc directories found in $ONE_PACE_DIR" >&2
-    exit 1
-  fi
-
   # Build fzf input: each line is "dirname | display_name".
   fzf_arc_input=""
   arc_pos=0
@@ -337,14 +337,45 @@ for (( i=1; i<=${#episodes[@]}; i++ )); do
   fi
 done
 
-# Build the playlist of episodes from start_idx to the end.
+# Find the index of the selected_arc in the arcs array.
+selected_arc_idx=-1
+for (( i=1; i<=${#arcs[@]}; i++ )); do
+  if [[ "${arcs[$i]}" == "$selected_arc" ]]; then
+    selected_arc_idx=$i
+    break
+  fi
+done
+
+# Build the playlist: remaining episodes of current arc + subsequent arcs.
 playlist=()
 for (( idx=start_idx; idx<=${#episodes[@]}; idx++ )); do
   playlist+=("$arc_dir/${episodes[$idx]}")
 done
 
+if (( selected_arc_idx != -1 )); then
+  for (( a_idx=selected_arc_idx+1; a_idx<=${#arcs[@]}; a_idx++ )); do
+    next_arc="${arcs[$a_idx]}"
+    next_arc_dir="$ONE_PACE_DIR/$next_arc"
+    
+    # Collect episodes in this next arc sorted naturally
+    next_episodes=()
+    while IFS= read -r f; do
+      [[ -n "$f" ]] && next_episodes+=("$(basename "$f")")
+    done < <(find "$next_arc_dir" -maxdepth 1 -name 'ep*.mp4' -type f | sort)
+    
+    # Append all episodes to the playlist
+    for ep in "${next_episodes[@]}"; do
+      playlist+=("$next_arc_dir/$ep")
+    done
+  done
+fi
+
 echo "▶ Playing from: $(format_arc "$selected_arc") / $(format_episode "$selected_episode")"
 export ONE_PACE_STATE_FILE="$STATE_FILE"
 mpv --script="$LUA_HOOK" --title="One Pace" "${playlist[@]}"
 
-echo "✓ State saved: $(format_arc "$selected_arc") / $(format_episode "$(read_state last_episode)")"
+saved_arc="$(read_state last_arc)"
+saved_episode="$(read_state last_episode)"
+if [[ -n "$saved_arc" && -n "$saved_episode" ]]; then
+  echo "✓ State saved: $(format_arc "$saved_arc") / $(format_episode "$saved_episode")"
+fi
