@@ -115,6 +115,10 @@ floating = true
 app_id = "com.bitwarden.desktop"
 floating = true
 
+[[virtual_workspaces.app_rules]]
+app_id = "com.workpuls.Agent"
+floating = true
+
 # Focus new terminals on creation (Rift can otherwise leave focus behind
 # when it adopts the window a beat after macOS reports it).
 [[virtual_workspaces.app_rules]]
