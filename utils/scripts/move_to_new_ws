@@ -1,44 +1,36 @@
 #!/bin/zsh
 
-# Find the first available workspace number
-workspaces=$(aerospace list-workspaces --all)
-candidate=0
-while [[ $workspaces == *"$candidate"* ]]; do
-  candidate=$((candidate+1))
-done
+# Create a new Rift workspace and move the focused window to it.
+# (Rift's `workspace create` auto-switches to the new workspace;
+# indexes are append-only since there is no destroy command.)
 
-aerospace move-node-to-workspace $candidate
-aerospace workspace $candidate
+rift-cli execute workspace create >/dev/null
+
+# The new workspace is the active one with the highest index.
+NEW_INDEX=$(rift-cli query workspaces | jq -r 'map(.index) | max')
+
+rift-cli execute workspace move-window "$NEW_INDEX" --follow >/dev/null
 
 source ~/.config/sketchybar/colors.sh
 
-for monitor in $(aerospace list-monitors --format %{monitor-id}); do
-    for workspace in $(aerospace list-workspaces --monitor $monitor); do
-        if [ $workspace -ne $candidate ]; then
-            continue
-        fi
-        sketchybar --add item space.$workspace left \
-            --subscribe space.$workspace aerospace_workspace_change aerospace_focus_change aerospace_window_created display_change space_windows_change front_app_switched \
-            --set space.$workspace \
-            display=$monitor \
-            background.color=$SURFACE_COLOR \
-            icon="$workspace" \
-            icon.color=$SUBTEXT_COLOR \
-            label.font="sketchybar-app-font:Regular:15.0" \
-            label.y_offset=-1 \
-            click_script="aerospace workspace $workspace" \
-            script="~/.config/sketchybar/plugins/aerospace.sh $workspace"
-        break
-    done
-done
+WORKSPACES_JSON=$(rift-cli query workspaces)
+name=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$NEW_INDEX" '.[] | select(.index == $idx) | .name')
+if [[ "$name" == "Workspace "* ]]; then
+    icon="$NEW_INDEX"
+else
+    icon="$name"
+fi
 
-for monitor in $(aerospace list-monitors --format %{monitor-id}); do
-    reorder_array=()
-    for sid in $(aerospace list-workspaces --monitor "$monitor"); do
-        reorder_array+=("space.$sid")
-    done
-    sketchybar --reorder "${reorder_array[@]}"
-done
+sketchybar --add item space.$NEW_INDEX left \
+    --subscribe space.$NEW_INDEX rift_workspace_changed rift_windows_changed display_change space_windows_change front_app_switched \
+    --set space.$NEW_INDEX \
+    background.color=$SURFACE_COLOR \
+    icon="$icon" \
+    icon.color=$SUBTEXT_COLOR \
+    label.font="sketchybar-app-font:Regular:15.0" \
+    label.y_offset=-1 \
+    click_script="rift-cli execute workspace switch $NEW_INDEX" \
+    script="~/.config/sketchybar/plugins/rift.sh $NEW_INDEX"
 
-sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$(aerospace list-workspaces --focused)
-sketchybar --trigger aerospace_focus_change
+sketchybar --trigger rift_workspace_changed
+sketchybar --trigger rift_windows_changed
