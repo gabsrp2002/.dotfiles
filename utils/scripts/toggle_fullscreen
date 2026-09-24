@@ -1,0 +1,16 @@
+#!/bin/zsh
+
+# True fullscreen AND hide sketchybar while active (the bar would otherwise
+# overlap the window). Restores the bar when leaving fullscreen.
+# (Alt+F stays gap-aware and never hides the bar.)
+
+UUID=$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid')
+WAS_FULL=$(rift-cli query layout --display "$UUID" | jq -r '[.. | objects | select(.is_selected == true) | .is_fullscreen] | any')
+
+rift-cli execute window toggle-fullscreen >/dev/null
+
+if [ "$WAS_FULL" = "true" ]; then
+    sketchybar --bar hidden=off
+else
+    sketchybar --bar hidden=on
+fi
