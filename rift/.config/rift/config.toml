@@ -187,9 +187,10 @@ comb1 = "Alt + Shift"
 "comb1 + N" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_next_prev next"] }
 "comb1 + P" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_next_prev prev"] }
 
-# Move a single window to another display (was Aerospace move-node-to-monitor).
-"Alt + Cmd + H" = { move_window_to_display = { selector = "left" } }
-"Alt + Cmd + L" = { move_window_to_display = { selector = "right" } }
+# Move a single window to another display, focus follows (was Aerospace
+# move-node-to-monitor --focus-follows-window).
+"Alt + Cmd + H" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_to_display left"] }
+"Alt + Cmd + L" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_to_display right"] }
 
 # Move the entire active workspace to another display (was move_to_monitor script).
 "Ctrl + Alt + Cmd + H" = { move_workspace_to_display = { selector = "left", wrap_around = true } }
