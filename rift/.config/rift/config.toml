@@ -38,6 +38,13 @@ vert_placement = "left"
 thickness = 4.0
 spacing = 1.0
 
+[settings.gestures]
+# Three-finger horizontal swipes switch workspaces, skipping empty ones
+# (matches Alt+N/P behavior).
+enabled = true
+fingers = 3
+skip_empty = true
+
 [settings.layout]
 # Default layout (Aerospace `tiles`).
 mode = "traditional"
