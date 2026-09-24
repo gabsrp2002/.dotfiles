@@ -7,6 +7,8 @@
 # at the edge a trial move_node still reshuffles the local tree instead of
 # crossing.)
 # Usage: move_node_or_cross left|right|up|down
+# (6px tolerance: float rounding plus the native stack_line thickness, which
+# insets tiled windows from the edge it sits on.)
 
 DIRECTION=$1
 
@@ -28,10 +30,10 @@ EDGE_CHECK=$(echo "$FOCUSED_JSON" | jq -r --argjson root "$ROOT" --arg dir "$DIR
     ($root.size.width) as $rw | ($root.size.height) as $rh |
     {full: ((($f.origin.x - $rx) | length) < 2 and ((($f.size.width - $rw) | length) < 2) and
             ((($f.origin.y - $ry) | length) < 2) and ((($f.size.height - $rh) | length) < 2)),
-     edge: (if $dir == "left" then $f.origin.x <= ($rx + 2)
-            elif $dir == "right" then ($f.origin.x + $f.size.width) >= ($rx + $rw - 2)
-            elif $dir == "up" then $f.origin.y <= ($ry + 2)
-            else ($f.origin.y + $f.size.height) >= ($ry + $rh - 2) end)} |
+     edge: (if $dir == "left" then $f.origin.x <= ($rx + 6)
+            elif $dir == "right" then ($f.origin.x + $f.size.width) >= ($rx + $rw - 6)
+            elif $dir == "up" then $f.origin.y <= ($ry + 6)
+            else ($f.origin.y + $f.size.height) >= ($ry + $rh - 6) end)} |
     "\(.full) \(.edge)"')
 
 IS_FULL=${EDGE_CHECK%% *}
