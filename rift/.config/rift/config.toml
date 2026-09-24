@@ -172,10 +172,10 @@ comb1 = "Alt + Shift"
 # New workspace (create auto-switches; script moves the focused window and follows).
 "Alt + C" = { exec = ["/bin/zsh", "-c", "~/scripts/move_to_new_ws"] }
 
-# Next/previous workspace, skipping empty ones (closest to auto-pruning:
-# Rift has no destroy-workspace command, so empties exist but are never landed on).
-"Alt + N" = { next_workspace = true }
-"Alt + P" = { prev_workspace = true }
+# Next/previous workspace, skipping empty ones except comm.
+# (Script wrapper: native next/prev cannot exempt comm.)
+"Alt + N" = { exec = ["/bin/zsh", "-c", "~/scripts/focus_next_prev next"] }
+"Alt + P" = { exec = ["/bin/zsh", "-c", "~/scripts/focus_next_prev prev"] }
 
 # Move focused window to next/previous non-empty workspace and follow it.
 # (Script wrapper: Rift's move_window_to_workspace cannot skip empties.)
