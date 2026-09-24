@@ -61,7 +61,6 @@ brew install --cask skim # For pdf preview
 brew install --cask spotify # For music
 brew install --cask nikitabobko/tap/aerospace # Legacy WM (kept for rollback)
 brew install acsandmann/tap/rift # Tiling WM
-brew install rust # For building stackline (Rust WM helpers)
 
 echo "\nInstalling fonts..."
 brew install --cask font-jetbrains-mono-nerd-font
@@ -71,7 +70,6 @@ echo "\nInstalling general packages..."
 brew install blueutil
 brew install btop
 brew install jq # For rift-cli / sketchybar JSON parsing
-brew install felixkratz/formulae/borders
 brew install felixkratz/formulae/sketchybar
 brew install lazygit
 
@@ -88,14 +86,6 @@ brew install deno # For markdown preview
 brew install anomalyco/tap/opencode
 brew install tmux
 echo "${GREEN}Developer tools installed!${NC}"
-
-echo "\n=> Step 7b: Install stackline (Rift stack indicators)"
-if [ -x "$HOME/.cargo/bin/stackline" ] || [ -x "$HOME/.local/bin/stackline" ]; then
-    echo "${GREEN}stackline already installed!${NC}"
-else
-    cargo install --git https://github.com/acsandmann/stackline
-    echo "${GREEN}stackline installed!${NC}"
-fi
 
 # Give scripts permission to run
 echo "\n=> Step 8: Make scripts executable"
