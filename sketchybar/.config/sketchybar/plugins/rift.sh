@@ -11,6 +11,14 @@ WORKSPACE_INDEX="$1"
 WORKSPACES_JSON=$(rift-cli query workspaces 2>/dev/null)
 [ -z "$WORKSPACES_JSON" ] && exit 0
 
+# Remove items for workspaces that no longer exist (e.g. after a service
+# restart consolidates the workspace set). Rift has no destroy command,
+# so the bar must garbage-collect its own items.
+if ! echo "$WORKSPACES_JSON" | jq -e --argjson idx "$WORKSPACE_INDEX" '.[] | select(.index == $idx)' >/dev/null; then
+    sketchybar --remove "$NAME"
+    exit 0
+fi
+
 # Highlight the focused workspace; hide workspaces that are neither focused nor occupied.
 FOCUSED_INDEX=$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')
 WINDOW_COUNT=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$WORKSPACE_INDEX" '.[] | select(.index == $idx) | .window_count // 0')
