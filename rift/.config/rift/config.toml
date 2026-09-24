@@ -48,7 +48,8 @@ default_orientation = "perpendicular"
 [settings.layout.gaps]
 # Uniform outer top gap leaves room for Sketchybar (was conditional in Aerospace).
 [settings.layout.gaps.outer]
-top = 40
+# Top = bar height (32) + offset (8) - menu bar (~24, Rift measures below it).
+top = 16
 left = 8
 bottom = 8
 right = 8
