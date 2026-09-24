@@ -129,7 +129,7 @@ for index in $(echo "$WORKSPACES_JSON" | jq -r '.[].index'); do
             icon.padding_right=6
     fi
 
-    if [ "$index" != "$FOCUSED_INDEX" ] && [ "$window_count" = "0" ]; then
+    if [ "$index" != "$FOCUSED_INDEX" ] && [ "$window_count" = "0" ] && [ "$name" != "comm" ]; then
         sketchybar --set space.$index drawing=off
     fi
 done
