@@ -46,6 +46,7 @@ consume_dock_swipe = true
 fingers = 3
 skip_empty = true
 haptics_enabled = true
+haptic_pattern = "alignment"
 
 [settings.layout]
 # Default layout (Aerospace `tiles`).
