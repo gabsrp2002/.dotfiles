@@ -42,6 +42,7 @@ spacing = 1.0
 # Three-finger horizontal swipes switch workspaces, skipping empty ones
 # (matches Alt+N/P behavior).
 enabled = true
+consume_dock_swipe = true
 fingers = 3
 skip_empty = true
 
