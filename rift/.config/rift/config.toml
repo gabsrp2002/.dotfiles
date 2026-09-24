@@ -64,16 +64,12 @@ default_orientation = "perpendicular"
 [settings.layout.gaps]
 # Uniform outer top gap leaves room for Sketchybar (was conditional in Aerospace).
 [settings.layout.gaps.outer]
-# Base value suits the built-in display (menu bar ~32 + 16).
-top = 16
+# Uniform on all displays: sketchybar (32) + offset (8). Rift measures from
+# the screen edge; the menu bar (main display) sits under sketchybar.
+top = 40
 left = 8
 bottom = 8
 right = 8
-
-# Per-display overrides, keyed by display UUID (rift-cli query displays).
-# Ultrawide has no menu bar: sketchybar (32) + offset (8).
-[settings.layout.gaps.per_display."8E490C42-4C03-4C8D-BACB-3A83F6A9FE40".outer]
-top = 40
 
 [settings.layout.gaps.inner]
 horizontal = 10
@@ -148,7 +144,10 @@ comb1 = "Alt + Shift"
 "comb1 + K" = { exec = ["/bin/zsh", "-c", "~/scripts/move_node_or_cross up"] }
 "comb1 + L" = { exec = ["/bin/zsh", "-c", "~/scripts/move_node_or_cross right"] }
 
-"Alt + F" = "toggle_fullscreen"
+# Fullscreen within gaps keeps the window below sketchybar (toggle_fullscreen
+# ignores gaps and slides under the bar).
+"Alt + F" = "toggle_fullscreen_within_gaps"
+"Alt + Shift + F" = "toggle_fullscreen"
 "Alt + Shift + Space" = "toggle_window_floating"
 
 "Alt + Enter" = { exec = ["/bin/zsh", "-c", "~/scripts/center_window"] }
