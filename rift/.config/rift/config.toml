@@ -156,7 +156,7 @@ comb1 = "Alt + Shift"
 # Fullscreen within gaps keeps the window below sketchybar (toggle_fullscreen
 # ignores gaps and slides under the bar).
 "Alt + F" = "toggle_fullscreen_within_gaps"
-"Alt + Shift + F" = "toggle_fullscreen"
+"Alt + Shift + F" = { exec = ["/bin/zsh", "-c", "~/scripts/toggle_fullscreen"] }
 "Alt + Shift + Space" = "toggle_window_floating"
 
 "Alt + Enter" = { exec = ["/bin/zsh", "-c", "~/scripts/center_window"] }
