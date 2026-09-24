@@ -6,30 +6,46 @@
 # node within the local tree. (Edge position is checked first from geometry:
 # at the edge a trial move_node still reshuffles the local tree instead of
 # crossing.)
+#
+# Everything is scoped to the focused window's own display (resolved globally
+# via focused_window_info): active-context queries go blind across monitors
+# when Rift's command context desyncs from the user's real focus.
 # Usage: move_node_or_cross left|right|up|down
-# (6px tolerance: float rounding plus the native stack_line thickness, which
-# insets tiled windows from the edge it sits on.)
 
 DIRECTION=$1
 
-# Focused tiled window.
-FOCUSED_JSON=$(rift-cli query windows | jq -c '[.[] | select(.is_focused == true)][0] // empty')
+INFO=$(~/scripts/focused_window_info) || exit 0
+UUID=${INFO%%|*}
+REST=${INFO#*|}
+IDX=${REST%%|*}
+REST=${REST#*|}
+BUNDLE=${REST%%|*}
+APP=${REST#*|}
+
+# Sync Rift's command context to the window's display first: native
+# move-node below acts on the command space, which can lag behind real focus.
+CTX=$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid')
+if [ "$CTX" != "$UUID" ] && [ -n "$BUNDLE" ]; then
+    open -b "$BUNDLE" 2>/dev/null || open -a "$APP" 2>/dev/null
+    sleep 0.3
+fi
+
+# Focused window frame + tiling area of its own display.
+FOCUSED_JSON=$(rift-cli query workspaces --display "$UUID" | jq -c --argjson idx "$IDX" '[.[] | .windows[] | select(.id.idx == $idx)][0] // empty')
 [ -z "$FOCUSED_JSON" ] && exit 0
 if [ "$(echo "$FOCUSED_JSON" | jq -r '.is_floating')" = "true" ]; then
     rift-cli execute layout move-node "$DIRECTION" >/dev/null
     exit 0
 fi
-
-# Tiling area (root container frame) of the active workspace.
-ROOT=$(rift-cli query layout | jq -c '.container_tree.frame // empty')
+ROOT=$(rift-cli query layout --display "$UUID" | jq -c '.container_tree.frame // empty')
 [ -z "$ROOT" ] || [ "$ROOT" = "null" ] && exit 0
 
 EDGE_CHECK=$(echo "$FOCUSED_JSON" | jq -r --argjson root "$ROOT" --arg dir "$DIRECTION" '
     .frame as $f |
     ($root.origin.x) as $rx | ($root.origin.y) as $ry |
     ($root.size.width) as $rw | ($root.size.height) as $rh |
-    {full: ((($f.origin.x - $rx) | length) < 2 and ((($f.size.width - $rw) | length) < 2) and
-            ((($f.origin.y - $ry) | length) < 2) and ((($f.size.height - $rh) | length) < 2)),
+    {full: ((($f.origin.x - $rx) | length) < 6 and ((($f.size.width - $rw) | length) < 6) and
+            ((($f.origin.y - $ry) | length) < 6 and ((($f.size.height - $rh) | length) < 6)),
      edge: (if $dir == "left" then $f.origin.x <= ($rx + 6)
             elif $dir == "right" then ($f.origin.x + $f.size.width) >= ($rx + $rw - 6)
             elif $dir == "up" then $f.origin.y <= ($ry + 6)
@@ -47,7 +63,7 @@ fi
 
 if [ "$AT_EDGE" = "true" ]; then
     # At the edge: cross to the adjacent display if there is one.
-    ACTIVE=$(rift-cli query displays | jq -c '.[] | select(.is_active_context == true)')
+    ACTIVE=$(rift-cli query displays | jq -c --arg uuid "$UUID" '.[] | select(.uuid == $uuid)')
     [ -z "$ACTIVE" ] || [ "$ACTIVE" = "null" ] && exit 0
     AX=$(echo "$ACTIVE" | jq -r '.frame.origin.x')
     AY=$(echo "$ACTIVE" | jq -r '.frame.origin.y')

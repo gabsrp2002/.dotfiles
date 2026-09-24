@@ -4,16 +4,21 @@
 # focused window to the adjacent display and pull focus after it.
 # (Rift updates its internal focus on move, but macOS key focus stays behind,
 # so activate the app to bring key focus to the moved window.)
+# The target is resolved globally (see focused_window_info) and passed
+# explicitly: implicit "focused window" resolution desyncs across displays.
 # Usage: move_window_to_display left|right|up|down
 
 DIRECTION=$1
 
-FOCUSED_ID=$(rift-cli query windows | jq -c '[.[] | select(.is_focused == true)][0].id // empty')
-[ -z "$FOCUSED_ID" ] && exit 0
-BUNDLE=$(rift-cli query windows | jq -r '[.[] | select(.is_focused == true)][0].bundle_id // empty')
-APP=$(rift-cli query windows | jq -r '[.[] | select(.is_focused == true)][0].app_name // empty')
+INFO=$(~/scripts/focused_window_info) || exit 0
+UUID=${INFO%%|*}
+REST=${INFO#*|}
+IDX=${REST%%|*}
+REST=${REST#*|}
+BUNDLE=${REST%%|*}
+APP=${REST#*|}
 
-rift-cli execute display move-window --direction "$DIRECTION" >/dev/null
+rift-cli execute display move-window --direction "$DIRECTION" --window-id "$IDX" >/dev/null
 
 # Let the move settle before activating: an immediate activation resolves
 # while the window is still transitioning, and its focus event is then
