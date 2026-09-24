@@ -1,0 +1,97 @@
+#!/bin/zsh
+
+# Mirror Aerospace's wrap-around-all-monitors focus: at the screen edge with
+# another display beyond, focus a window there. Native move_focus already
+# crosses to displays whose active workspace has TILED windows, but floating
+# windows are invisible to it -- so when the neighbor side holds only
+# floating windows (or the crossing otherwise has no tiled target), activate
+# the nearest floating window's app directly (macOS key focus follows, and
+# Rift's command context follows that).
+# Usage: focus_move_or_cross left|right|up|down
+
+DIRECTION=$1
+
+INFO=$(~/scripts/focused_window_info) || exit 0
+UUID=${INFO%%|*}
+REST=${INFO#*|}
+IDX=${REST%%|*}
+REST=${REST#*|}
+BUNDLE=${REST%%|*}
+APP=${REST#*|}
+
+# Floating windows navigate natively (Rift cycles floating ↔ tiled itself).
+CUR_FLOATING=$(rift-cli query workspaces --display "$UUID" | jq -r --argjson idx "$IDX" '[.[] | .windows[] | select(.id.idx == $idx)][0].is_floating // false')
+if [ "$CUR_FLOATING" = "true" ]; then
+    rift-cli execute window focus "$DIRECTION" >/dev/null
+    exit 0
+fi
+
+# Geometry of the focused window and its tiling area.
+FOCUSED_JSON=$(rift-cli query workspaces --display "$UUID" | jq -c --argjson idx "$IDX" '[.[] | .windows[] | select(.id.idx == $idx)][0] // empty')
+[ -z "$FOCUSED_JSON" ] && exit 0
+ROOT=$(rift-cli query layout --display "$UUID" | jq -c '.container_tree.frame // empty')
+[ -z "$ROOT" ] || [ "$ROOT" = "null" ] && exit 0
+
+AT_EDGE=$(echo "$FOCUSED_JSON" | jq -r --argjson root "$ROOT" --arg dir "$DIRECTION" --argjson eps 6 '
+    .frame as $f |
+    ($root.origin.x) as $rx | ($root.origin.y) as $ry |
+    ($root.size.width) as $rw | ($root.size.height) as $rh |
+    if $dir == "left" then $f.origin.x <= ($rx + $eps)
+    elif $dir == "right" then ($f.origin.x + $f.size.width) >= ($rx + $rw - $eps)
+    elif $dir == "up" then $f.origin.y <= ($ry + $eps)
+    else ($f.origin.y + $f.size.height) >= ($ry + $rh - $eps) end')
+
+if [ "$AT_EDGE" != "true" ]; then
+    rift-cli execute window focus "$DIRECTION" >/dev/null
+    exit 0
+fi
+
+# At the edge: find the adjacent display.
+ACTIVE=$(rift-cli query displays | jq -c --arg uuid "$UUID" '.[] | select(.uuid == $uuid)')
+[ -z "$ACTIVE" ] || [ "$ACTIVE" = "null" ] && exit 0
+AX=$(echo "$ACTIVE" | jq -r '.frame.origin.x')
+AY=$(echo "$ACTIVE" | jq -r '.frame.origin.y')
+AW=$(echo "$ACTIVE" | jq -r '.frame.size.width')
+AH=$(echo "$ACTIVE" | jq -r '.frame.size.height')
+
+NEIGHBOR_UUID=$(rift-cli query displays | jq -r --argjson ax "$AX" --argjson ay "$AY" --argjson aw "$AW" --argjson ah "$AH" --arg dir "$DIRECTION" '
+    [.[] | select(
+        ($dir == "right" and .frame.origin.x >= ($ax + $aw) and .frame.origin.y < ($ay + $ah) and (.frame.origin.y + .frame.size.height) > $ay) or
+        ($dir == "left" and (.frame.origin.x + .frame.size.width) <= $ax and .frame.origin.y < ($ay + $ah) and (.frame.origin.y + .frame.size.height) > $ay) or
+        ($dir == "down" and .frame.origin.y >= ($ay + $ah) and .frame.origin.x < ($ax + $aw) and (.frame.origin.x + .frame.size.width) > $ax) or
+        ($dir == "up" and (.frame.origin.y + .frame.size.height) <= $ay and .frame.origin.x < ($ax + $aw) and (.frame.origin.x + .frame.size.width) > $ax)
+    )][0].uuid // empty')
+[ -z "$NEIGHBOR_UUID" ] && exit 0
+
+# If the neighbor side has tiled windows, native focus crosses on its own.
+TILED=$(rift-cli query workspaces --display "$NEIGHBOR_UUID" | jq -r '[.[].windows[] | select(.is_floating != true)] | length')
+if [ "$TILED" != "0" ]; then
+    rift-cli execute window focus "$DIRECTION" >/dev/null
+    exit 0
+fi
+
+# Floating-only (or empty): activate the nearest floating window's app so
+# macOS key focus -- and Rift's context behind it -- lands on that display.
+FCX=$(echo "$FOCUSED_JSON" | jq -r '.frame.origin.x + .frame.size.width / 2')
+FCY=$(echo "$FOCUSED_JSON" | jq -r '.frame.origin.y + .frame.size.height / 2')
+TARGET_APP=$(rift-cli query workspaces --display "$NEIGHBOR_UUID" | jq -r --argjson x "$FCX" --argjson y "$FCY" --arg dir "$DIRECTION" '
+    [.[].windows[] | select(.is_floating == true)
+     | {b: (.bundle_id // empty), a: (.app_name // empty),
+        d: (if $dir == "left" then ($x - (.frame.origin.x + .frame.size.width / 2))
+            elif $dir == "right" then ((.frame.origin.x + .frame.size.width / 2) - $x)
+            elif $dir == "up" then ($y - (.frame.origin.y + .frame.size.height / 2))
+            else ((.frame.origin.y + .frame.size.height / 2) - $y) end)}]
+    | ((map(select(.d >= 0)) | sort_by(.d) | .[0])
+       // (sort_by(.d | length) | .[0]) // empty)
+    | "\(.b)|\(.a)"')
+[ -z "$TARGET_APP" ] && exit 0
+TB=${TARGET_APP%%|*}
+TA=${TARGET_APP#*|}
+if [ -n "$TB" ]; then
+    open -b "$TB" 2>/dev/null || open -a "$TA" 2>/dev/null
+elif [ -n "$TA" ]; then
+    open -a "$TA" 2>/dev/null
+fi
+
+sketchybar --trigger rift_workspace_changed
+sketchybar --trigger rift_windows_changed
