@@ -14,7 +14,11 @@ WORKSPACE_INDEX="$1"
 DISPLAY_UUID="$2"
 
 WORKSPACES_JSON=$(rift-cli query workspaces --display "$DISPLAY_UUID" 2>/dev/null)
-[ -z "$WORKSPACES_JSON" ] && exit 0
+# Bail on error shapes (e.g. display lost from Rift's registry after dock
+# turbulence): better to keep the last rendered state than to blank items.
+if [ -z "$WORKSPACES_JSON" ] || echo "$WORKSPACES_JSON" | jq -e 'type == "object"' >/dev/null 2>&1; then
+    exit 0
+fi
 
 # Remove items for workspaces that no longer exist on this display (e.g. after
 # a service restart consolidates the workspace set). Rift has no destroy

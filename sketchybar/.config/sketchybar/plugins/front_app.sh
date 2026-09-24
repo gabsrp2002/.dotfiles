@@ -2,6 +2,10 @@
 
 MAX_CHARS=20
 
+if [ -z "$INFO" ]; then
+  # No event payload (e.g. first run at reload): query the front app directly.
+  INFO=$(osascript -e 'tell application "System Events" to get name of first process whose frontmost is true' 2>/dev/null)
+fi
 LABEL="$INFO"
 
 if [[ ${#LABEL} -gt $MAX_CHARS ]]; then
@@ -12,6 +16,6 @@ else
     LABEL="$LABEL"
 fi
 
-if [ "$SENDER" = "front_app_switched" ]; then
+if [ -n "$LABEL" ]; then
   sketchybar --set "$NAME" label="$LABEL"
 fi

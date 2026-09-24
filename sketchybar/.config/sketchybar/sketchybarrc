@@ -96,57 +96,14 @@ sketchybar --add event rift_windows_changed
 # space.<arrangement-id>_<workspace-index>, pinned via display=<arr>.
 # Clicking focuses that display first: `workspace switch` alone would act on
 # whichever display is currently active (upstream limitation, see #131).
-SKETCHYBAR_DISPLAYS=$(sketchybar --query displays)
-for arr in $(echo "$SKETCHYBAR_DISPLAYS" | jq -r '.[]."arrangement-id"'); do
-    uuid=$(echo "$SKETCHYBAR_DISPLAYS" | jq -r --argjson a "$arr" '.[] | select(."arrangement-id" == $a) | .UUID')
-    WORKSPACES_JSON=$(rift-cli query workspaces --display "$uuid")
-    for index in $(echo "$WORKSPACES_JSON" | jq -r '.[].index'); do
-        window_count=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .window_count // 0')
-        icon="$index"
+# Built by rebuild_spaces.sh, which also re-runs on every display_change
+# (dock/undock) via the spaces_watcher item below.
+"$CONFIG_DIR/plugins/rebuild_spaces.sh"
 
-        icons=""
-        while IFS= read -r app; do
-            if [ -n "$app" ]; then
-                icons+=$("$PLUGIN_DIR/icon_map_fn.sh" "$app")
-                icons+="  "
-            fi
-        done < <(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .windows[] | .app_name // .bundle_id // empty')
-
-        # Idempotent: drop any stale item first so re-adding never duplicates
-        # (e.g. workspace indexes reused after a service restart).
-        sketchybar --remove "space.${arr}_${index}" >/dev/null 2>&1
-        sketchybar --add item space.${arr}_${index} left \
-            --subscribe space.${arr}_${index} rift_workspace_changed rift_windows_changed display_change space_windows_change front_app_switched \
-            --set space.${arr}_${index} \
-            display=$arr \
-            background.color=$SURFACE_COLOR \
-            icon="$icon" \
-            label="$icons" \
-            icon.color=$SUBTEXT_COLOR \
-            label.font="sketchybar-app-font:Regular:15.0" \
-            label.y_offset=-1 \
-            click_script="rift-cli execute display focus --uuid $uuid && rift-cli execute workspace switch $index" \
-            script="$CONFIG_DIR/plugins/rift.sh $index $uuid"
-
-        if [ -n "$icons" ]; then
-            sketchybar --set space.${arr}_${index} label.drawing=on
-        else
-            sketchybar --set space.${arr}_${index} label.drawing=off \
-                icon.padding_right=6
-        fi
-
-        if [ "$index" != "$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')" ] && [ "$window_count" = "0" ]; then
-            sketchybar --set space.${arr}_${index} drawing=off
-        fi
-    done
-done
-
-# Highlight each display's active workspace.
-for arr in $(echo "$SKETCHYBAR_DISPLAYS" | jq -r '.[]."arrangement-id"'); do
-    uuid=$(echo "$SKETCHYBAR_DISPLAYS" | jq -r --argjson a "$arr" '.[] | select(."arrangement-id" == $a) | .UUID')
-    FOCUSED_INDEX=$(rift-cli query workspaces --display "$uuid" | jq -r '.[] | select(.is_active == true) | .index')
-    sketchybar --set space.${arr}_${FOCUSED_INDEX} icon.color=$BASE_COLOR label.color=$BASE_COLOR background.color=$LAVENDER
-done
+sketchybar --add item spaces_watcher left \
+           --set spaces_watcher drawing=off \
+                                script="$CONFIG_DIR/plugins/rebuild_spaces.sh" \
+           --subscribe spaces_watcher display_change
 
 ##### Adding Center Items #####
 
