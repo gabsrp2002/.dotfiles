@@ -64,11 +64,16 @@ default_orientation = "perpendicular"
 [settings.layout.gaps]
 # Uniform outer top gap leaves room for Sketchybar (was conditional in Aerospace).
 [settings.layout.gaps.outer]
-# Top = bar height (32) + offset (8) - menu bar (~24, Rift measures below it).
+# Base value suits the built-in display (menu bar ~32 + 16).
 top = 16
 left = 8
 bottom = 8
 right = 8
+
+# Per-display overrides, keyed by display UUID (rift-cli query displays).
+# Ultrawide has no menu bar: sketchybar (32) + offset (8).
+[settings.layout.gaps.per_display."8E490C42-4C03-4C8D-BACB-3A83F6A9FE40".outer]
+top = 40
 
 [settings.layout.gaps.inner]
 horizontal = 10
@@ -146,8 +151,10 @@ comb1 = "Alt + Shift"
 "Alt + Slash" = { set_workspace_layout = { mode = "traditional" } }
 "Alt + Semicolon" = { set_workspace_layout = { mode = "stack" } }
 
-# Focus mpv if open, otherwise open the most recent Onepace note.
-"Alt + O" = { exec = ["/bin/zsh", "-c", "mpv_id=$(rift-cli query windows | jq -c '[.[] | select(.app_name == \"mpv\")][0].id // empty'); if [ -n \"$mpv_id\" ]; then rift-cli execute window focus --window-id \"$mpv_id\"; else ~/scripts/onepace --recent; fi"] }
+# Focus mpv if open anywhere (query workspaces: query windows only covers
+# the active workspace). Must switch to its workspace first: focusing across
+# workspaces is silently ignored.
+"Alt + O" = { exec = ["/bin/zsh", "-c", "mpv_ws=$(rift-cli query workspaces | jq -r '[.[] | select(.windows[].app_name == \"mpv\")][0].index // empty'); if [ -n \"$mpv_ws\" ]; then mpv_id=$(rift-cli query workspaces | jq -c --argjson ws \"$mpv_ws\" '[.[] | select(.index == $ws) | .windows[] | select(.app_name == \"mpv\")][0].id'); rift-cli execute workspace switch \"$mpv_ws\" && rift-cli execute window focus --window-id \"$mpv_id\"; else ~/scripts/onepace --recent; fi"] }
 
 "Alt + T" = { exec = ["/bin/zsh", "-c", "~/scripts/gemini-temp"] }
 "Alt + G" = { exec = ["open", "-a", "Gemini"] }

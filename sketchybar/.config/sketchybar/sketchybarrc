@@ -91,50 +91,64 @@ sketchybar --add item front_app left \
 sketchybar --add event rift_workspace_changed
 sketchybar --add event rift_windows_changed
 
-WORKSPACES_JSON=$(rift-cli query workspaces)
-FOCUSED_INDEX=$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')
-for index in $(echo "$WORKSPACES_JSON" | jq -r '.[].index'); do
-    name=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .name')
-    window_count=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .window_count // 0')
-    if [[ "$name" == "Workspace "* ]]; then
-        icon="$index"
-    else
-        icon="$name"
-    fi
-
-    icons=""
-    while IFS= read -r app; do
-        if [ -n "$app" ]; then
-            icons+=$("$PLUGIN_DIR/icon_map_fn.sh" "$app")
-            icons+="  "
+# Per-display workspace items. Rift keeps a separate workspace set per macOS
+# Space (= per display), so each display gets its own item group:
+# space.<arrangement-id>_<workspace-index>, pinned via display=<arr>.
+# Clicking focuses that display first: `workspace switch` alone would act on
+# whichever display is currently active (upstream limitation, see #131).
+SKETCHYBAR_DISPLAYS=$(sketchybar --query displays)
+for arr in $(echo "$SKETCHYBAR_DISPLAYS" | jq -r '.[]."arrangement-id"'); do
+    uuid=$(echo "$SKETCHYBAR_DISPLAYS" | jq -r --argjson a "$arr" '.[] | select(."arrangement-id" == $a) | .UUID')
+    WORKSPACES_JSON=$(rift-cli query workspaces --display "$uuid")
+    for index in $(echo "$WORKSPACES_JSON" | jq -r '.[].index'); do
+        name=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .name')
+        window_count=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .window_count // 0')
+        if [[ "$name" == "Workspace "* ]]; then
+            icon="$index"
+        else
+            icon="$name"
         fi
-    done < <(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .windows[] | .app_name // .bundle_id // empty')
 
-    sketchybar --add item space.$index left \
-        --subscribe space.$index rift_workspace_changed rift_windows_changed display_change space_windows_change front_app_switched \
-        --set space.$index \
-        background.color=$SURFACE_COLOR \
-        icon="$icon" \
-        label="$icons" \
-        icon.color=$SUBTEXT_COLOR \
-        label.font="sketchybar-app-font:Regular:15.0" \
-        label.y_offset=-1 \
-        click_script="rift-cli execute workspace switch $index" \
-        script="$CONFIG_DIR/plugins/rift.sh $index"
+        icons=""
+        while IFS= read -r app; do
+            if [ -n "$app" ]; then
+                icons+=$("$PLUGIN_DIR/icon_map_fn.sh" "$app")
+                icons+="  "
+            fi
+        done < <(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .windows[] | .app_name // .bundle_id // empty')
 
-    if [ -n "$icons" ]; then
-        sketchybar --set space.$index label.drawing=on
-    else
-        sketchybar --set space.$index label.drawing=off \
-            icon.padding_right=6
-    fi
+        sketchybar --add item space.${arr}_${index} left \
+            --subscribe space.${arr}_${index} rift_workspace_changed rift_windows_changed display_change space_windows_change front_app_switched \
+            --set space.${arr}_${index} \
+            display=$arr \
+            background.color=$SURFACE_COLOR \
+            icon="$icon" \
+            label="$icons" \
+            icon.color=$SUBTEXT_COLOR \
+            label.font="sketchybar-app-font:Regular:15.0" \
+            label.y_offset=-1 \
+            click_script="rift-cli execute display focus --uuid $uuid && rift-cli execute workspace switch $index" \
+            script="$CONFIG_DIR/plugins/rift.sh $index $uuid"
 
-    if [ "$index" != "$FOCUSED_INDEX" ] && [ "$window_count" = "0" ] && [ "$name" != "comm" ]; then
-        sketchybar --set space.$index drawing=off
-    fi
+        if [ -n "$icons" ]; then
+            sketchybar --set space.${arr}_${index} label.drawing=on
+        else
+            sketchybar --set space.${arr}_${index} label.drawing=off \
+                icon.padding_right=6
+        fi
+
+        if [ "$index" != "$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')" ] && [ "$window_count" = "0" ] && [ "$name" != "comm" ]; then
+            sketchybar --set space.${arr}_${index} drawing=off
+        fi
+    done
 done
 
-sketchybar --set space.$FOCUSED_INDEX icon.color=$BASE_COLOR label.color=$BASE_COLOR background.color=$LAVENDER
+# Highlight each display's active workspace.
+for arr in $(echo "$SKETCHYBAR_DISPLAYS" | jq -r '.[]."arrangement-id"'); do
+    uuid=$(echo "$SKETCHYBAR_DISPLAYS" | jq -r --argjson a "$arr" '.[] | select(."arrangement-id" == $a) | .UUID')
+    FOCUSED_INDEX=$(rift-cli query workspaces --display "$uuid" | jq -r '.[] | select(.is_active == true) | .index')
+    sketchybar --set space.${arr}_${FOCUSED_INDEX} icon.color=$BASE_COLOR label.color=$BASE_COLOR background.color=$LAVENDER
+done
 
 ##### Adding Center Items #####
 
