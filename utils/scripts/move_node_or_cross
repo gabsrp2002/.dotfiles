@@ -1,0 +1,49 @@
+#!/bin/zsh
+
+# Mirror Aerospace's `move --boundaries all-monitors-outer-frame`: move the
+# selected node, but when it is already at the screen edge and another display
+# lies in that direction, carry it across displays instead of shuffling the
+# local tree (which is what a bare move_node would do there).
+# Usage: move_node_or_cross left|right|up|down
+
+DIRECTION=$1
+
+# Focused tiled window and its current frame.
+FOCUSED_JSON=$(rift-cli query windows | jq -c '[.[] | select(.is_focused == true)][0] // empty')
+[ -z "$FOCUSED_JSON" ] && exit 0
+if [ "$(echo "$FOCUSED_JSON" | jq -r '.is_floating')" = "true" ]; then
+    rift-cli execute layout move-node "$DIRECTION" >/dev/null
+    exit 0
+fi
+BEFORE=$(echo "$FOCUSED_JSON" | jq -c '.frame')
+
+rift-cli execute layout move-node "$DIRECTION" >/dev/null
+
+AFTER=$(rift-cli query windows | jq -c --argjson id "$(echo "$FOCUSED_JSON" | jq -c '.id')" '[.[] | select(.id == $id)][0].frame // empty')
+
+# Moved within the workspace: done.
+if [ -n "$AFTER" ] && [ "$AFTER" != "$BEFORE" ]; then
+    sketchybar --trigger rift_workspace_changed
+    sketchybar --trigger rift_windows_changed
+    exit 0
+fi
+
+# At the edge: cross to the adjacent display if there is one.
+ACTIVE=$(rift-cli query displays | jq -c '.[] | select(.is_active_context == true)')
+[ -z "$ACTIVE" ] || [ "$ACTIVE" = "null" ] && exit 0
+AX=$(echo "$ACTIVE" | jq -r '.frame.origin.x')
+AY=$(echo "$ACTIVE" | jq -r '.frame.origin.y')
+AW=$(echo "$ACTIVE" | jq -r '.frame.size.width')
+AH=$(echo "$ACTIVE" | jq -r '.frame.size.height')
+
+HAS_NEIGHBOR=$(rift-cli query displays | jq -r --argjson ax "$AX" --argjson ay "$AY" --argjson aw "$AW" --argjson ah "$AH" --arg dir "$DIRECTION" '
+    [.[] | select(
+        ($dir == "right" and .frame.origin.x >= ($ax + $aw) and .frame.origin.y < ($ay + $ah) and (.frame.origin.y + .frame.size.height) > $ay) or
+        ($dir == "left" and (.frame.origin.x + .frame.size.width) <= $ax and .frame.origin.y < ($ay + $ah) and (.frame.origin.y + .frame.size.height) > $ay) or
+        ($dir == "down" and .frame.origin.y >= ($ay + $ah) and .frame.origin.x < ($ax + $aw) and (.frame.origin.x + .frame.size.width) > $ax) or
+        ($dir == "up" and (.frame.origin.y + .frame.size.height) <= $ay and .frame.origin.x < ($ax + $aw) and (.frame.origin.x + .frame.size.width) > $ax)
+    )] | length')
+
+if [ "$HAS_NEIGHBOR" != "0" ]; then
+    ~/scripts/move_window_to_display "$DIRECTION"
+fi
