@@ -1,16 +1,51 @@
 #!/bin/zsh
 
-# True fullscreen AND hide sketchybar while active (the bar would otherwise
-# overlap the window). Restores the bar when leaving fullscreen.
+# True fullscreen companion: hide the sketchybar on the fullscreen display
+# while active (the bar would otherwise overlap the window), restore after.
+#
+# Two platform facts shape this:
+# - Notch displays need no hiding: fullscreen windows never cover the
+#   notch/menu strip where the bar sits. Only notch-less displays hide.
+# - sketchybar can only toggle the ACTIVE display's bar (`hidden=current`),
+#   so track what we hid in a state file instead of blind-toggling.
 # (Alt+F stays gap-aware and never hides the bar.)
 
-UUID=$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid')
-WAS_FULL=$(rift-cli query layout --display "$UUID" | jq -r '[.. | objects | select(.is_selected == true) | .is_fullscreen] | any')
+STATE_FILE=/tmp/rift_fs_hidden_display
 
-rift-cli execute window toggle-fullscreen >/dev/null
+# Display (uuid) holding a selected fullscreen window right now, if any.
+fullscreen_display() {
+    for uuid in $(rift-cli query displays | jq -r '.[].uuid'); do
+        if rift-cli query layout --display "$uuid" 2>/dev/null | jq -e '[.. | objects | select(.is_selected == true) | select(.is_fullscreen == true)] | length > 0' >/dev/null 2>&1; then
+            echo "$uuid"
+            return 0
+        fi
+    done
+    return 1
+}
 
-if [ "$WAS_FULL" = "true" ]; then
-    sketchybar --bar hidden=off
+# Arrangement ID for a display UUID (empty when unknown).
+arr_for() {
+    sketchybar --query displays 2>/dev/null | jq -r --arg uuid "$1" '.[] | select(.UUID == $uuid) | ."arrangement-id" // empty'
+}
+
+# Notch check: only Apple's built-in display has one; its bar never overlaps.
+is_notch_display() {
+    [ "$(rift-cli query displays | jq -r --arg uuid "$1" '.[] | select(.uuid == $uuid) | .name // empty')" = "Built-in Retina Display" ]
+}
+
+if FULL_UUID=$(fullscreen_display); then
+    # Leaving fullscreen: toggle Rift state, restore the bar we hid (if any).
+    rift-cli execute window toggle-fullscreen >/dev/null
+    if [ -f "$STATE_FILE" ]; then
+        sketchybar --bar hidden=current >/dev/null
+        rm -f "$STATE_FILE"
+    fi
 else
-    sketchybar --bar hidden=on
+    # Entering fullscreen on the active display.
+    rift-cli execute window toggle-fullscreen >/dev/null
+    ACTIVE_UUID=$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid')
+    if [ -n "$ACTIVE_UUID" ] && ! is_notch_display "$ACTIVE_UUID"; then
+        sketchybar --bar hidden=current >/dev/null
+        arr_for "$ACTIVE_UUID" > "$STATE_FILE"
+    fi
 fi
