@@ -11,12 +11,17 @@ WORKSPACE_INDEX="$1"
 WORKSPACES_JSON=$(rift-cli query workspaces 2>/dev/null)
 [ -z "$WORKSPACES_JSON" ] && exit 0
 
-# Highlight the focused workspace.
+# Highlight the focused workspace; hide workspaces that are neither focused nor occupied.
 FOCUSED_INDEX=$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')
+WINDOW_COUNT=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$WORKSPACE_INDEX" '.[] | select(.index == $idx) | .window_count // 0')
+
 if [ "$WORKSPACE_INDEX" = "$FOCUSED_INDEX" ]; then
-    sketchybar --set "$NAME" background.color=0xffB4BEFE icon.color=0xff1E1E2E label.color=0xff1E1E2E
+    sketchybar --set "$NAME" drawing=on background.color=0xffB4BEFE icon.color=0xff1E1E2E label.color=0xff1E1E2E
+elif [ "$WINDOW_COUNT" = "0" ]; then
+    sketchybar --set "$NAME" drawing=off
+    exit 0
 else
-    sketchybar --set "$NAME" background.color=0xff313244 icon.color=0xffA6ADC8 label.color=0xffA6ADC8
+    sketchybar --set "$NAME" drawing=on background.color=0xff313244 icon.color=0xffA6ADC8 label.color=0xffA6ADC8
 fi
 
 # Window icons for this workspace (app_name matches Aerospace %{app-name}).

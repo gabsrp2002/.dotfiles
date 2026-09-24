@@ -92,8 +92,10 @@ sketchybar --add event rift_workspace_changed
 sketchybar --add event rift_windows_changed
 
 WORKSPACES_JSON=$(rift-cli query workspaces)
+FOCUSED_INDEX=$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')
 for index in $(echo "$WORKSPACES_JSON" | jq -r '.[].index'); do
     name=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .name')
+    window_count=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .window_count // 0')
     if [[ "$name" == "Workspace "* ]]; then
         icon="$index"
     else
@@ -126,9 +128,12 @@ for index in $(echo "$WORKSPACES_JSON" | jq -r '.[].index'); do
         sketchybar --set space.$index label.drawing=off \
             icon.padding_right=6
     fi
+
+    if [ "$index" != "$FOCUSED_INDEX" ] && [ "$window_count" = "0" ]; then
+        sketchybar --set space.$index drawing=off
+    fi
 done
 
-FOCUSED_INDEX=$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')
 sketchybar --set space.$FOCUSED_INDEX icon.color=$BASE_COLOR label.color=$BASE_COLOR background.color=$LAVENDER
 
 ##### Adding Center Items #####
