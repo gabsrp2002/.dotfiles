@@ -40,22 +40,23 @@ fi
 ROOT=$(rift-cli query layout --display "$UUID" | jq -c '.container_tree.frame // empty')
 [ -z "$ROOT" ] || [ "$ROOT" = "null" ] && exit 0
 
-EDGE_CHECK=$(echo "$FOCUSED_JSON" | jq -r --argjson root "$ROOT" --arg dir "$DIRECTION" '
-    .frame as $f |
-    ($root.origin.x) as $rx | ($root.origin.y) as $ry |
-    ($root.size.width) as $rw | ($root.size.height) as $rh |
-    {full: ((($f.origin.x - $rx) | length) < 6 and ((($f.size.width - $rw) | length) < 6) and
-            ((($f.origin.y - $ry) | length) < 6 and ((($f.size.height - $rh) | length) < 6)),
-     edge: (if $dir == "left" then $f.origin.x <= ($rx + 6)
-            elif $dir == "right" then ($f.origin.x + $f.size.width) >= ($rx + $rw - 6)
-            elif $dir == "up" then $f.origin.y <= ($ry + 6)
-            else ($f.origin.y + $f.size.height) >= ($ry + $rh - 6) end)} |
-    "\(.full) \(.edge)"')
+EDGE_CHECK=$(echo "$FOCUSED_JSON" | jq -r --argjson root "$ROOT" --arg dir "$DIRECTION" \
+    --argjson eps 6 \
+    '.frame as $f
+    | ($root.origin.x) as $rx | ($root.origin.y) as $ry
+    | ($root.size.width) as $rw | ($root.size.height) as $rh
+    | (if $dir == "left" then $f.origin.x <= ($rx + $eps)
+       elif $dir == "right" then ($f.origin.x + $f.size.width) >= ($rx + $rw - $eps)
+       elif $dir == "up" then $f.origin.y <= ($ry + $eps)
+       else ($f.origin.y + $f.size.height) >= ($ry + $rh - $eps) end) as $edge
+    | "\($edge)"')
+[ -z "$EDGE_CHECK" ] && exit 0
 
-IS_FULL=${EDGE_CHECK%% *}
-AT_EDGE=${EDGE_CHECK##* }
+AT_EDGE=$EDGE_CHECK
 
-# Fullscreen windows cover the whole area: never treat as "at edge".
+# True fullscreen windows (not merely lone tiled windows covering the area):
+# never treat as "at edge".
+IS_FULL=$(rift-cli query layout --display "$UUID" | jq -r --argjson idx "$IDX" '[.. | objects | select(.window_id?.idx == $idx) | [.is_fullscreen, .is_fullscreen_within_gaps] | any] | any // false')
 if [ "$IS_FULL" = "true" ]; then
     rift-cli execute layout move-node "$DIRECTION" >/dev/null
     exit 0
