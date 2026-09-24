@@ -150,9 +150,10 @@ comb1 = "Alt + Shift"
 # New workspace (create auto-switches; script moves the focused window and follows).
 "Alt + C" = { exec = ["/bin/zsh", "-c", "~/scripts/move_to_new_ws"] }
 
-# Next/previous workspace (wraps unless prevent_wrapping is set).
-"Alt + N" = "next_workspace"
-"Alt + P" = "prev_workspace"
+# Next/previous workspace, skipping empty ones (closest to auto-pruning:
+# Rift has no destroy-workspace command, so empties exist but are never landed on).
+"Alt + N" = { next_workspace = true }
+"Alt + P" = { prev_workspace = true }
 
 # Move focused window to next/previous workspace and follow it.
 "comb1 + N" = { move_window_to_workspace = { workspace = "next", follow = true } }
