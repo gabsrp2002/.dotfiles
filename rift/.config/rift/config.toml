@@ -94,6 +94,12 @@ floating = true
 app_id = "com.bitwarden.desktop"
 floating = true
 
+# Focus new terminals on creation (Rift can otherwise leave focus behind
+# when it adopts the window a beat after macOS reports it).
+[[virtual_workspaces.app_rules]]
+app_id = "net.kovidgoyal.kitty"
+focus = true
+
 # Communication workspace (was Aerospace move-node-to-workspace `comm` rules).
 [[virtual_workspaces.app_rules]]
 app_id = "net.whatsapp.WhatsApp"
