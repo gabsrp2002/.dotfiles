@@ -14,10 +14,11 @@ WORKSPACES_JSON=$(rift-cli query workspaces 2>/dev/null)
 # Highlight the focused workspace; hide workspaces that are neither focused nor occupied.
 FOCUSED_INDEX=$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')
 WINDOW_COUNT=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$WORKSPACE_INDEX" '.[] | select(.index == $idx) | .window_count // 0')
+WORKSPACE_NAME=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$WORKSPACE_INDEX" '.[] | select(.index == $idx) | .name // empty')
 
 if [ "$WORKSPACE_INDEX" = "$FOCUSED_INDEX" ]; then
     sketchybar --set "$NAME" drawing=on background.color=0xffB4BEFE icon.color=0xff1E1E2E label.color=0xff1E1E2E
-elif [ "$WINDOW_COUNT" = "0" ]; then
+elif [ "$WINDOW_COUNT" = "0" ] && [ "$WORKSPACE_NAME" != "comm" ]; then
     sketchybar --set "$NAME" drawing=off
     exit 0
 else
