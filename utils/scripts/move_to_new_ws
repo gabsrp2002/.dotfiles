@@ -7,7 +7,7 @@
 
 WORKSPACES_JSON=$(rift-cli query workspaces)
 CURRENT=$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')
-TARGET=$(echo "$WORKSPACES_JSON" | jq -r --argjson cur "$CURRENT" '[.[] | select(.index != $cur and .window_count == 0) | .index] | first // empty')
+TARGET=$(echo "$WORKSPACES_JSON" | jq -r --argjson cur "$CURRENT" '[.[] | select(.index != $cur and .window_count == 0 and .name != "comm") | .index] | first // empty')
 
 if [ -z "$TARGET" ]; then
     rift-cli execute workspace create >/dev/null
