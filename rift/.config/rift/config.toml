@@ -135,12 +135,11 @@ comb1 = "Alt + Shift"
 "Alt + T" = { exec = ["/bin/zsh", "-c", "~/scripts/gemini-temp"] }
 "Alt + G" = { exec = ["open", "-a", "Gemini"] }
 
-# Focus windows; at the screen edge with a monitor beyond, cross displays
-# (native focus cannot reach floating-only targets, so a script handles it).
-"Alt + H" = { exec = ["/bin/zsh", "-c", "~/scripts/focus_move_or_cross left"] }
-"Alt + J" = { exec = ["/bin/zsh", "-c", "~/scripts/focus_move_or_cross down"] }
-"Alt + K" = { exec = ["/bin/zsh", "-c", "~/scripts/focus_move_or_cross up"] }
-"Alt + L" = { exec = ["/bin/zsh", "-c", "~/scripts/focus_move_or_cross right"] }
+# Focus windows (mouse follows via mouse_follows_focus).
+"Alt + H" = { move_focus = "left" }
+"Alt + J" = { move_focus = "down" }
+"Alt + K" = { move_focus = "up" }
+"Alt + L" = { move_focus = "right" }
 
 # Move windows; at the screen edge with a monitor beyond, cross displays
 # (mirrors Aerospace move --boundaries all-monitors-outer-frame).
