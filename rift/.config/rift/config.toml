@@ -35,8 +35,8 @@ enabled = true
 hover = "hover"
 horiz_placement = "top"
 vert_placement = "left"
-thickness = 8.0
-spacing = 0.0
+thickness = 4.0
+spacing = 1.0
 
 [settings.layout]
 # Default layout (Aerospace `tiles`).
