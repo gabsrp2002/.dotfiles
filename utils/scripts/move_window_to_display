@@ -1,0 +1,25 @@
+#!/bin/zsh
+
+# Mirror Aerospace's `move-node-to-monitor --focus-follows-window`: move the
+# focused window to the adjacent display and pull focus after it.
+# (Rift updates its internal focus on move, but macOS key focus stays behind,
+# so activate the app to bring key focus to the moved window.)
+# Usage: move_window_to_display left|right|up|down
+
+DIRECTION=$1
+
+FOCUSED_ID=$(rift-cli query windows | jq -c '[.[] | select(.is_focused == true)][0].id // empty')
+[ -z "$FOCUSED_ID" ] && exit 0
+BUNDLE=$(rift-cli query windows | jq -r '[.[] | select(.is_focused == true)][0].bundle_id // empty')
+APP=$(rift-cli query windows | jq -r '[.[] | select(.is_focused == true)][0].app_name // empty')
+
+rift-cli execute display move-window --direction "$DIRECTION" >/dev/null
+
+if [ -n "$BUNDLE" ]; then
+    open -b "$BUNDLE" 2>/dev/null || open -a "$APP" 2>/dev/null
+elif [ -n "$APP" ]; then
+    open -a "$APP" 2>/dev/null
+fi
+
+sketchybar --trigger rift_workspace_changed
+sketchybar --trigger rift_windows_changed
