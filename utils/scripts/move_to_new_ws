@@ -1,36 +1,45 @@
 #!/bin/zsh
 
-# Create a new Rift workspace and move the focused window to it.
-# (Rift's `workspace create` auto-switches to the new workspace;
-# indexes are append-only since there is no destroy command.)
+# Move the focused window to the first empty workspace (other than the
+# current one) and follow it. Only creates a new workspace when no empty
+# one is available. (Rift's `workspace create` auto-switches, and indexes
+# are append-only since there is no destroy command.)
 
-rift-cli execute workspace create >/dev/null
+WORKSPACES_JSON=$(rift-cli query workspaces)
+CURRENT=$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')
+TARGET=$(echo "$WORKSPACES_JSON" | jq -r --argjson cur "$CURRENT" '[.[] | select(.index != $cur and .window_count == 0) | .index] | first // empty')
 
-# The new workspace is the active one with the highest index.
-NEW_INDEX=$(rift-cli query workspaces | jq -r 'map(.index) | max')
+if [ -z "$TARGET" ]; then
+    rift-cli execute workspace create >/dev/null
+    TARGET=$(rift-cli query workspaces | jq -r 'map(.index) | max')
+fi
 
-rift-cli execute workspace move-window "$NEW_INDEX" --follow >/dev/null
+rift-cli execute workspace move-window "$TARGET" --follow >/dev/null
 
 source ~/.config/sketchybar/colors.sh
 
-WORKSPACES_JSON=$(rift-cli query workspaces)
-name=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$NEW_INDEX" '.[] | select(.index == $idx) | .name')
-if [[ "$name" == "Workspace "* ]]; then
-    icon="$NEW_INDEX"
-else
-    icon="$name"
-fi
+# Ensure the bar has an item for the target (a reload recreates all items,
+# so this only fires for workspaces born since the last reload).
+if ! sketchybar --query "space.$TARGET" >/dev/null 2>&1; then
+    WORKSPACES_JSON=$(rift-cli query workspaces)
+    name=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$TARGET" '.[] | select(.index == $idx) | .name')
+    if [[ "$name" == "Workspace "* ]]; then
+        icon="$TARGET"
+    else
+        icon="$name"
+    fi
 
-sketchybar --add item space.$NEW_INDEX left \
-    --subscribe space.$NEW_INDEX rift_workspace_changed rift_windows_changed display_change space_windows_change front_app_switched \
-    --set space.$NEW_INDEX \
-    background.color=$SURFACE_COLOR \
-    icon="$icon" \
-    icon.color=$SUBTEXT_COLOR \
-    label.font="sketchybar-app-font:Regular:15.0" \
-    label.y_offset=-1 \
-    click_script="rift-cli execute workspace switch $NEW_INDEX" \
-    script="~/.config/sketchybar/plugins/rift.sh $NEW_INDEX"
+    sketchybar --add item space.$TARGET left \
+        --subscribe space.$TARGET rift_workspace_changed rift_windows_changed display_change space_windows_change front_app_switched \
+        --set space.$TARGET \
+        background.color=$SURFACE_COLOR \
+        icon="$icon" \
+        icon.color=$SUBTEXT_COLOR \
+        label.font="sketchybar-app-font:Regular:15.0" \
+        label.y_offset=-1 \
+        click_script="rift-cli execute workspace switch $TARGET" \
+        script="~/.config/sketchybar/plugins/rift.sh $TARGET"
+fi
 
 sketchybar --trigger rift_workspace_changed
 sketchybar --trigger rift_windows_changed
