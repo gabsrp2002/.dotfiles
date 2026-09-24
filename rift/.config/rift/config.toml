@@ -163,11 +163,12 @@ comb1 = "Alt + Shift"
 "Alt + K" = { move_focus = "up" }
 "Alt + L" = { move_focus = "right" }
 
-# Move windows.
-"comb1 + H" = { move_node = "left" }
-"comb1 + J" = { move_node = "down" }
-"comb1 + K" = { move_node = "up" }
-"comb1 + L" = { move_node = "right" }
+# Move windows; at the screen edge with a monitor beyond, cross displays
+# (mirrors Aerospace move --boundaries all-monitors-outer-frame).
+"comb1 + H" = { exec = ["/bin/zsh", "-c", "~/scripts/move_node_or_cross left"] }
+"comb1 + J" = { exec = ["/bin/zsh", "-c", "~/scripts/move_node_or_cross down"] }
+"comb1 + K" = { exec = ["/bin/zsh", "-c", "~/scripts/move_node_or_cross up"] }
+"comb1 + L" = { exec = ["/bin/zsh", "-c", "~/scripts/move_node_or_cross right"] }
 
 "Alt + F" = "toggle_fullscreen"
 "Alt + Shift + Space" = "toggle_window_floating"
