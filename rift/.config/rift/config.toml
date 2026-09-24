@@ -155,9 +155,10 @@ comb1 = "Alt + Shift"
 "Alt + N" = { next_workspace = true }
 "Alt + P" = { prev_workspace = true }
 
-# Move focused window to next/previous workspace and follow it.
-"comb1 + N" = { move_window_to_workspace = { workspace = "next", follow = true } }
-"comb1 + P" = { move_window_to_workspace = { workspace = "prev", follow = true } }
+# Move focused window to next/previous non-empty workspace and follow it.
+# (Script wrapper: Rift's move_window_to_workspace cannot skip empties.)
+"comb1 + N" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_next_prev next"] }
+"comb1 + P" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_next_prev prev"] }
 
 # Move a single window to another display (was Aerospace move-node-to-monitor).
 "Alt + Cmd + H" = { move_window_to_display = { selector = "left" } }
