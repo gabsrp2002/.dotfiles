@@ -18,10 +18,15 @@ rift-cli execute workspace move-window "$TARGET" --follow >/dev/null
 
 source ~/.config/sketchybar/colors.sh
 
+# New workspaces are created on the active display; resolve its sketchybar
+# arrangement ID via the shared display UUID.
+ACTIVE_UUID=$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid')
+ARR=$(sketchybar --query displays | jq -r --arg uuid "$ACTIVE_UUID" '.[] | select(.UUID == $uuid) | ."arrangement-id"')
+
 # Ensure the bar has an item for the target (a reload recreates all items,
 # so this only fires for workspaces born since the last reload).
-if ! sketchybar --query "space.$TARGET" >/dev/null 2>&1; then
-    WORKSPACES_JSON=$(rift-cli query workspaces)
+if ! sketchybar --query "space.${ARR}.$TARGET" >/dev/null 2>&1; then
+    WORKSPACES_JSON=$(rift-cli query workspaces --display "$ACTIVE_UUID")
     name=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$TARGET" '.[] | select(.index == $idx) | .name')
     if [[ "$name" == "Workspace "* ]]; then
         icon="$TARGET"
@@ -29,16 +34,17 @@ if ! sketchybar --query "space.$TARGET" >/dev/null 2>&1; then
         icon="$name"
     fi
 
-    sketchybar --add item space.$TARGET left \
-        --subscribe space.$TARGET rift_workspace_changed rift_windows_changed display_change space_windows_change front_app_switched \
-        --set space.$TARGET \
+    sketchybar --add item space.${ARR}.$TARGET left \
+        --subscribe space.${ARR}.$TARGET rift_workspace_changed rift_windows_changed display_change space_windows_change front_app_switched \
+        --set space.${ARR}.$TARGET \
+        display=$ARR \
         background.color=$SURFACE_COLOR \
         icon="$icon" \
         icon.color=$SUBTEXT_COLOR \
         label.font="sketchybar-app-font:Regular:15.0" \
         label.y_offset=-1 \
-        click_script="rift-cli execute workspace switch $TARGET" \
-        script="~/.config/sketchybar/plugins/rift.sh $TARGET"
+        click_script="rift-cli execute display focus --uuid $ACTIVE_UUID && rift-cli execute workspace switch $TARGET" \
+        script="~/.config/sketchybar/plugins/rift.sh $TARGET $ACTIVE_UUID"
 fi
 
 sketchybar --trigger rift_workspace_changed
