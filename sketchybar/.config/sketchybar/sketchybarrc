@@ -112,6 +112,9 @@ for arr in $(echo "$SKETCHYBAR_DISPLAYS" | jq -r '.[]."arrangement-id"'); do
             fi
         done < <(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .windows[] | .app_name // .bundle_id // empty')
 
+        # Idempotent: drop any stale item first so re-adding never duplicates
+        # (e.g. workspace indexes reused after a service restart).
+        sketchybar --remove "space.${arr}_${index}" >/dev/null 2>&1
         sketchybar --add item space.${arr}_${index} left \
             --subscribe space.${arr}_${index} rift_workspace_changed rift_windows_changed display_change space_windows_change front_app_switched \
             --set space.${arr}_${index} \

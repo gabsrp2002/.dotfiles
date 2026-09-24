@@ -29,6 +29,8 @@ if ! sketchybar --query "space.${ARR}.$TARGET" >/dev/null 2>&1; then
     WORKSPACES_JSON=$(rift-cli query workspaces --display "$ACTIVE_UUID")
     icon="$TARGET"
 
+    # Idempotent: drop any stale item first so re-adding never duplicates.
+    sketchybar --remove "space.${ARR}.$TARGET" >/dev/null 2>&1
     sketchybar --add item space.${ARR}.$TARGET left \
         --subscribe space.${ARR}.$TARGET rift_workspace_changed rift_windows_changed display_change space_windows_change front_app_switched \
         --set space.${ARR}.$TARGET \
