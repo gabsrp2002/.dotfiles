@@ -15,6 +15,11 @@ APP=$(rift-cli query windows | jq -r '[.[] | select(.is_focused == true)][0].app
 
 rift-cli execute display move-window --direction "$DIRECTION" >/dev/null
 
+# Let the move settle before activating: an immediate activation resolves
+# while the window is still transitioning, and its focus event is then
+# ignored as "not in active layout" (stale focus wins).
+sleep 0.5
+
 if [ -n "$BUNDLE" ]; then
     open -b "$BUNDLE" 2>/dev/null || open -a "$APP" 2>/dev/null
 elif [ -n "$APP" ]; then
