@@ -101,13 +101,8 @@ for arr in $(echo "$SKETCHYBAR_DISPLAYS" | jq -r '.[]."arrangement-id"'); do
     uuid=$(echo "$SKETCHYBAR_DISPLAYS" | jq -r --argjson a "$arr" '.[] | select(."arrangement-id" == $a) | .UUID')
     WORKSPACES_JSON=$(rift-cli query workspaces --display "$uuid")
     for index in $(echo "$WORKSPACES_JSON" | jq -r '.[].index'); do
-        name=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .name')
         window_count=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .window_count // 0')
-        if [[ "$name" == "Workspace "* ]]; then
-            icon="$index"
-        else
-            icon="$name"
-        fi
+        icon="$index"
 
         icons=""
         while IFS= read -r app; do
@@ -137,7 +132,7 @@ for arr in $(echo "$SKETCHYBAR_DISPLAYS" | jq -r '.[]."arrangement-id"'); do
                 icon.padding_right=6
         fi
 
-        if [ "$index" != "$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')" ] && [ "$window_count" = "0" ] && [ "$name" != "comm" ]; then
+        if [ "$index" != "$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')" ] && [ "$window_count" = "0" ]; then
             sketchybar --set space.${arr}_${index} drawing=off
         fi
     done

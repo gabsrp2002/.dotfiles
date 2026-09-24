@@ -25,14 +25,13 @@ if ! echo "$WORKSPACES_JSON" | jq -e --argjson idx "$WORKSPACE_INDEX" '.[] | sel
 fi
 
 # Highlight this display's focused workspace; hide workspaces on this display
-# that are neither focused nor occupied (comm is always visible).
+# that are neither focused nor occupied.
 FOCUSED_INDEX=$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')
 WINDOW_COUNT=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$WORKSPACE_INDEX" '.[] | select(.index == $idx) | .window_count // 0')
-WORKSPACE_NAME=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$WORKSPACE_INDEX" '.[] | select(.index == $idx) | .name // empty')
 
 if [ "$WORKSPACE_INDEX" = "$FOCUSED_INDEX" ]; then
     sketchybar --set "$NAME" drawing=on background.color=$LAVENDER icon.color=$BASE_COLOR label.color=$BASE_COLOR
-elif [ "$WINDOW_COUNT" = "0" ] && [ "$WORKSPACE_NAME" != "comm" ]; then
+elif [ "$WINDOW_COUNT" = "0" ]; then
     sketchybar --set "$NAME" drawing=off
     exit 0
 else

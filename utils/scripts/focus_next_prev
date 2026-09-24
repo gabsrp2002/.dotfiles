@@ -1,8 +1,7 @@
 #!/bin/zsh
 
 # Switch to the next/previous non-empty workspace, wrapping around.
-# (Rift's native next/prev skips ALL empty workspaces with no way to exempt
-# comm, so this mirrors move_window_next_prev's stepping for focus.)
+# (Rift's native next/prev cannot skip empties, so this steps manually.)
 # Usage: focus_next_prev next|prev
 
 DIRECTION=${1:-next}
@@ -32,8 +31,7 @@ for ((k = 0; k < N; k++)); do
     fi
     CAND=${INDEXES[$STEP]}
     COUNT=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$CAND" '.[] | select(.index == $idx) | .window_count // 0')
-    CNAME=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$CAND" '.[] | select(.index == $idx) | .name // empty')
-    if [ "$COUNT" != "0" ] || [ "$CNAME" = "comm" ]; then
+    if [ "$COUNT" != "0" ]; then
         TARGET=$CAND
         break
     fi
