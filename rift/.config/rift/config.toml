@@ -73,7 +73,12 @@ bottom = 8
 right = 8
 
 [settings.layout.gaps.per_display."37D8832A-2D66-02CA-B9F7-8F30A301B230".outer]
+# NOTE: overrides REPLACE the whole outer table (no merging), so all four
+# edges must be spelled out; omitted ones default to 0.
 top = 8
+left = 8
+bottom = 8
+right = 8
 
 [settings.layout.gaps.inner]
 horizontal = 10
