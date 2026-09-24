@@ -32,8 +32,7 @@ for ((k = 0; k < N; k++)); do
     fi
     CAND=${INDEXES[$STEP]}
     COUNT=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$CAND" '.[] | select(.index == $idx) | .window_count // 0')
-    CNAME=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$CAND" '.[] | select(.index == $idx) | .name // empty')
-    if [ "$COUNT" != "0" ] || [ "$CNAME" = "comm" ]; then
+    if [ "$COUNT" != "0" ]; then
         TARGET=$CAND
         break
     fi

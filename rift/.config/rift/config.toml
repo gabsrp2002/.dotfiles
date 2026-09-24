@@ -81,22 +81,17 @@ vertical = 10
 
 [virtual_workspaces]
 enabled = true
-# Start with only `comm`; the rest are created on demand (Alt + C).
+# Start with a single empty workspace; the rest are created on demand (Alt + C).
 default_workspace_count = 1
 auto_assign_windows = true
 preserve_focus_per_workspace = true
 workspace_auto_back_and_forth = false
 prevent_wrapping = false
 reapply_app_rules_on_title_change = false
-# Only `comm` is named (index 0); the rest use default names and grow via `create`.
-workspace_names = ["comm"]
-# Start on workspace 0 (`comm`, the only initial workspace).
+# No named workspaces: indexes are used as-is, created on demand (Alt + C).
+workspace_names = []
+# Start on workspace 0 (the only initial workspace).
 default_workspace = 0
-
-# `comm` uses the accordion layout (was Aerospace `v_accordion`).
-[[virtual_workspaces.workspace_rules]]
-workspace = "comm"
-layout = "stack"
 
 # Floating windows (were Aerospace on-window-detected `layout floating` rules).
 [[virtual_workspaces.app_rules]]
@@ -120,23 +115,6 @@ floating = true
 [[virtual_workspaces.app_rules]]
 app_id = "net.kovidgoyal.kitty"
 focus = true
-
-# Communication workspace (was Aerospace move-node-to-workspace `comm` rules).
-[[virtual_workspaces.app_rules]]
-app_id = "net.whatsapp.WhatsApp"
-workspace = "comm"
-
-[[virtual_workspaces.app_rules]]
-app_id = "com.tinyspeck.slackmacgap"
-workspace = "comm"
-
-[[virtual_workspaces.app_rules]]
-app_id = "com.hnc.Discord"
-workspace = "comm"
-
-[[virtual_workspaces.app_rules]]
-app_id = "com.spotify.client"
-workspace = "comm"
 
 [modifier_combinations]
 comb1 = "Alt + Shift"
@@ -178,8 +156,8 @@ comb1 = "Alt + Shift"
 # New workspace (create auto-switches; script moves the focused window and follows).
 "Alt + C" = { exec = ["/bin/zsh", "-c", "~/scripts/move_to_new_ws"] }
 
-# Next/previous workspace, skipping empty ones except comm.
-# (Script wrapper: native next/prev cannot exempt comm.)
+# Next/previous workspace, skipping empty ones.
+# (Script wrapper: native next/prev always lands on empties.)
 "Alt + N" = { exec = ["/bin/zsh", "-c", "~/scripts/focus_next_prev next"] }
 "Alt + P" = { exec = ["/bin/zsh", "-c", "~/scripts/focus_next_prev prev"] }
 
