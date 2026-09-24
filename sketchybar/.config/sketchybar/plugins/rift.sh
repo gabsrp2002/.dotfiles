@@ -6,6 +6,8 @@
 # Usage: rift.sh <workspace-index>
 # Triggered by: rift_workspace_changed, rift_windows_changed
 
+source "$CONFIG_DIR/colors.sh"
+
 WORKSPACE_INDEX="$1"
 
 WORKSPACES_JSON=$(rift-cli query workspaces 2>/dev/null)
@@ -25,12 +27,12 @@ WINDOW_COUNT=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$WORKSPACE_INDEX" 
 WORKSPACE_NAME=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$WORKSPACE_INDEX" '.[] | select(.index == $idx) | .name // empty')
 
 if [ "$WORKSPACE_INDEX" = "$FOCUSED_INDEX" ]; then
-    sketchybar --set "$NAME" drawing=on background.color=0xffB4BEFE icon.color=0xff1E1E2E label.color=0xff1E1E2E
+    sketchybar --set "$NAME" drawing=on background.color=$GREEN icon.color=$BASE_COLOR label.color=$BASE_COLOR
 elif [ "$WINDOW_COUNT" = "0" ] && [ "$WORKSPACE_NAME" != "comm" ]; then
     sketchybar --set "$NAME" drawing=off
     exit 0
 else
-    sketchybar --set "$NAME" drawing=on background.color=0xff313244 icon.color=0xffA6ADC8 label.color=0xffA6ADC8
+    sketchybar --set "$NAME" drawing=on background.color=$SURFACE_COLOR icon.color=$SUBTEXT_COLOR label.color=$SUBTEXT_COLOR
 fi
 
 # Window icons for this workspace (app_name matches Aerospace %{app-name}).
