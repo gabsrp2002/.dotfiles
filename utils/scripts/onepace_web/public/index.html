@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>One Pace Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-group">
+        <span class="skull-icon">🏴‍☠️</span>
+        <div>
+          <h1>ONE PACE</h1>
+          <span class="sub-tag">Mobile Player</span>
+        </div>
+      </div>
+      <button id="refresh-btn" class="icon-btn" title="Refresh state">🔄</button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="content">
+      <!-- Resume Hero Card -->
+      <section class="hero-card" id="hero-card">
+        <div class="hero-header-row">
+          <div class="hero-tag">CONTINUE WATCHING</div>
+          <span id="hero-time-badge" class="time-badge hidden">00:00</span>
+        </div>
+        <h2 id="hero-title">Loading...</h2>
+        <div class="hero-subtitle" id="hero-subtitle">Fetching latest episode</div>
+        <div class="hero-actions">
+          <button id="hero-play-btn" class="btn btn-primary" disabled>
+            <span class="btn-icon">▶</span> Stream Now
+          </button>
+          <a id="hero-download-btn" class="btn btn-secondary" href="#" download disabled>
+            <span class="btn-icon">⬇</span> Download
+          </a>
+        </div>
+      </section>
+
+      <!-- Stats Bar -->
+      <section class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-num" id="stat-arcs">--</span>
+          <span class="stat-label">Arcs</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num" id="stat-eps">--</span>
+          <span class="stat-label">Episodes</span>
+        </div>
+      </section>
+
+      <!-- Library Section -->
+      <section class="library-section">
+        <div class="section-header">
+          <h3>ALL ARCS</h3>
+          <input type="text" id="search-input" placeholder="Search arc or ep..." class="search-input">
+        </div>
+        <div id="arcs-container" class="arcs-container">
+          <div class="loading-spinner">Loading arcs...</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Video Modal Player -->
+    <div id="player-modal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 id="player-title">Playing Episode</h4>
+          <button id="close-modal-btn" class="close-btn">✕</button>
+        </div>
+        <div class="video-wrapper">
+          <video id="video-player" controls playsinline preload="auto">
+            Your browser does not support HTML5 video streaming.
+          </video>
+        </div>
+        <div class="modal-footer">
+          <a id="modal-download-btn" class="btn btn-sm btn-secondary" href="#" download>
+            <span>⬇</span> Download for Offline
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

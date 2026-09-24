@@ -1,0 +1,448 @@
+:root {
+  --bg-color: #0c1017;
+  --card-bg: #161b22;
+  --card-hover: #1f242d;
+  --border-color: #30363d;
+  --primary-color: #e63946;
+  --primary-hover: #ff4d5a;
+  --secondary-color: #1d3557;
+  --secondary-hover: #457b9d;
+  --text-main: #f0f6fc;
+  --text-muted: #8b949e;
+  --accent-gold: #ffb703;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: var(--font-family);
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 0;
+  margin: 0;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-color);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+  padding: 16px;
+}
+
+/* Header */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 16px;
+}
+
+.logo-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.skull-icon {
+  font-size: 1.8rem;
+}
+
+.app-header h1 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #ffffff, #e63946);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sub-tag {
+  font-size: 0.75rem;
+  color: var(--accent-gold);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.icon-btn {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:active {
+  transform: scale(0.92);
+}
+
+/* Hero Resume Card */
+.hero-card {
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.15) 0%, rgba(22, 27, 34, 0.9) 100%);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(230, 57, 70, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.hero-tag {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: var(--primary-color);
+}
+
+.time-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--accent-gold);
+  color: #000;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.time-badge.hidden {
+  display: none;
+}
+
+.hero-card h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text-main);
+}
+
+.hero-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* Buttons */
+.btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3);
+}
+
+.btn-primary:active {
+  background-color: var(--primary-hover);
+  transform: scale(0.97);
+}
+
+.btn-secondary {
+  background-color: var(--card-bg);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:active {
+  background-color: var(--card-hover);
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-sm {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+}
+
+/* Stats Bar */
+.stats-bar {
+  display: flex;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 0;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-num {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.stat-divider {
+  width: 1px;
+  background-color: var(--border-color);
+}
+
+/* Library Section */
+.library-section {
+  flex: 1;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.section-header h3 {
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.search-input {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  width: 150px;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: var(--primary-color);
+}
+
+/* Arcs Accordion */
+.arcs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.arc-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.arc-card.active-arc {
+  border-color: var(--primary-color);
+}
+
+.arc-header {
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.arc-header:active {
+  background-color: var(--card-hover);
+}
+
+.arc-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.arc-badge {
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.episodes-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid var(--border-color);
+}
+
+.episode-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.episode-item.is-last-watched {
+  border-color: var(--accent-gold);
+  background-color: rgba(255, 183, 3, 0.08);
+}
+
+.ep-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.last-tag {
+  font-size: 0.65rem;
+  background-color: var(--accent-gold);
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  font-weight: 700;
+}
+
+.ep-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.action-icon-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  color: var(--text-main);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.action-icon-btn:active {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Modal Player */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 480px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.video-wrapper {
+  width: 100%;
+  background: #000;
+  aspect-ratio: 16 / 9;
+}
+
+.video-wrapper video {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.modal-footer {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: flex-end;
+}

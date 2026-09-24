@@ -1,0 +1,12 @@
+{
+  "name": "onepace-web",
+  "version": "1.0.0",
+  "description": "Mobile web app and streaming server for One Pace",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

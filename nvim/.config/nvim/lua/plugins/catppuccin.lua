@@ -5,7 +5,7 @@ return {
   config = function()
     require("catppuccin").setup(
       {
-        flavour = "mocha", -- latte, frappe, macchiato, mocha
+        flavour = "mocha",
         float = {
           transparent = true,
           solid = false,
@@ -22,7 +22,7 @@ return {
         no_bold = false,
         no_underline = false,
         styles = {
-          comments = { "italic" }, -- Change the style of comments
+          comments = { "italic" },
           conditionals = { "italic" },
           loops = {},
           functions = { "bold" },
@@ -45,9 +45,7 @@ return {
           harpoon = true,
           lightspeed = true,
           copilot_vim = true,
-          telescope = {
-            enabled = true,
-          },
+          telescope = true,
           rainbow_delimiters = true,
         },
       }

@@ -1,32 +1,46 @@
 #!/usr/bin/env zsh
-# one_pace — Browse and watch One Pace episodes with fzf + mpv.
+# one_pace — Browse and watch One Pace episodes with fzf + mpv or web server.
 #
 # Directories in ONE_PACE_DIR use a numbered prefix (e.g. 19_sabaody_archipelago)
-# so they sort in canonical One Piece arc order. To add a new arc, just create a
+# so they sort in canonical One Piece arc order. To add a new arc, create a
 # directory like 34_new_arc_name — no script changes needed.
 
 set -euo pipefail
 
 ONE_PACE_DIR="${ONE_PACE_DIR:-$HOME/one_pace}"
+
+# Validate directory exists.
+if [[ ! -d "$ONE_PACE_DIR" ]]; then
+  echo "Error: One Pace directory not found at $ONE_PACE_DIR" >&2
+  exit 1
+fi
+ONE_PACE_DIR=$(cd "$ONE_PACE_DIR" && pwd)
 STATE_FILE="$ONE_PACE_DIR/.one_pace_state.json"
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
-# Read a key from the JSON state file (lightweight, no jq dependency).
+# Read a key from the JSON state file using Zsh regex pattern matching.
 read_state() {
   local key="$1"
   if [[ -f "$STATE_FILE" ]]; then
-    sed -n "s/.*\"${key}\": *\"\\([^\"]*\\)\".*/\\1/p" "$STATE_FILE" | head -1
+    local content=$(<"$STATE_FILE")
+    if [[ "$content" =~ "\"$key\": *\"?([^\",}]+)\"?" ]]; then
+      echo "${match[1]}"
+    fi
   fi
 }
 
-# Write both keys to the state file atomically.
+# Write keys to the state file atomically.
 write_state() {
-  local arc="$1" episode="$2"
+  local arc="$1" episode="$2" timestamp="${3:-0}"
+  local ts_clean="${timestamp%%.*}"
+  [[ -z "$ts_clean" || ! "$ts_clean" =~ "^[0-9]+$" ]] && ts_clean=0
+
   cat > "$STATE_FILE" <<EOF
 {
   "last_arc": "${arc}",
-  "last_episode": "${episode}"
+  "last_episode": "${episode}",
+  "timestamp": ${ts_clean}
 }
 EOF
 }
@@ -36,14 +50,14 @@ format_arc() {
   local dir="$1"
   local num="${dir%%_*}"                       # 19
   local name="${dir#*_}"                       # sabaody_archipelago
-  # Replace underscores with spaces and title-case each word
-  local title=$(echo "$name" | tr '_' ' ' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2)); print}')
+  local title="${(C)name//_/ }"
   echo "${num}. ${title}"
 }
 
 # Repeat an fzf action N times: repeat_action down 3 → "down+down+down"
 repeat_action() {
   local action="$1" n="$2" result=""
+  local i
   for (( i=0; i<n; i++ )); do
     [[ -n "$result" ]] && result+="+"
     result+="$action"
@@ -54,8 +68,84 @@ repeat_action() {
 # Format episode filename for display: ep01.mp4 → Episode 01
 format_episode() {
   local fname="$1"
-  local num=$(echo "$fname" | sed 's/^ep0*\([0-9]*\)\.mp4$/\1/')
-  printf "Episode %02d" "$num"
+  local base="${fname:r}"         # ep01
+  local num="${base#ep}"          # 01
+  if [[ "$num" =~ "^[0-9]+$" ]]; then
+    printf "Episode %02d" "$(( 10#$num ))"
+  else
+    echo "$fname"
+  fi
+}
+
+# Format timestamp seconds to mm:ss or hh:mm:ss
+format_time() {
+  local seconds="${1:-0}"
+  local sec="${seconds%%.*}"
+  [[ -z "$sec" || ! "$sec" =~ "^[0-9]+$" ]] && sec=0
+  local h=$(( sec / 3600 ))
+  local m=$(( (sec % 3600) / 60 ))
+  local s=$(( sec % 60 ))
+  if (( h > 0 )); then
+    printf "%d:%02d:%02d" "$h" "$m" "$s"
+  else
+    printf "%02d:%02d" "$m" "$s"
+  fi
+}
+
+# Show help message
+show_help() {
+  cat <<'EOF'
+onepace — Browse and watch One Pace episodes with fzf + mpv.
+
+USAGE:
+  onepace                 Open interactive arc & episode selector (fzf)
+  onepace --recent        Replay the last watched episode immediately
+  onepace --web [port]    Start local web streaming server & ngrok tunnel
+  onepace --status, -s    Display current watch progress summary
+  onepace --import <src>  Import a .zip archive or folder of episodes
+  onepace --help, -h      Show this help message
+
+KEYBINDINGS IN FZF:
+  Enter                   Select arc or episode
+  Esc / Ctrl-C            Exit selector
+
+CONFIG:
+  ONE_PACE_DIR            Directory containing arc folders (default: ~/one_pace)
+EOF
+}
+
+# Display watch progress summary
+show_status() {
+  local last_arc="$(read_state last_arc)"
+  local last_ep="$(read_state last_episode)"
+  local last_ts="$(read_state timestamp)"
+
+  echo "========================================"
+  echo "         One Pace Watch Status          "
+  echo "========================================"
+
+  if [[ -n "$last_arc" && -n "$last_ep" ]]; then
+    local ts_str=""
+    if [[ -n "$last_ts" && "$last_ts" != "0" ]]; then
+      ts_str=" (at $(format_time "$last_ts"))"
+    fi
+    echo "▶ Last Watched : $(format_arc "$last_arc") / $(format_episode "$last_ep")${ts_str}"
+  else
+    echo "▶ Last Watched : None"
+  fi
+
+  local total_arcs=0 total_eps=0 d eps
+  for d in "$ONE_PACE_DIR"/*/(N); do
+    eps=("$d"/ep*.mp4(Nn))
+    if (( ${#eps[@]} > 0 )); then
+      total_arcs=$(( total_arcs + 1 ))
+      total_eps=$(( total_eps + ${#eps[@]} ))
+    fi
+  done
+
+  echo "📁 Available Arcs: $total_arcs"
+  echo "🎬 Total Episodes: $total_eps"
+  echo "========================================"
 }
 
 # Canonical arc order — add new arcs at the end.
@@ -98,6 +188,18 @@ ARC_ORDER=(
 # Look up the numbered prefix for an arc slug: arc_number sabaody_archipelago → 19
 arc_number() {
   local slug="$1"
+  case "$slug" in
+    reverie) slug="levely" ;;
+    sabaody) slug="sabaody_archipelago" ;;
+    fishman|fish_man|fishman_island_arc) slug="fishman_island" ;;
+    wano) slug="wano_country" ;;
+    whole_cake) slug="whole_cake_island" ;;
+    post_enies) slug="post_enies_lobby" ;;
+    long_ring) slug="long_ring_long_land" ;;
+    return_to_sabaody|post_timeskip_sabaody) slug="return_to_sabaody" ;;
+  esac
+
+  local i
   for (( i=1; i<=${#ARC_ORDER[@]}; i++ )); do
     if [[ "${ARC_ORDER[$i]}" == "$slug" ]]; then
       printf "%02d" "$i"
@@ -109,40 +211,111 @@ arc_number() {
 
 # ── main ─────────────────────────────────────────────────────────────────────
 
-# Validate directory exists.
-if [[ ! -d "$ONE_PACE_DIR" ]]; then
-  echo "Error: One Pace directory not found at $ONE_PACE_DIR" >&2
-  exit 1
-fi
-ONE_PACE_DIR=$(cd "$ONE_PACE_DIR" && pwd)
-STATE_FILE="$ONE_PACE_DIR/.one_pace_state.json"
+# Handle CLI flags
+case "${1:-}" in
+  --help|-h)
+    show_help
+    exit 0
+    ;;
+  --status|-s)
+    show_status
+    exit 0
+    ;;
+  --web)
+    port="${2:-3000}"
+    web_dir="$(dirname "$0")/onepace_web"
 
-# --import <zip>: extract a One Pace zip into the correct arc directory.
+    if [[ ! -d "$web_dir" ]]; then
+      echo "Error: Web server directory not found at $web_dir" >&2
+      exit 1
+    fi
+
+    echo "================================================="
+    echo "🏴‍☠️ Starting One Pace Web Server & Tunnel..."
+    echo "================================================="
+
+    lan_ip=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "localhost")
+
+    export PORT="$port"
+    export ONE_PACE_DIR="$ONE_PACE_DIR"
+    node "$web_dir/server.js" &
+    server_pid=$!
+
+    ngrok_log=$(mktemp "$ONE_PACE_DIR/.ngrok_log_XXXXXX")
+    trap 'kill $server_pid 2>/dev/null || true; kill ${ngrok_pid:-} 2>/dev/null || true; rm -f "$ngrok_log" 2>/dev/null || true' EXIT
+
+    sleep 1
+
+    echo ""
+    echo "🌐 Local Access:   http://localhost:${port}"
+    echo "📱 LAN Access:     http://${lan_ip}:${port}"
+
+    ngrok_pid=""
+    if command -v ngrok &>/dev/null; then
+      ngrok http --url easy-artistic-mullet.ngrok-free.app  "$port" >"$ngrok_log" 2>&1 &
+      ngrok_pid=$!
+
+      ngrok_url=""
+      attempt=0
+      while (( attempt < 10 )); do
+        sleep 1
+        ngrok_url=$(curl -s http://127.0.0.1:4040/api/tunnels 2>/dev/null | grep -o '"public_url":"[^"]*' | head -1 | cut -d'"' -f4 || true)
+        if [[ -n "$ngrok_url" ]]; then
+          break
+        fi
+        attempt=$(( attempt + 1 ))
+      done
+
+      if [[ -n "$ngrok_url" ]]; then
+        echo "🌍 Public Tunnel:  ${ngrok_url}"
+      else
+        err_msg=$(grep -i -E "err|error" "$ngrok_log" | head -1 || true)
+        if [[ -n "$err_msg" ]]; then
+          echo "⚠️ ngrok Notice:   ${err_msg}"
+          echo "   (Make sure to run 'ngrok config add-authtoken <your-token>' if missing)"
+        else
+          echo "🌍 Public Tunnel:  http://127.0.0.1:4040 (check ngrok dashboard)"
+        fi
+      fi
+    else
+      echo "ℹ ngrok not found. To access over internet, run: ngrok http $port"
+    fi
+
+    echo "================================================="
+    echo "Press Ctrl+C to stop web server"
+    wait $server_pid
+    exit 0
+    ;;
+esac
+
+# --import <zip|folder>: extract/copy One Pace episodes into correct arc directory.
 if [[ "${1:-}" == "--import" ]]; then
-  zip_file="${2:-}"
-  if [[ -z "$zip_file" || ! -f "$zip_file" ]]; then
-    echo "Usage: one_pace --import <path-to-zip>" >&2
+  import_src="${2:-}"
+  if [[ -z "$import_src" || ! -e "$import_src" ]]; then
+    echo "Usage: onepace --import <path-to-zip-or-folder>" >&2
     exit 1
   fi
 
-  # Parse arc name from zip filename: "[490-513] Sabaody Archipelago [En Sub][720p].zip"
-  zip_basename="$(basename "$zip_file" .zip)"
-  # Strip leading "[...]" and trailing "[...]" blocks to get the arc name
-  arc_display=$(echo "$zip_basename" | sed 's/^\[[^]]*\] *//; s/ *\[.*$//')
+  src_basename="$(basename "$import_src")"
+  src_name="${src_basename%.zip}"
+
+  # Parse arc name from filename/foldername: "[490-513] Sabaody Archipelago [En Sub][720p]"
+  arc_display=$(echo "$src_name" | sed 's/^\[[^]]*\] *//; s/ *\[.*$//')
 
   if [[ -z "$arc_display" ]]; then
-    echo "Could not parse arc name from: $zip_basename" >&2
+    echo "Could not parse arc name from: $src_name" >&2
     exit 1
   fi
 
   # Convert display name to slug: "Sabaody Archipelago" → "sabaody_archipelago"
   arc_slug=$(echo "$arc_display" | tr '[:upper:]' '[:lower:]' | tr ' ' '_' | tr '-' '_' | tr -cd 'a-z0-9_')
 
-  # Look up the number
+  # Look up the arc number
   arc_num=$(arc_number "$arc_slug") || {
     echo "Unknown arc: '$arc_display' (slug: $arc_slug)" >&2
     echo "" >&2
     echo "Known arcs:" >&2
+    local i
     for (( i=1; i<=${#ARC_ORDER[@]}; i++ )); do
       printf "  %02d  %s\n" "$i" "${ARC_ORDER[$i]}" >&2
     done
@@ -150,8 +323,9 @@ if [[ "${1:-}" == "--import" ]]; then
   }
 
   target_dir="$ONE_PACE_DIR/${arc_num}_${arc_slug}"
+  existing_eps=("$target_dir"/ep*.mp4(N))
 
-  if [[ -d "$target_dir" ]] && ls "$target_dir"/*.mp4 &>/dev/null; then
+  if [[ -d "$target_dir" ]] && (( ${#existing_eps[@]} > 0 )); then
     echo "⚠ Directory already has episodes: $target_dir" >&2
     echo "  Delete it first if you want to re-import." >&2
     exit 1
@@ -160,38 +334,57 @@ if [[ "${1:-}" == "--import" ]]; then
   echo "📦 Importing: $arc_display → $target_dir"
   mkdir -p "$target_dir"
 
-  # Extract to a temp dir, then rename files to epNN.mp4
   tmp_dir=$(mktemp -d "$ONE_PACE_DIR/.import_XXXXXX")
   trap 'rm -rf "$tmp_dir"' EXIT
 
-  unzip -q "$zip_file" -d "$tmp_dir"
+  if [[ -f "$import_src" && "$import_src" == *.zip ]]; then
+    unzip -q "$import_src" -d "$tmp_dir"
+  else
+    cp -r "$import_src"/* "$tmp_dir/"
+  fi
 
-  # Rename recursively: find any mp4 file inside the extracted zip directory
   count=0
-  while IFS= read -r f; do
+  local mp4_files=("$tmp_dir"/**/*.mp4(Nn))
+  local seq_num=1
+  for f in "${mp4_files[@]}"; do
     [[ -f "$f" ]] || continue
     fname="$(basename "$f")"
-    # Extract the episode number: last number before the first "[" after the arc name
-    ep_num=$(echo "$fname" | sed "s/.*${arc_display} *0*\([0-9]\{1,\}\).*/\1/")
+    base="${fname:r}"
+    clean=$(echo "$base" | sed -E 's/\[[^]]*\]//g; s/\([^)]*\)//g')
+    ep_digit=$(echo "$clean" | grep -oE '[0-9]+' | tail -1 || true)
+
+    if [[ -n "$ep_digit" ]]; then
+      ep_num=$(( 10#$ep_digit ))
+    else
+      ep_num=$seq_num
+    fi
+
     ep_name=$(printf "ep%02d.mp4" "$ep_num")
     mv "$f" "$target_dir/$ep_name"
-    (( count++ )) || true
-  done < <(find "$tmp_dir" -name '*.mp4' -type f)
+    count=$(( count + 1 ))
+    seq_num=$(( seq_num + 1 ))
+  done
 
   echo "✓ Imported $count episodes into $target_dir"
   ls "$target_dir"
   exit 0
 fi
 
-# Collect arc directories (sorted by name, which sorts by number prefix).
+# Collect non-empty arc directories (sorted numerically by prefix).
 arcs=()
-for d in "$ONE_PACE_DIR"/*/; do
+arc_ep_counts=()
+for d in "$ONE_PACE_DIR"/*/(Nn); do
   [[ -d "$d" ]] || continue
-  arcs+=("$(basename "$d")")
+  bname="$(basename "$d")"
+  ep_files=("$d"/ep*.mp4(Nn))
+  if (( ${#ep_files[@]} > 0 )); then
+    arcs+=("$bname")
+    arc_ep_counts+=("${#ep_files[@]}")
+  fi
 done
 
 if (( ${#arcs[@]} == 0 )); then
-  echo "No arc directories found in $ONE_PACE_DIR" >&2
+  echo "No arc directories with episode files found in $ONE_PACE_DIR" >&2
   exit 1
 fi
 
@@ -215,17 +408,21 @@ if [[ "${1:-}" == "--recent" ]]; then
 fi
 
 if [[ -z "$selected_arc" ]]; then
-  # Build fzf input: each line is "dirname | display_name".
   fzf_arc_input=""
   arc_pos=0
   last_arc_offset=0
   last_arc="$(read_state last_arc)"
+  idx=1
   for arc in "${arcs[@]}"; do
-    fzf_arc_input+="${arc} | $(format_arc "$arc")"$'\n'
+    ep_cnt="${arc_ep_counts[$idx]}"
+    disp="$(format_arc "$arc") [${ep_cnt} ep]"
     if [[ "$arc" == "$last_arc" ]]; then
+      disp+=" (last watched)"
       last_arc_offset=$arc_pos
     fi
-    (( arc_pos++ )) || true
+    fzf_arc_input+="${arc} | ${disp}"$'\n'
+    arc_pos=$(( arc_pos + 1 ))
+    idx=$(( idx + 1 ))
   done
 
   fzf_arc_opts=(
@@ -233,6 +430,7 @@ if [[ -z "$selected_arc" ]]; then
     --reverse
     --no-multi
     --no-sort
+    --tiebreak=index
     --delimiter=' \| '
     --with-nth=2
     --prompt='Arc ❯ '
@@ -242,7 +440,6 @@ if [[ -z "$selected_arc" ]]; then
     fzf_arc_opts+=(--bind="load:$(repeat_action down $last_arc_offset)")
   fi
 
-  # Select arc — cursor starts on last-watched arc.
   selected_arc_line=$(echo -n "$fzf_arc_input" | fzf "${fzf_arc_opts[@]}" || true)
 
   if [[ -z "$selected_arc_line" ]]; then
@@ -255,12 +452,7 @@ fi
 # ── episode selection ────────────────────────────────────────────────────────
 
 arc_dir="$ONE_PACE_DIR/$selected_arc"
-
-# Collect .mp4 files sorted naturally.
-episodes=()
-while IFS= read -r f; do
-  [[ -n "$f" ]] && episodes+=("$(basename "$f")")
-done < <(find "$arc_dir" -maxdepth 1 -name 'ep*.mp4' -type f | sort)
+episodes=("$arc_dir"/ep*.mp4(Nn))
 
 if (( ${#episodes[@]} == 0 )); then
   echo "No ep*.mp4 files found in $arc_dir" >&2
@@ -272,12 +464,15 @@ if [[ -z "$selected_episode" ]]; then
   ep_pos=0
   last_ep_offset=0
   last_episode="$(read_state last_episode)"
-  for ep in "${episodes[@]}"; do
-    episode_input+="${ep} | $(format_episode "$ep")"$'\n'
+  for ep_path in "${episodes[@]}"; do
+    ep="$(basename "$ep_path")"
+    ep_disp="$(format_episode "$ep")"
     if [[ "$selected_arc" == "$last_arc" && "$ep" == "$last_episode" ]]; then
+      ep_disp+=" (last watched)"
       last_ep_offset=$ep_pos
     fi
-    (( ep_pos++ )) || true
+    episode_input+="${ep} | ${ep_disp}"$'\n'
+    ep_pos=$(( ep_pos + 1 ))
   done
 
   fzf_ep_opts=(
@@ -285,6 +480,7 @@ if [[ -z "$selected_episode" ]]; then
     --reverse
     --no-multi
     --no-sort
+    --tiebreak=index
     --delimiter=' \| '
     --with-nth=2
     --prompt='Episode ❯ '
@@ -294,7 +490,6 @@ if [[ -z "$selected_episode" ]]; then
     fzf_ep_opts+=(--bind="load:$(repeat_action down $last_ep_offset)")
   fi
 
-  # Select episode — cursor starts on last-watched episode if same arc.
   selected_ep_line=$(echo -n "$episode_input" | fzf "${fzf_ep_opts[@]}" || true)
 
   if [[ -z "$selected_ep_line" ]]; then
@@ -306,38 +501,14 @@ fi
 
 # ── play & persist ───────────────────────────────────────────────────────────
 
-# Ensure the mpv Lua hook script exists.
-LUA_HOOK="$ONE_PACE_DIR/.one_pace_hook.lua"
-cat > "$LUA_HOOK" <<'EOF'
-local state_file = os.getenv("ONE_PACE_STATE_FILE")
-
-mp.register_event("file-loaded", function()
-    local path = mp.get_property("path")
-    if not path or not state_file then return end
-    
-    local parent, file = path:match("([^/]+)/([^/]+)$")
-    if parent and file then
-        if file:match("^ep[0-9]+%.mp4$") then
-            local f = io.open(state_file, "w")
-            if f then
-                f:write('{\n  "last_arc": "' .. parent .. '",\n  "last_episode": "' .. file .. '"\n}\n')
-                f:close()
-            end
-        end
-    end
-end)
-EOF
-
-# Find the starting index of the selected episode.
 start_idx=1
 for (( i=1; i<=${#episodes[@]}; i++ )); do
-  if [[ "${episodes[$i]}" == "$selected_episode" ]]; then
+  if [[ "$(basename "${episodes[$i]}")" == "$selected_episode" ]]; then
     start_idx=$i
     break
   fi
 done
 
-# Find the index of the selected_arc in the arcs array.
 selected_arc_idx=-1
 for (( i=1; i<=${#arcs[@]}; i++ )); do
   if [[ "${arcs[$i]}" == "$selected_arc" ]]; then
@@ -346,36 +517,61 @@ for (( i=1; i<=${#arcs[@]}; i++ )); do
   fi
 done
 
-# Build the playlist: remaining episodes of current arc + subsequent arcs.
 playlist=()
 for (( idx=start_idx; idx<=${#episodes[@]}; idx++ )); do
-  playlist+=("$arc_dir/${episodes[$idx]}")
+  playlist+=("${episodes[$idx]}")
 done
 
 if (( selected_arc_idx != -1 )); then
   for (( a_idx=selected_arc_idx+1; a_idx<=${#arcs[@]}; a_idx++ )); do
     next_arc="${arcs[$a_idx]}"
     next_arc_dir="$ONE_PACE_DIR/$next_arc"
-    
-    # Collect episodes in this next arc sorted naturally
-    next_episodes=()
-    while IFS= read -r f; do
-      [[ -n "$f" ]] && next_episodes+=("$(basename "$f")")
-    done < <(find "$next_arc_dir" -maxdepth 1 -name 'ep*.mp4' -type f | sort)
-    
-    # Append all episodes to the playlist
-    for ep in "${next_episodes[@]}"; do
-      playlist+=("$next_arc_dir/$ep")
+    next_episodes=("$next_arc_dir"/ep*.mp4(Nn))
+    for ep_path in "${next_episodes[@]}"; do
+      playlist+=("$ep_path")
     done
   done
 fi
 
 echo "▶ Playing from: $(format_arc "$selected_arc") / $(format_episode "$selected_episode")"
-export ONE_PACE_STATE_FILE="$STATE_FILE"
-mpv --script="$LUA_HOOK" --title="One Pace" "${playlist[@]}"
 
-saved_arc="$(read_state last_arc)"
-saved_episode="$(read_state last_episode)"
-if [[ -n "$saved_arc" && -n "$saved_episode" ]]; then
-  echo "✓ State saved: $(format_arc "$saved_arc") / $(format_episode "$saved_episode")"
+mpv_log=$(mktemp "$ONE_PACE_DIR/.mpv_log_XXXXXX")
+trap 'rm -f "$mpv_log"' EXIT
+
+# Build MPV options disabling watch_later playlist redirects so selected_episode ALWAYS plays
+mpv_opts=(--no-resume-playback --save-position-on-quit --term-playing-msg='ONE_PACE_PLAYING:${path}' --title="One Pace")
+
+start_ts="$(read_state timestamp)"
+if [[ -n "$start_ts" && "$start_ts" != "0" && "$selected_arc" == "$(read_state last_arc)" && "$selected_episode" == "$(read_state last_episode)" ]]; then
+  echo "⏱ Resuming at timestamp: $(format_time "$start_ts") (${start_ts}s)"
+  mpv_opts+=(--start="$start_ts")
+fi
+
+mpv "${mpv_opts[@]}" "${playlist[@]}" 2>&1 | tee "$mpv_log"
+
+# Parse last played episode from MPV terminal output log
+last_played_line=$(grep "ONE_PACE_PLAYING:" "$mpv_log" | tail -1 || true)
+if [[ -n "$last_played_line" ]]; then
+  last_path="${last_played_line#ONE_PACE_PLAYING:}"
+  saved_arc="$(basename "$(dirname "$last_path")")"
+  saved_ep="$(basename "$last_path")"
+  saved_ts=0
+
+  # Read saved timestamp from MPV watch_later file
+  if command -v md5 &>/dev/null; then
+    hash=$(echo -n "$last_path" | md5 | tr '[:lower:]' '[:upper:]')
+    wl_file="$HOME/.config/mpv/watch_later/$hash"
+    if [[ -f "$wl_file" ]]; then
+      ts_line=$(grep "^start=" "$wl_file" | head -1 || true)
+      if [[ -n "$ts_line" ]]; then
+        raw_ts="${ts_line#start=}"
+        saved_ts="${raw_ts%%.*}"
+      fi
+    fi
+  fi
+
+  if [[ -n "$saved_arc" && -n "$saved_ep" ]]; then
+    write_state "$saved_arc" "$saved_ep" "$saved_ts"
+    echo "✓ State saved: $(format_arc "$saved_arc") / $(format_episode "$saved_ep") (at $(format_time "$saved_ts"))"
+  fi
 fi

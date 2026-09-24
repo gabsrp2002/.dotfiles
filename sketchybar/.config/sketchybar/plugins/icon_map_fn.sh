@@ -39,7 +39,7 @@ function icon_map() {
     icon_result=":android_studio:"
     ;;
   "Antigravity")
-    icon_result=":gemini:"
+    icon_result=":antigravity:"
     ;;
   "Anytype")
     icon_result=":anytype:"
@@ -513,7 +513,7 @@ function icon_map() {
     icon_result=":zulip:"
     ;;
   "Gemini")
-    icon_result=":openai:"
+    icon_result=":gemini:"
     ;;
   *)
     icon_result=":default:"

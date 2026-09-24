@@ -1,0 +1,57 @@
+#!/usr/bin/env osascript
+
+if not (application "Gemini" is running) then
+    tell application "Gemini" to launch
+end if
+
+tell application "System Events"
+    set maxWait to 5.0
+    set interval to 0.05
+    set elapsed to 0.0
+
+    -- Wait until Gemini's process and menu bar are initialized
+    repeat until (exists process "Gemini") and (exists menu bar 1 of process "Gemini")
+        delay interval
+        set elapsed to elapsed + interval
+        if elapsed ≥ maxWait then
+            error "Gemini launch timed out."
+        end if
+    end repeat
+
+    tell process "Gemini"
+        -- Step 1: If any window is currently open, close it first
+        if (count of (windows whose visible is true)) > 0 then
+            repeat with w in (windows whose visible is true)
+                try
+                    click (first button of w whose subrole is "AXCloseButton")
+                on error
+                    try
+                        click menu item "Close Window" of menu "File" of menu bar 1
+                    end try
+                end try
+            end repeat
+            delay 0.2
+        end if
+
+        -- Step 2: Open Mini Chat
+        repeat with m in menus of menu bar 1
+            if exists (menu item "Open Mini Chat" of m) then
+                click menu item "Open Mini Chat" of m
+                exit repeat
+            else if exists (menu item "Toggle Mini Chat" of m) then
+                click menu item "Toggle Mini Chat" of m
+                exit repeat
+            end if
+        end repeat
+
+        delay 0.2
+
+        -- Step 3: Switch to Temporary Chat
+        repeat with m in menus of menu bar 1
+            if exists (menu item "New Temporary Chat" of m) then
+                click menu item "New Temporary Chat" of m
+                exit repeat
+            end if
+        end repeat
+    end tell
+end tell

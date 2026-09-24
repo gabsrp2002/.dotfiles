@@ -80,6 +80,9 @@ alt-o = '''exec-and-forget zsh -c '
     fi
 ' '''
 
+alt-t = 'exec-and-forget ~/scripts/gemini-temp'
+alt-g = 'exec-and-forget open -a "Gemini"'
+
 alt-h = [
   'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors left --fail-if-fullscreen && move-mouse window-lazy-center',
 ]
