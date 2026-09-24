@@ -1,0 +1,35 @@
+#!/bin/zsh
+
+# Focus the mpv window wherever it is (any display/workspace), or open the
+# most recent Onepace note if mpv isn't running.
+#
+# Three Rift quirks make this a script instead of a one-liner:
+# - `query windows` only covers the active workspace, so search via workspaces.
+# - `window focus` only works within the active workspace *and* active
+#   display (otherwise silently ignored), so focus the display and switch
+#   workspace first.
+# - A short settle delay lets the switch land before focusing, so a stale
+#   main-window focus event doesn't override it.
+
+FOUND_UUID=""
+FOUND_INDEX=""
+FOUND_ID=""
+for uuid in $(rift-cli query displays | jq -r '.[].uuid'); do
+    IDX=$(rift-cli query workspaces --display "$uuid" | jq -r '[.[] | select(.windows[].app_name == "mpv")][0].index // empty')
+    if [ -n "$IDX" ]; then
+        FOUND_UUID=$uuid
+        FOUND_INDEX=$IDX
+        FOUND_ID=$(rift-cli query workspaces --display "$uuid" | jq -c --argjson idx "$IDX" '[.[] | select(.index == $idx) | .windows[] | select(.app_name == "mpv")][0].id')
+        break
+    fi
+done
+
+if [ -z "$FOUND_UUID" ]; then
+    ~/scripts/onepace --recent
+    exit 0
+fi
+
+rift-cli execute display focus --uuid "$FOUND_UUID" >/dev/null
+rift-cli execute workspace switch "$FOUND_INDEX" >/dev/null
+sleep 0.3
+rift-cli execute window focus --window-id "$FOUND_ID" >/dev/null
