@@ -134,7 +134,7 @@ for index in $(echo "$WORKSPACES_JSON" | jq -r '.[].index'); do
     fi
 done
 
-sketchybar --set space.$FOCUSED_INDEX icon.color=$BASE_COLOR label.color=$BASE_COLOR background.color=$GREEN
+sketchybar --set space.$FOCUSED_INDEX icon.color=$BASE_COLOR label.color=$BASE_COLOR background.color=$LAVENDER
 
 ##### Adding Center Items #####
 
