@@ -64,12 +64,16 @@ default_orientation = "perpendicular"
 [settings.layout.gaps]
 # Uniform outer top gap leaves room for Sketchybar (was conditional in Aerospace).
 [settings.layout.gaps.outer]
-# Uniform on all displays: sketchybar (32) + offset (8). Rift measures from
-# the screen edge; the menu bar (main display) sits under sketchybar.
+# Uniform visual margins on all displays: sketchybar (32) + offset (8).
+# Rift measures from each screen's edge, and the built-in sits 32px lower
+# (arrangement offset), so it only needs 8 to land at the same line.
 top = 40
 left = 8
 bottom = 8
 right = 8
+
+[settings.layout.gaps.per_display."37D8832A-2D66-02CA-B9F7-8F30A301B230".outer]
+top = 8
 
 [settings.layout.gaps.inner]
 horizontal = 10
