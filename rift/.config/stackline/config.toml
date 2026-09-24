@@ -1,0 +1,25 @@
+# Stackline configuration — stack indicator pills for Rift.
+# https://github.com/acsandmann/stackline
+# Install: cargo install --git https://github.com/acsandmann/stackline
+# (handled by utils/scripts/install_dotfiles)
+# Launched from Rift's run_on_start in ../rift/config.toml.
+
+[appearance]
+white = 0.90
+alpha = 1.0
+dimmer = 2.5
+icon_dimmer = 1.1
+show_icons = true
+size = 32.0
+radius = 3.0
+icon_padding = 4.0
+pill_thinness = 6.0
+vertical_spacing = 1.2
+offset_x = 4.0
+offset_y = 2.0
+should_fade = true
+fade_duration = 0.2
+
+[behavior]
+click_to_focus = true
+hide_when_fullscreen = true

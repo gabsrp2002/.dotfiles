@@ -6,7 +6,8 @@ My dotfiles managed with `stow`
 
 | Package      | Platform       | Description                                 |
 | ------------ | -------------- | ------------------------------------------- |
-| `aerospace`  | macOS          | Aerospace window manager configuration      |
+| `aerospace`  | macOS          | Aerospace window manager configuration (legacy, kept for rollback) |
+| `rift`       | macOS          | Rift window manager configuration         |
 | `git`        | Cross-platform | Git configuration and aliases               |
 | `hypr`       | Linux          | Hyprland (Wayland compositor) configuration |
 | `kitty`      | Cross-platform | Kitty terminal emulator configuration       |
@@ -70,7 +71,7 @@ cd .dotfiles
 Install all macOS packages:
 
 ```sh
-stow aerospace git kitty latex nvim rofi sketchybar tmux utils zsh
+stow git kitty latex nvim rift rofi sketchybar tmux utils zsh
 ```
 
 ### Arch Linux

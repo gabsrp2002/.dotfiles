@@ -1,0 +1,172 @@
+# Rift configuration — migrated from Aerospace.
+# Original: aerospace/.config/aerospace/aerospace.toml
+# Reference: https://acsandmann.github.io/rift-docs/
+# Validate with: rift-cli execute config reload
+
+[settings]
+# Animations stay on (main reason for migrating off Aerospace).
+animate = true
+animation_duration = 0.3
+animation_fps = 100.0
+
+# Manage new macOS spaces by default (matches Aerospace behavior).
+# Toggle per-space with Alt + Z.
+default_disable = false
+
+# Mouse/focus behavior (matches Aerospace: focus-follows-mouse + mouse-follows-focus).
+focus_follows_mouse = true
+mouse_follows_focus = true
+mouse_hides_on_focus = true
+
+# Apps that must not steal focus / trigger workspace switches.
+auto_focus_blacklist = []
+
+# Notify Sketchybar about workspace and window changes, and launch Stackline
+# (stack indicator pills: https://github.com/acsandmann/stackline).
+run_on_start = [
+  "rift-cli subscribe cli --event workspace_changed --command sh --args -c --args 'sketchybar --trigger rift_workspace_changed'",
+  "rift-cli subscribe cli --event windows_changed --command sh --args -c --args 'sketchybar --trigger rift_windows_changed'",
+  "sh -c 'for d in ~/.cargo/bin ~/.local/bin; do [ -x \"$d/stackline\" ] && exec \"$d/stackline\"; done'",
+]
+
+hot_reload = true
+
+[settings.layout]
+# Default layout (Aerospace `tiles`).
+mode = "traditional"
+window_insertion_point = "next_to_selection"
+
+# Sway-style node normalization on insert (replaces Aerospace
+# enable-normalization-flatten-containers, so no flatten keybind is needed).
+[settings.layout.traditional]
+equalize_nodes = true
+
+[settings.layout.stack]
+stack_offset = 40.0
+default_orientation = "perpendicular"
+
+[settings.layout.gaps]
+# Uniform outer top gap leaves room for Sketchybar (was conditional in Aerospace).
+[settings.layout.gaps.outer]
+top = 40
+left = 8
+bottom = 8
+right = 8
+
+[settings.layout.gaps.inner]
+horizontal = 10
+vertical = 10
+
+[virtual_workspaces]
+enabled = true
+default_workspace_count = 4
+auto_assign_windows = true
+preserve_focus_per_workspace = true
+workspace_auto_back_and_forth = false
+prevent_wrapping = false
+reapply_app_rules_on_title_change = false
+# Only `comm` is named (index 0); the rest use default names and grow via `create`.
+workspace_names = ["comm"]
+# Start on workspace 1 so `comm` (index 0) is not the initial workspace.
+default_workspace = 1
+
+# `comm` uses the accordion layout (was Aerospace `v_accordion`).
+[[virtual_workspaces.workspace_rules]]
+workspace = "comm"
+layout = "stack"
+
+# Floating windows (were Aerospace on-window-detected `layout floating` rules).
+[[virtual_workspaces.app_rules]]
+app_id = "com.apple.weather"
+floating = true
+
+[[virtual_workspaces.app_rules]]
+app_id = "com.apple.finder"
+floating = true
+
+[[virtual_workspaces.app_rules]]
+app_name = "mpv"
+floating = true
+
+[[virtual_workspaces.app_rules]]
+app_id = "com.bitwarden.desktop"
+floating = true
+
+# Communication workspace (was Aerospace move-node-to-workspace `comm` rules).
+[[virtual_workspaces.app_rules]]
+app_id = "net.whatsapp.WhatsApp"
+workspace = "comm"
+
+[[virtual_workspaces.app_rules]]
+app_id = "com.tinyspeck.slackmacgap"
+workspace = "comm"
+
+[[virtual_workspaces.app_rules]]
+app_id = "com.hnc.Discord"
+workspace = "comm"
+
+[[virtual_workspaces.app_rules]]
+app_id = "com.spotify.client"
+workspace = "comm"
+
+[modifier_combinations]
+comb1 = "Alt + Shift"
+
+[keys]
+"Alt + Z" = "toggle_space_activated"
+
+# New terminal in a tmux session (wrapped in zsh so ~ expands; Rift launches directly).
+"Ctrl + Shift + T" = { exec = ["/bin/zsh", "-c", "kitty --single-instance -d ~ -e tmux new -A -s default"] }
+
+# Layouts (were Aerospace `tiles` / `v_accordion`).
+"Alt + Slash" = { set_workspace_layout = { mode = "traditional" } }
+"Alt + Semicolon" = { set_workspace_layout = { mode = "stack" } }
+
+# Focus mpv if open, otherwise open the most recent Onepace note.
+"Alt + O" = { exec = ["/bin/zsh", "-c", "mpv_id=$(rift-cli query windows | jq -c '[.[] | select(.app_name == \"mpv\")][0].id // empty'); if [ -n \"$mpv_id\" ]; then rift-cli execute window focus --window-id \"$mpv_id\"; else ~/scripts/onepace --recent; fi"] }
+
+"Alt + T" = { exec = ["/bin/zsh", "-c", "~/scripts/gemini-temp"] }
+"Alt + G" = { exec = ["open", "-a", "Gemini"] }
+
+# Focus windows (mouse follows via mouse_follows_focus).
+"Alt + H" = { move_focus = "left" }
+"Alt + J" = { move_focus = "down" }
+"Alt + K" = { move_focus = "up" }
+"Alt + L" = { move_focus = "right" }
+
+# Move windows.
+"comb1 + H" = { move_node = "left" }
+"comb1 + J" = { move_node = "down" }
+"comb1 + K" = { move_node = "up" }
+"comb1 + L" = { move_node = "right" }
+
+"Alt + F" = "toggle_fullscreen"
+"Alt + Shift + Space" = "toggle_window_floating"
+
+"Alt + Enter" = { exec = ["/bin/zsh", "-c", "~/scripts/center_window"] }
+
+# New workspace (create auto-switches; script moves the focused window and follows).
+"Alt + C" = { exec = ["/bin/zsh", "-c", "~/scripts/move_to_new_ws"] }
+
+# Next/previous workspace (wraps unless prevent_wrapping is set).
+"Alt + N" = "next_workspace"
+"Alt + P" = "prev_workspace"
+
+# Move focused window to next/previous workspace and follow it.
+"comb1 + N" = { move_window_to_workspace = { workspace = "next", follow = true } }
+"comb1 + P" = { move_window_to_workspace = { workspace = "prev", follow = true } }
+
+# Move a single window to another display (was Aerospace move-node-to-monitor).
+"Alt + Cmd + H" = { move_window_to_display = { selector = "left" } }
+"Alt + Cmd + L" = { move_window_to_display = { selector = "right" } }
+
+# Move the entire active workspace to another display (was move_to_monitor script).
+"Ctrl + Alt + Cmd + H" = { move_workspace_to_display = { selector = "left", wrap_around = true } }
+"Ctrl + Alt + Cmd + L" = { move_workspace_to_display = { selector = "right", wrap_around = true } }
+
+# Toggle Sketchybar visibility (was service-mode `b`).
+"Alt + B" = { exec = ["sketchybar", "--bar", "topmost=toggle"] }
+
+# Resize (replaces resize-mode; smart picks the nearest applicable split).
+"Alt + Shift + Equal" = "resize_window_grow"
+"Alt + Shift + Minus" = "resize_window_shrink"
