@@ -37,6 +37,8 @@ horiz_placement = "top"
 vert_placement = "left"
 thickness = 4.0
 spacing = 1.0
+# Catppuccin green selected segment (A6E3A1); readable on blue backgrounds.
+selected_color = { r = 0.65, g = 0.89, b = 0.63, a = 0.9 }
 
 [settings.gestures]
 # Three-finger horizontal swipes switch workspaces, skipping empty ones
@@ -45,6 +47,7 @@ enabled = true
 consume_dock_swipe = true
 fingers = 3
 skip_empty = true
+haptics_enabled = false
 
 [settings.layout]
 # Default layout (Aerospace `tiles`).
@@ -190,6 +193,23 @@ comb1 = "Alt + Shift"
 # Toggle Sketchybar visibility (was service-mode `b`).
 "Alt + B" = { exec = ["sketchybar", "--bar", "topmost=toggle"] }
 
-# Resize (replaces resize-mode; smart picks the nearest applicable split).
-"Alt + Shift + Equal" = "resize_window_grow"
-"Alt + Shift + Minus" = "resize_window_shrink"
+# Resize mode (restored Aerospace mode; single command per key, so no
+# sketchybar mode indicator is possible).
+"Alt + R" = { binding_mode = "resize" }
+
+# Service mode (restored Aerospace mode).
+"Alt + Shift + Semicolon" = { binding_mode = "service" }
+
+[binding_modes.resize]
+"H" = { resize_window_shrink = "horizontal" }
+"L" = { resize_window_grow = "horizontal" }
+"J" = { resize_window_grow = "vertical" }
+"K" = { resize_window_shrink = "vertical" }
+"Enter" = { binding_mode = "default" }
+"Escape" = { binding_mode = "default" }
+
+[binding_modes.service]
+"B" = { exec = ["sketchybar", "--bar", "topmost=toggle"] }
+"R" = "unjoin_windows"
+"F" = "toggle_window_floating"
+"Escape" = { binding_mode = "default" }
