@@ -90,6 +90,15 @@ sketchybar --add item front_app left \
 
 sketchybar --add event rift_workspace_changed
 sketchybar --add event rift_windows_changed
+sketchybar --add event rift_mode_change
+
+sketchybar --add item rift_mode left \
+           --set rift_mode script="$PLUGIN_DIR/rift_mode.sh" \
+           icon.drawing=off \
+           label.color=$BASE_COLOR \
+           background.color=$GREEN \
+           label="default" \
+           --subscribe rift_mode rift_mode_change
 
 # Per-display workspace items. Rift keeps a separate workspace set per macOS
 # Space (= per display), so each display gets its own item group:
