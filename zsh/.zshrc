@@ -10,6 +10,11 @@ plugins=(git zsh-syntax-highlighting)
 
 source $ZSH/oh-my-zsh.sh
 
+# Disable XON/XOFF flow control so C-s works as tmux prefix
+if [[ -t 0 && $- == *i* ]]; then
+  stty -ixon
+fi
+
 if [[ $(uname) == "Darwin" ]]; then
     # skim alias
     alias skim="open -a Skim"
