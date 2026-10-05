@@ -15,25 +15,26 @@ if [[ "$PARENT" == *.win* ]]; then
     PARENT="${PARENT%%.win*}"
 fi
 FLAG="/tmp/sketchybar_rift_hover_${PARENT}"
+COUNT_FILE="${FLAG}.count"
 
 touch_flag() {
     touch "$FLAG"
-}
-
-flag_age() {
-    local now mtime
-    now=$(date +%s)
-    mtime=$(stat -f %m "$FLAG" 2>/dev/null || echo 0)
-    echo $((now - mtime))
+    # Generation counter: integer wall-clock math races sub-second
+    # enter/exit sequences (same-second touch and check reads age 0 and
+    # either sticks open or mis-hides), so count enters instead.
+    count=$(cat "$COUNT_FILE" 2>/dev/null || echo 0)
+    echo $((count + 1)) > "$COUNT_FILE"
 }
 
 schedule_hide() {
-    # Hide 0.6s later unless something touched the flag since (pointer moved
-    # into the popup or back onto the item). Terminates: each exit schedules
-    # at most one check, and checks never reschedule.
+    # Hide 1.0s later unless the pointer re-entered in the meantime (counter
+    # moved). Terminates: each exit schedules at most one check, and checks
+    # never reschedule.
+    local seen
+    seen=$(cat "$COUNT_FILE" 2>/dev/null || echo 0)
     (
-        sleep 0.6
-        if [ "$(flag_age)" -ge 1 ]; then
+        sleep 1.0
+        if [ "$(cat "$COUNT_FILE" 2>/dev/null || echo 0)" = "$seen" ]; then
             NAME="$PARENT" "$CONFIG_DIR/plugins/rift_popup.sh" "$1" "$2" hide
         fi
     ) >/dev/null 2>&1 &
