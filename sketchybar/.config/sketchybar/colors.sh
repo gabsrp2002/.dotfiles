@@ -12,6 +12,7 @@ LAVENDER=0xffB4BEFE
 RED=0xffF38BA8
 YELLOW=0xffF9E2AF
 GREEN=0xffA6E3A1
+GREEN_DARK=0xff40a02b           # Darker green, readable on lavender backgrounds
 BLUE=0xff89B4FA
 PINK=0xffF5C2E7
 MAUVE=0xffCBA6F7              # Mauve for accents or highlights

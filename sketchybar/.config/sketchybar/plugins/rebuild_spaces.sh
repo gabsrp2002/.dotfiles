@@ -35,17 +35,38 @@ build_display() {
     fi
     FOCUSED_INDEX=$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')
     [ -z "$FOCUSED_INDEX" ] || [ "$FOCUSED_INDEX" = "null" ] && return 0
+    # Display frame for the visible-window filter (see plugins/rift.sh).
+    DISPLAY_FRAME=$(rift-cli query displays 2>/dev/null | jq -c --arg uuid "$uuid" '.[] | select(.uuid == $uuid) | .frame // empty')
     for index in $(echo "$WORKSPACES_JSON" | jq -r '.[].index'); do
         window_count=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .window_count // 0')
         icon="$index"
 
         icons=""
+        # Initial paint filters every workspace to on-screen frames
+        # (rift.sh refreshes apply the stricter rule plus the focused-column
+        # boost right after).
+        if [ -n "$DISPLAY_FRAME" ] && [ "$DISPLAY_FRAME" != "null" ]; then
+            WINDOW_FILTER='.[] | select(.index == $idx) | .windows[]
+                | select((.frame // null) as $f | $f == null or (
+                    ($d.origin.x) as $dx | ($d.origin.y) as $dy |
+                    ($d.size.width) as $dw | ($d.size.height) as $dh |
+                    ($f.origin.x) as $fx | ($f.origin.y) as $fy |
+                    ($f.size.width) as $fw | ($f.size.height) as $fh |
+                    ([($fx + $fw), ($dx + $dw)] | min) - ([($fx), ($dx)] | max) as $ox |
+                    ([($fy + $fh), ($dy + $dh)] | min) - ([($fy), ($dy)] | max) as $oy |
+                    (($ox * $oy) as $ov | ($fw * $fh) as $wa |
+                      ($ov >= (0.9 * $wa)) or ($ox >= ($dw - 4) and $oy >= ($dh - 4)))))
+                | .app_name // .bundle_id // empty'
+            APPS_JSON=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" --argjson d "$DISPLAY_FRAME" "$WINDOW_FILTER")
+        else
+            APPS_JSON=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .windows[] | .app_name // .bundle_id // empty')
+        fi
         while IFS= read -r app; do
             if [ -n "$app" ]; then
                 icons+=$("$PLUGIN_DIR/icon_map_fn.sh" "$app")
                 icons+="  "
             fi
-        done < <(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$index" '.[] | select(.index == $idx) | .windows[] | .app_name // .bundle_id // empty')
+        done < <(printf '%s\n' "$APPS_JSON")
 
         sketchybar --add item space.${arr}_${index} left \
             --subscribe space.${arr}_${index} rift_workspace_changed rift_windows_changed display_change space_windows_change front_app_switched \
@@ -57,8 +78,14 @@ build_display() {
             icon.color=$SUBTEXT_COLOR \
             label.font="sketchybar-app-font:Regular:15.0" \
             label.y_offset=-1 \
-            click_script="rift-cli execute display focus --uuid $uuid && rift-cli execute workspace switch $index" \
-            script="$CONFIG_DIR/plugins/rift.sh $index $uuid"
+            click_script="$CONFIG_DIR/plugins/rift_click.sh $index $uuid" \
+            script="$CONFIG_DIR/plugins/rift.sh $index $uuid" \
+            popup.background.border_width=2 \
+            popup.background.corner_radius=10 \
+            popup.background.border_color=$BORDER_COLOR \
+            popup.background.color=$BASE_COLOR \
+            popup.blur_radius=20 \
+            popup.y_offset=5
 
         if [ -n "$icons" ]; then
             sketchybar --set space.${arr}_${index} label.drawing=on
