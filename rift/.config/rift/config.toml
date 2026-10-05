@@ -209,7 +209,9 @@ comb1 = "Alt + Shift"
 "Escape" = { binding_mode = "default" }
 
 [binding_modes.service]
-"B" = { exec = ["sketchybar", "--bar", "topmost=toggle"] }
-"R" = "unjoin_windows"
-"F" = "toggle_window_floating"
+# One-shot actions: each acts, then drops back to the default mode (single
+# command per key, so action + reset are wrapped in a shell call).
+"B" = { exec = ["/bin/zsh", "-c", "sketchybar --bar topmost=toggle; rift-cli execute binding-mode default"] }
+"R" = { exec = ["/bin/zsh", "-c", "rift-cli execute layout unjoin; rift-cli execute binding-mode default"] }
+"F" = { exec = ["/bin/zsh", "-c", "rift-cli execute window toggle-float; rift-cli execute binding-mode default"] }
 "Escape" = { binding_mode = "default" }
