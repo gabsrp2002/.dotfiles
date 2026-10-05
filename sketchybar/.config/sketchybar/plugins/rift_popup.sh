@@ -2,22 +2,30 @@
 # Per-window popup for a Rift workspace item. Lists every window in the
 # workspace in strip column order; windows currently on screen get a green
 # icon, the rest the default gray.
-# Usage: rift_popup.sh <workspace-index> <display-uuid>  ($NAME = parent item)
-# Toggles: open popup already showing -> close it and drop its items.
+# Usage: rift_popup.sh <workspace-index> <display-uuid> [show|hide|toggle]
+# ($NAME = parent item). Hide closes and drops items; show (re)builds;
+# toggle (default) switches.
+# Defaults to toggle.
 
 source "$CONFIG_DIR/colors.sh"
 
 WORKSPACE_INDEX="$1"
 DISPLAY_UUID="$2"
+ACTION="${3:-toggle}"
 PARENT="$NAME"
 
 DRAWING=$(sketchybar --query "$PARENT" 2>/dev/null | jq -r '.popup.drawing // "off"')
 ESCAPED_PARENT=$(printf '%s' "$PARENT" | sed 's/\./\\./g')
-if [ "$DRAWING" = "on" ]; then
+if [ "$ACTION" = "hide" ] || { [ "$ACTION" = "toggle" ] && [ "$DRAWING" = "on" ]; }; then
     sketchybar --set "$PARENT" popup.drawing=off
+    for pool_i in 0 1 2 3 4 5 6 7 8 9; do
+        sketchybar --set "${PARENT}.winpool.${pool_i}" drawing=off 2>/dev/null
+    done
     sketchybar --remove "/${ESCAPED_PARENT}\.win\..*/" >/dev/null 2>&1
     exit 0
 fi
+# Show path continues below: drop stale children, then rebuild fresh.
+sketchybar --remove "/${ESCAPED_PARENT}\.win\..*/" >/dev/null 2>&1
 
 WORKSPACES_JSON=$(rift-cli query workspaces --display "$DISPLAY_UUID" 2>/dev/null)
 if [ -z "$WORKSPACES_JSON" ] || echo "$WORKSPACES_JSON" | jq -e 'type == "object"' >/dev/null 2>&1; then
@@ -78,8 +86,15 @@ WINDOWS_TSV=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$WORKSPACE_INDEX" -
     | sort_by((.i) as $i | ($order | index($i)) // 1000000) | .[] | [.i, .p, .app, .title, .vis] | join("\u001f")')
 [ -z "$WINDOWS_TSV" ] && exit 0
 
+# Fixed pool of popup rows, reused across opens: rapid add/remove churn has
+# crashed sketchybar before (use-after-free on item teardown), so children
+# are updated in place and only hidden, never destroyed, outside rebuilds.
+POOL_SIZE=10
+pool_i=0
 while IFS=$'\x1f' read -r idx pid app title vis; do
     [ -n "$idx" ] || continue
+    [ "$pool_i" -lt "$POOL_SIZE" ] || break
+    child="${PARENT}.winpool.${pool_i}"
     icon=$("$CONFIG_DIR/plugins/icon_map_fn.sh" "$app")
     [ -z "$icon" ] && icon="•"
     if [ "$vis" = "true" ]; then
@@ -92,15 +107,18 @@ while IFS=$'\x1f' read -r idx pid app title vis; do
         label="${label:0:45}…"
     fi
     focus_script="rift-cli execute display focus --uuid $DISPLAY_UUID && rift-cli execute workspace switch $WORKSPACE_INDEX && sleep 0.3 && rift-cli execute window focus --window-id '{\"idx\":$idx,\"pid\":$pid}' && sketchybar --set $PARENT popup.drawing=off"
-    sketchybar --add item "${PARENT}.win.${idx}" "popup.${PARENT}" \
-        --set "${PARENT}.win.${idx}" \
-        icon="$icon" \
+    sketchybar --query "$child" >/dev/null 2>&1 || sketchybar --add item "$child" "popup.${PARENT}" \
+        --subscribe "$child" mouse.entered mouse.exited \
+        --set "$child" \
         icon.font="sketchybar-app-font:Regular:15.0" \
-        icon.color="$color" \
-        label="$label" \
-        label.color="$TEXT_COLOR" \
         background.color="$TRANSPARENT" \
-        click_script="$focus_script"
+        script="$CONFIG_DIR/plugins/rift_hover.sh $WORKSPACE_INDEX $DISPLAY_UUID"
+    sketchybar --set "$child" drawing=on icon="$icon" icon.color="$color" label="$label" label.color="$TEXT_COLOR" click_script="$focus_script"
+    pool_i=$((pool_i + 1))
 done <<< "$WINDOWS_TSV"
+while [ "$pool_i" -lt "$POOL_SIZE" ]; do
+    sketchybar --set "${PARENT}.winpool.${pool_i}" drawing=off 2>/dev/null
+    pool_i=$((pool_i + 1))
+done
 
 sketchybar --set "$PARENT" popup.drawing=on

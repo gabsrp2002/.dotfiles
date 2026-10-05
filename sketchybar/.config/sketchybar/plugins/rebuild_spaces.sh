@@ -69,7 +69,7 @@ build_display() {
         done < <(printf '%s\n' "$APPS_JSON")
 
         sketchybar --add item space.${arr}_${index} left \
-            --subscribe space.${arr}_${index} rift_workspace_changed rift_windows_changed display_change space_windows_change front_app_switched \
+            --subscribe space.${arr}_${index} rift_workspace_changed rift_windows_changed display_change space_windows_change front_app_switched mouse.entered mouse.exited \
             --set space.${arr}_${index} \
             display=$arr \
             background.color=$SURFACE_COLOR \
@@ -78,8 +78,8 @@ build_display() {
             icon.color=$SUBTEXT_COLOR \
             label.font="sketchybar-app-font:Regular:15.0" \
             label.y_offset=-1 \
-            click_script="$CONFIG_DIR/plugins/rift_click.sh $index $uuid" \
-            script="$CONFIG_DIR/plugins/rift.sh $index $uuid" \
+            click_script="rift-cli execute display focus --uuid $uuid && rift-cli execute workspace switch $index && sketchybar --set \$NAME popup.drawing=off" \
+            script="$CONFIG_DIR/plugins/rift_hover.sh $index $uuid" \
             popup.background.border_width=2 \
             popup.background.corner_radius=10 \
             popup.background.border_color=$BORDER_COLOR \
