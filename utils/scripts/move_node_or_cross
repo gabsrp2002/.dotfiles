@@ -27,7 +27,13 @@ APP=${REST#*|}
 CTX=$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid')
 if [ "$CTX" != "$UUID" ] && [ -n "$BUNDLE" ]; then
     open -b "$BUNDLE" 2>/dev/null || open -a "$APP" 2>/dev/null
-    sleep 0.3
+    # Wait for the command context to follow the activation (async native
+    # notification) instead of a fixed sleep; capped at the old 0.3s budget.
+    for _ in 1 2 3 4 5 6; do
+        CTX=$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid')
+        [ "$CTX" = "$UUID" ] && break
+        sleep 0.05
+    done
 fi
 
 # Focused window frame + tiling area of its own display.
@@ -85,7 +91,8 @@ if [ "$AT_EDGE" = "true" ]; then
     fi
 fi
 
-# Not at an edge (or no display beyond): plain local move.
+# Not at an edge (or no display beyond): plain local move. Only the
+# windows event fires: the workspace set is unchanged, so a workspace
+# refresh would just re-render every item a second time.
 rift-cli execute layout move-node "$DIRECTION" >/dev/null
-sketchybar --trigger rift_workspace_changed
 sketchybar --trigger rift_windows_changed

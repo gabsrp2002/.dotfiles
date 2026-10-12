@@ -20,10 +20,24 @@ APP=${REST#*|}
 
 rift-cli execute display move-window --direction "$DIRECTION" --window-id "$IDX" >/dev/null
 
-# Let the move settle before activating: an immediate activation resolves
-# while the window is still transitioning, and its focus event is then
-# ignored as "not in active layout" (stale focus wins).
-sleep 0.5
+# Wait for the move to settle before activating: an activation delivered
+# while the window is still transitioning has its focus event ignored as
+# "not in active layout" (stale focus wins). Poll the globally focused
+# window instead of a fixed sleep; require it stable across two consecutive
+# polls, capped at the old 0.5s budget.
+POLLS=0
+STABLE=0
+while [ "$POLLS" -lt 6 ]; do
+    FOCUS_IDX=$(~/scripts/focused_window_info 2>/dev/null | cut -d'|' -f2)
+    if [ -n "$FOCUS_IDX" ] && [ "$FOCUS_IDX" = "$IDX" ]; then
+        STABLE=$((STABLE + 1))
+        [ "$STABLE" -ge 2 ] && break
+    else
+        STABLE=0
+    fi
+    sleep 0.05
+    POLLS=$((POLLS + 1))
+done
 
 if [ -n "$BUNDLE" ]; then
     open -b "$BUNDLE" 2>/dev/null || open -a "$APP" 2>/dev/null

@@ -8,8 +8,9 @@
 # - `window focus` only works within the active workspace *and* active
 #   display (otherwise silently ignored), so focus the display and switch
 #   workspace first.
-# - A short settle delay lets the switch land before focusing, so a stale
-#   main-window focus event doesn't override it.
+# - Wait for the display activation to propagate (async native
+#   notification) before focusing, so a stale main-window focus event
+#   doesn't override it.
 
 FOUND_UUID=""
 FOUND_INDEX=""
@@ -31,5 +32,11 @@ fi
 
 rift-cli execute display focus --uuid "$FOUND_UUID" >/dev/null
 rift-cli execute workspace switch "$FOUND_INDEX" >/dev/null
-sleep 0.3
+# Poll for display-context convergence instead of a fixed sleep; capped at
+# the old 0.3s budget.
+for _ in 1 2 3 4 5 6; do
+    CTX=$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid')
+    [ "$CTX" = "$FOUND_UUID" ] && break
+    sleep 0.05
+done
 rift-cli execute window focus --window-id "$FOUND_ID" >/dev/null

@@ -7,7 +7,7 @@
 # Animations stay on (main reason for migrating off Aerospace).
 animate = true
 animation_duration = 0.3
-animation_fps = 100.0
+animation_fps = 60.0
 
 # Manage new macOS spaces by default (matches Aerospace behavior).
 default_disable = false

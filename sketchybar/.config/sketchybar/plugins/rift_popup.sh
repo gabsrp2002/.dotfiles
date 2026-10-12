@@ -14,6 +14,11 @@ DISPLAY_UUID="$2"
 ACTION="${3:-toggle}"
 PARENT="$NAME"
 
+# Tracks the currently open popup so opening one closes the previous
+# (exclusive popups). Only the parent name is stored; visibility itself
+# stays in sketchybar.
+OPEN_TRACKER="/tmp/sketchybar_rift_popup_open"
+
 DRAWING=$(sketchybar --query "$PARENT" 2>/dev/null | jq -r '.popup.drawing // "off"')
 ESCAPED_PARENT=$(printf '%s' "$PARENT" | sed 's/\./\\./g')
 if [ "$ACTION" = "hide" ] || { [ "$ACTION" = "toggle" ] && [ "$DRAWING" = "on" ]; }; then
@@ -22,6 +27,9 @@ if [ "$ACTION" = "hide" ] || { [ "$ACTION" = "toggle" ] && [ "$DRAWING" = "on" ]
         sketchybar --set "${PARENT}.winpool.${pool_i}" drawing=off 2>/dev/null
     done
     sketchybar --remove "/${ESCAPED_PARENT}\.win\..*/" >/dev/null 2>&1
+    if [ "$(cat "$OPEN_TRACKER" 2>/dev/null || true)" = "$PARENT" ]; then
+        rm -f "$OPEN_TRACKER"
+    fi
     exit 0
 fi
 # Show path continues below: drop stale children, then rebuild fresh.
@@ -34,6 +42,15 @@ fi
 if ! echo "$WORKSPACES_JSON" | jq -e --argjson idx "$WORKSPACE_INDEX" '.[] | select(.index == $idx and (.window_count // 0) > 0)' >/dev/null 2>&1; then
     exit 0
 fi
+
+# Exclusive popups: close whichever popup is open before showing this one.
+# A plain drawing=off suffices (children hide with the parent popup; stale
+# children are dropped by the show-path rebuild and the full hide path).
+PREVIOUS_OPEN=$(cat "$OPEN_TRACKER" 2>/dev/null || true)
+if [ -n "$PREVIOUS_OPEN" ] && [ "$PREVIOUS_OPEN" != "$PARENT" ]; then
+    sketchybar --set "$PREVIOUS_OPEN" popup.drawing=off >/dev/null 2>&1
+fi
+printf '%s' "$PARENT" > "$OPEN_TRACKER"
 
 # Visibility rule mirrors plugins/rift.sh: focused column always counts,
 # otherwise ~90% of the frame must be inside the display (or cover it).
@@ -106,7 +123,7 @@ while IFS=$'\x1f' read -r idx pid app title vis; do
     if [ "${#label}" -gt 45 ]; then
         label="${label:0:45}…"
     fi
-    focus_script="rift-cli execute display focus --uuid $DISPLAY_UUID && rift-cli execute workspace switch $WORKSPACE_INDEX && sleep 0.3 && rift-cli execute window focus --window-id '{\"idx\":$idx,\"pid\":$pid}' && sketchybar --set $PARENT popup.drawing=off"
+    focus_script="rift-cli execute display focus --uuid $DISPLAY_UUID && rift-cli execute workspace switch $WORKSPACE_INDEX && for i in 1 2 3 4 5 6; do CTX=\$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid'); [ \"\$CTX\" = \"$DISPLAY_UUID\" ] && break; sleep 0.05; done && rift-cli execute window focus --window-id '{\"idx\":$idx,\"pid\":$pid}' && sketchybar --set $PARENT popup.drawing=off"
     sketchybar --query "$child" >/dev/null 2>&1 || sketchybar --add item "$child" "popup.${PARENT}" \
         --subscribe "$child" mouse.entered mouse.exited \
         --set "$child" \

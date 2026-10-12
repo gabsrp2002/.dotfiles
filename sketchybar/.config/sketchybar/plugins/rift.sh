@@ -14,6 +14,37 @@
 
 source "$CONFIG_DIR/colors.sh"
 
+# Memoize icon lookups per run: icon_map_fn.sh costs a process spawn per
+# call (~4ms), and workspaces often repeat apps (plus the fail-open path
+# below would look the same apps up twice). bash 3.2 has no associative
+# arrays, so use a newline-delimited "app<US>glyph" list with exact compare.
+ICON_SEP=$'\x1f'
+ICON_CACHE=""
+icon_for_app() {
+    local app="$1" entry key
+    while IFS= read -r entry; do
+        [ -n "$entry" ] || continue
+        key="${entry%%"$ICON_SEP"*}"
+        if [ "$key" = "$app" ]; then
+            printf '%s' "${entry#*"$ICON_SEP"}"
+            return 0
+        fi
+    done <<< "$ICON_CACHE"
+    return 1
+}
+glyph_for_app() {
+    # Sets GLYPH. Must be called directly (not via $()) so the cache
+    # update survives: command substitution runs in a subshell.
+    local app="$1" cached
+    if cached=$(icon_for_app "$app"); then
+        GLYPH=$cached
+    else
+        GLYPH=$("$CONFIG_DIR/plugins/icon_map_fn.sh" "$app")
+        ICON_CACHE="${ICON_CACHE}${app}${ICON_SEP}${GLYPH}
+"
+    fi
+}
+
 WORKSPACE_INDEX="$1"
 DISPLAY_UUID="$2"
 
@@ -36,13 +67,16 @@ fi
 # that are neither focused nor occupied.
 FOCUSED_INDEX=$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')
 WINDOW_COUNT=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$WORKSPACE_INDEX" '.[] | select(.index == $idx) | .window_count // 0')
+# The settle loop below only guards scrolling layouts (see below); other
+# modes skip it entirely instead of paying a fixed 0.15s per refresh.
+FOCUSED_MODE=$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .layout_mode // empty')
 
 # Scroll animations report in-flight frames: sampling mid-flight would
 # misclassify sliding columns (e.g. a column arriving on screen reads as
 # partial and gets filtered out, stuck until the next event). On the focused
 # workspace, wait for frames to settle (bounded): compare a compact
 # signature across 0.15s polls.
-if [ "$WORKSPACE_INDEX" = "$FOCUSED_INDEX" ]; then
+if [ "$WORKSPACE_INDEX" = "$FOCUSED_INDEX" ] && [ "$FOCUSED_MODE" = "scrolling" ]; then
     settle_sig() { echo "$1" | jq -c '[.[] | select(.is_active == true) | .windows[] | [.id.idx, .frame]]'; }
     SIG=$(settle_sig "$WORKSPACES_JSON")
     DIRTY=0
@@ -144,24 +178,26 @@ VIS_LIST=" $(echo "$VIS_IDXS" | jq -r '.[]?' | tr '\n' ' ')"
 
 icons=""
 have_rows=0
+# Single window listing shared by the main pass and the fail-open pass below.
+WINDOWS_TSV=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$WORKSPACE_INDEX" --argjson order "$ORDER" '[.[] | select(.index == $idx) | .windows[] | {i: .id.idx, a: (.app_name // .bundle_id // "?")}] | sort_by((.i) as $i | ($order | index($i)) // 1000000) | .[] | "\(.i)\u001f\(.a)"')
 while IFS=$'\x1f' read -r idx app; do
     [ -n "$idx" ] || continue
     have_rows=1
     case "$VIS_LIST" in
         *" $idx "*)
-            glyph=$("$CONFIG_DIR/plugins/icon_map_fn.sh" "$app")
-            icons+="${glyph}  "
+            glyph_for_app "$app"
+            icons+="${GLYPH}  "
             ;;
     esac
-done < <(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$WORKSPACE_INDEX" --argjson order "$ORDER" '[.[] | select(.index == $idx) | .windows[] | {i: .id.idx, a: (.app_name // .bundle_id // "?")}] | sort_by((.i) as $i | ($order | index($i)) // 1000000) | .[] | "\(.i)\u001f\(.a)"')
+done <<< "$WINDOWS_TSV"
 
 # Fail-open: never render an empty item when windows exist.
 if [ -z "$icons" ] && [ "$have_rows" = "1" ]; then
     while IFS=$'\x1f' read -r idx app; do
         [ -n "$idx" ] || continue
-        glyph=$("$CONFIG_DIR/plugins/icon_map_fn.sh" "$app")
-        icons+="${glyph}  "
-    done < <(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$WORKSPACE_INDEX" --argjson order "$ORDER" '[.[] | select(.index == $idx) | .windows[] | {i: .id.idx, a: (.app_name // .bundle_id // "?")}] | sort_by((.i) as $i | ($order | index($i)) // 1000000) | .[] | "\(.i)\u001f\(.a)"')
+        glyph_for_app "$app"
+        icons+="${GLYPH}  "
+    done <<< "$WINDOWS_TSV"
 fi
 
 if [ -n "$icons" ]; then

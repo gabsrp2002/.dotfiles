@@ -27,13 +27,13 @@ touch_flag() {
 }
 
 schedule_hide() {
-    # Hide 1.0s later unless the pointer re-entered in the meantime (counter
+    # Hide 0.35s later unless the pointer re-entered in the meantime (counter
     # moved). Terminates: each exit schedules at most one check, and checks
     # never reschedule.
     local seen
     seen=$(cat "$COUNT_FILE" 2>/dev/null || echo 0)
     (
-        sleep 1.0
+        sleep 0.35
         if [ "$(cat "$COUNT_FILE" 2>/dev/null || echo 0)" = "$seen" ]; then
             NAME="$PARENT" "$CONFIG_DIR/plugins/rift_popup.sh" "$1" "$2" hide
         fi
