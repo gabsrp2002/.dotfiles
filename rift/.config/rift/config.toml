@@ -192,13 +192,13 @@ comb1 = "Alt + Shift"
 "Alt + K" = { move_focus = "up" }
 "Alt + L" = { move_focus = "right" }
 
-# Move in scrolling workspaces: a shared column ejects a new adjacent column; a
-# lone column reorders and crosses displays only at the strip edge. Up/down
-# reorder within the column. Non-scrolling layouts delegate to move_node_or_cross.
-"comb1 + H" = { exec = ["/bin/zsh", "-c", "~/scripts/move_column_or_cross left"] }
-"comb1 + J" = { exec = ["/bin/zsh", "-c", "~/scripts/move_column_or_cross down"] }
-"comb1 + K" = { exec = ["/bin/zsh", "-c", "~/scripts/move_column_or_cross up"] }
-"comb1 + L" = { exec = ["/bin/zsh", "-c", "~/scripts/move_column_or_cross right"] }
+# Move windows. In scrolling layout a shared column ejects into a new adjacent
+# column, a lone column reorders, and at the strip edge the window crosses to
+# the adjacent display (native move_node crosses displays in every layout).
+"comb1 + H" = { move_node = "left" }
+"comb1 + J" = { move_node = "down" }
+"comb1 + K" = { move_node = "up" }
+"comb1 + L" = { move_node = "right" }
 
 # Alt+F cycles the focused column between one (0.5) and two (1.0) columns (see
 # preset_column_widths). Fullscreen-within-gaps is no longer bound; true
@@ -223,10 +223,9 @@ comb1 = "Alt + Shift"
 "comb1 + P" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_next_prev prev"] }
 
 # Move a single window to another display, focus follows (was Aerospace
-# move-node-to-monitor --focus-follows-window). In scrolling layout the window
-# is walked to the strip edge, then crossed.
-"Alt + Cmd + H" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_to_display left"] }
-"Alt + Cmd + L" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_to_display right"] }
+# move-node-to-monitor --focus-follows-window).
+"Alt + Cmd + H" = { move_window_to_display = { selector = "left" } }
+"Alt + Cmd + L" = { move_window_to_display = { selector = "right" } }
 
 # Move the entire active workspace to another display (was move_to_monitor script).
 "Ctrl + Alt + Cmd + H" = { move_workspace_to_display = { selector = "left", wrap_around = true } }
