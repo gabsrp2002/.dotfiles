@@ -30,15 +30,19 @@ run_on_start = [
 ]
 
 [settings.ui.stack_line]
-# Native stack indicator.
+# Native stack indicator. thickness has a hard minimum of 20 (the 0.7.0
+# stackline rewrite); selected_color was dropped upstream with that rewrite.
 enabled = true
 hover = "hover"
 horiz_placement = "top"
 vert_placement = "left"
-thickness = 4.0
+thickness = 20.0
 spacing = 1.0
-# Catppuccin green selected segment (A6E3A1); readable on blue backgrounds.
-selected_color = { r = 0.65, g = 0.89, b = 0.63, a = 0.9 }
+
+[settings.ui.menu_bar]
+enabled = false
+show_empty = false
+show_binding_mode = true
 
 [settings.gestures]
 # Three-finger horizontal swipes switch workspaces, skipping empty ones
@@ -53,6 +57,9 @@ haptics_enabled = false
 # Default layout (Aerospace `tiles`).
 mode = "traditional"
 window_insertion_point = "next_to_selection"
+
+[settings.drag_drop]
+drop_action = "stack"
 
 # Sway-style node normalization on insert (replaces Aerospace
 # enable-normalization-flatten-containers, so no flatten keybind is needed).

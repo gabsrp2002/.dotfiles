@@ -12,15 +12,6 @@ TARGET=$(echo "$WORKSPACES_JSON" | jq -r --argjson cur "$CURRENT" '[.[] | select
 if [ -z "$TARGET" ]; then
     rift-cli execute workspace create >/dev/null
     TARGET=$(rift-cli query workspaces | jq -r 'map(.index) | max')
-
-    # Workaround for acsandmann/rift#577: a freshly created workspace has no
-    # layout object yet, so the moved window would not be added to the tiling
-    # tree and would sit untiled until later events. Toggling the layout mode
-    # away and back forces layout creation while the workspace is still empty.
-    MODE=$(rift-cli query workspaces | jq -r --argjson t "$TARGET" '.[] | select(.index == $t) | .layout_mode // empty')
-    if [ "$MODE" = "stack" ]; then ALT="traditional"; else ALT="stack"; fi
-    rift-cli execute workspace set-layout "$ALT" --workspace-id "$TARGET" >/dev/null
-    rift-cli execute workspace set-layout "${MODE:-traditional}" --workspace-id "$TARGET" >/dev/null
 fi
 
 rift-cli execute workspace move-window "$TARGET" --follow >/dev/null
