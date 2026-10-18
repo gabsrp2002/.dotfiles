@@ -17,15 +17,26 @@ focus_follows_mouse = true
 mouse_follows_focus = true
 mouse_hides_on_focus = true
 
+# Scrolling wants displays arranged vertically in macOS (all displays share one
+# coordinate space, so side-by-side displays let off-screen columns leak onto a
+# neighbor). Keep the physical side-by-side feel: warp the pointer across the
+# logical vertical chain as if the displays were left/right.
+horizontal_mouse_warp = "top-to-bottom"
+
 # Apps that must not steal focus / trigger workspace switches.
 auto_focus_blacklist = []
 
 hot_reload = true
 
-# Notify Sketchybar about workspace and window changes.
+# Notify Sketchybar about workspace and window changes. Scrolling also needs
+# focused_window_changed (scrolling the strip changes which columns are visible
+# without changing the window set) and layout_changed (column-width/geometry
+# changes, e.g. Alt+F) so window icons refresh.
 run_on_start = [
   "rift-cli subscribe cli --event workspace_changed --command sh --args -c --args 'sketchybar --trigger rift_workspace_changed'",
   "rift-cli subscribe cli --event windows_changed --command sh --args -c --args 'sketchybar --trigger rift_windows_changed'",
+  "rift-cli subscribe cli --event focused_window_changed --command sh --args -c --args 'sketchybar --trigger rift_windows_changed'",
+  "rift-cli subscribe cli --event layout_changed --command sh --args -c --args 'sketchybar --trigger rift_windows_changed'",
   "rift-cli subscribe cli --event binding_mode_changed --command sh --args -c --args 'sketchybar --trigger rift_mode_change'",
 ]
 
@@ -54,8 +65,8 @@ skip_empty = true
 haptics_enabled = false
 
 [settings.layout]
-# Default layout (Aerospace `tiles`).
-mode = "traditional"
+# Default layout: scrolling strip of columns (was Aerospace `tiles`).
+mode = "scrolling"
 window_insertion_point = "next_to_selection"
 
 [settings.drag_drop]
@@ -65,6 +76,24 @@ drop_action = "stack"
 # enable-normalization-flatten-containers, so no flatten keybind is needed).
 [settings.layout.traditional]
 equalize_nodes = true
+
+[settings.layout.scrolling]
+# Each column is half the tiling area, so two windows sit side by side.
+column_width_ratio = 0.5
+min_column_width_ratio = 0.3
+max_column_width_ratio = 1.0
+# Alt+F cycles a window between one column (0.5) and two columns (1.0). Order
+# matters: the cycler picks the first preset wider than the current width, so
+# with [1.0, 0.5] anything below 1.0 goes to 1.0 and exactly-1.0 wraps to 0.5.
+preset_column_widths = [1.0, 0.5]
+# Lone column fills the width; its stored width returns once a column returns.
+expand_single_column = true
+# Force arrivals to column_width_ratio so pairs tile edge-to-edge (preserved
+# widths would leave permanent neighbor slivers).
+preserve_window_sizes = false
+# Focused-column placement; niri only scrolls as far as needed to reveal it.
+alignment = "center"
+focus_navigation_style = "niri"
 
 [settings.layout.stack]
 # No offset: stacked windows overlap exactly (was 40.0).
@@ -144,8 +173,8 @@ comb1 = "Alt + Shift"
 # New terminal in a tmux session (wrapped in zsh so ~ expands; Rift launches directly).
 "Ctrl + Shift + T" = { exec = ["/bin/zsh", "-c", "kitty --single-instance -d ~ -e tmux new -A -s default"] }
 
-# Layouts (were Aerospace `tiles` / `v_accordion`).
-"Alt + Slash" = { set_workspace_layout = { mode = "traditional" } }
+# Layouts: scrolling strip (default) or overlapping stack.
+"Alt + Slash" = { set_workspace_layout = { mode = "scrolling" } }
 "Alt + Semicolon" = { set_workspace_layout = { mode = "stack" } }
 
 # Focus mpv wherever it is, otherwise open the most recent Onepace note.
@@ -154,22 +183,27 @@ comb1 = "Alt + Shift"
 "Alt + T" = { exec = ["/bin/zsh", "-c", "~/scripts/gemini-temp"] }
 "Alt + G" = { exec = ["open", "-a", "Gemini"] }
 
-# Focus windows (mouse follows via mouse_follows_focus).
+# Focus windows (mouse follows via mouse_follows_focus). In scrolling layout,
+# left/right move within the strip and stop at the edge (never cross displays);
+# up/down move within the column and DO cross to the vertically-adjacent
+# display. Use the display-focus keys to switch displays.
 "Alt + H" = { move_focus = "left" }
 "Alt + J" = { move_focus = "down" }
 "Alt + K" = { move_focus = "up" }
 "Alt + L" = { move_focus = "right" }
 
-# Move windows; at the screen edge with a monitor beyond, cross displays
-# (mirrors Aerospace move --boundaries all-monitors-outer-frame).
-"comb1 + H" = { exec = ["/bin/zsh", "-c", "~/scripts/move_node_or_cross left"] }
-"comb1 + J" = { exec = ["/bin/zsh", "-c", "~/scripts/move_node_or_cross down"] }
-"comb1 + K" = { exec = ["/bin/zsh", "-c", "~/scripts/move_node_or_cross up"] }
-"comb1 + L" = { exec = ["/bin/zsh", "-c", "~/scripts/move_node_or_cross right"] }
+# Move in scrolling workspaces: a shared column ejects a new adjacent column; a
+# lone column reorders and crosses displays only at the strip edge. Up/down
+# reorder within the column. Non-scrolling layouts delegate to move_node_or_cross.
+"comb1 + H" = { exec = ["/bin/zsh", "-c", "~/scripts/move_column_or_cross left"] }
+"comb1 + J" = { exec = ["/bin/zsh", "-c", "~/scripts/move_column_or_cross down"] }
+"comb1 + K" = { exec = ["/bin/zsh", "-c", "~/scripts/move_column_or_cross up"] }
+"comb1 + L" = { exec = ["/bin/zsh", "-c", "~/scripts/move_column_or_cross right"] }
 
-# Fullscreen within gaps keeps the window below sketchybar (toggle_fullscreen
-# ignores gaps and slides under the bar).
-"Alt + F" = "toggle_fullscreen_within_gaps"
+# Alt+F cycles the focused column between one (0.5) and two (1.0) columns (see
+# preset_column_widths). Fullscreen-within-gaps is no longer bound; true
+# fullscreen stays on Alt+Shift+F.
+"Alt + F" = "switch_preset_column_width"
 "Alt + Shift + F" = { exec = ["/bin/zsh", "-c", "~/scripts/toggle_fullscreen"] }
 "Alt + Shift + Space" = "toggle_window_floating"
 
@@ -189,7 +223,8 @@ comb1 = "Alt + Shift"
 "comb1 + P" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_next_prev prev"] }
 
 # Move a single window to another display, focus follows (was Aerospace
-# move-node-to-monitor --focus-follows-window).
+# move-node-to-monitor --focus-follows-window). In scrolling layout the window
+# is walked to the strip edge, then crossed.
 "Alt + Cmd + H" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_to_display left"] }
 "Alt + Cmd + L" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_to_display right"] }
 

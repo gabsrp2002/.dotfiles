@@ -1,0 +1,138 @@
+#!/bin/zsh
+
+# Scrolling-aware window move.
+#
+# Column rule:
+# - Cross displays only when no column lies beyond the focused window in that
+#   direction AND the window is alone in its column.
+# - Otherwise the window gets a new column: a window sharing its column is
+#   ejected into a new adjacent column; a lone window with a neighbor column
+#   keeps its column and reorders (never joins, never crosses).
+# - Up/down reorder within the column.
+#
+# Native behavior relied on (to re-validate on Rift 0.7.0):
+# - `layout move-node` on a lone column reorders within the strip, and at the
+#   strip edge transfers the window to the adjacent display (focus follows).
+# - `layout consume-or-expel-window` on a shared window ejects it into a new
+#   adjacent column.
+# - `display move-window` does not transfer windows between scrolling displays,
+#   so crossing goes through `move-node`.
+#
+# Column membership comes from explicit layout math (the focused window's
+# column index vs. the strip's column range), not geometry: columns live
+# off-screen, so geometry checks are invalid.
+#
+# Non-scrolling workspaces (e.g. stack) delegate to move_node_or_cross.
+# Usage: move_column_or_cross left|right|up|down
+
+DIRECTION=$1
+
+INFO=$(~/scripts/focused_window_info) || exit 0
+UUID=${INFO%%|*}
+REST=${INFO#*|}
+IDX=${REST%%|*}
+REST=${REST#*|}
+BUNDLE=${REST%%|*}
+APP=${REST#*|}
+
+# Sync Rift's command context to the window's display first: layout commands
+# act on the command space, which can lag behind real focus.
+CTX=$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid')
+if [ "$CTX" != "$UUID" ] && [ -n "$BUNDLE" ]; then
+    open -b "$BUNDLE" 2>/dev/null || open -a "$APP" 2>/dev/null
+    for _ in 1 2 3 4 5 6; do
+        CTX=$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid')
+        [ "$CTX" = "$UUID" ] && break
+        sleep 0.05
+    done
+fi
+
+MODE=$(rift-cli query layout --display "$UUID" 2>/dev/null | jq -r '.mode // empty')
+if [ -z "$MODE" ]; then
+    MODE=$(rift-cli query workspace-layout --display "$UUID" 2>/dev/null | jq -r '.[] | select(.is_active == true) | .layout_mode // empty')
+fi
+if [ "$MODE" != "scrolling" ]; then
+    exec ~/scripts/move_node_or_cross "$DIRECTION"
+fi
+
+# Floating and true fullscreen windows move as plain nodes.
+FLOATING=$(rift-cli query workspaces --display "$UUID" | jq -r --argjson idx "$IDX" '[.[] | .windows[] | select(.id.idx == $idx)][0] | .is_floating // false')
+if [ "$FLOATING" = "true" ]; then
+    rift-cli execute layout move-node "$DIRECTION" >/dev/null
+    sketchybar --trigger rift_windows_changed
+    exit 0
+fi
+IS_FULL=$(rift-cli query layout --display "$UUID" | jq -r --argjson idx "$IDX" '[.. | objects | select(.window_id?.idx == $idx) | [.is_fullscreen, .is_fullscreen_within_gaps] | any] | any // false')
+if [ "$IS_FULL" = "true" ]; then
+    rift-cli execute layout move-node "$DIRECTION" >/dev/null
+    sketchybar --trigger rift_windows_changed
+    exit 0
+fi
+
+# Align the tree selection with the focused window: move/join act on the
+# selection, not on focus.
+sync_selection() {
+    local wid
+    wid=$(rift-cli query workspaces --display "$UUID" | jq -c --argjson idx "$IDX" '[.[] | .windows[] | select(.id.idx == $idx)][0].id // empty')
+    if [ -n "$wid" ] && [ "$wid" != "null" ]; then
+        rift-cli execute window focus --window-id "$wid" >/dev/null
+    fi
+}
+
+# After a `move-node`, pull macOS key focus after the window when it left this
+# display (Rift moves its own focus but macOS lags). Poll for the cross instead
+# of a fixed sleep; bounded at the old 0.3s budget.
+settle_move() {
+    local after after_uuid
+    for _ in 1 2 3 4 5 6; do
+        after=$(~/scripts/focused_window_info 2>/dev/null) || after=""
+        after_uuid=${after%%|*}
+        if [ -n "$after_uuid" ] && [ "$after_uuid" != "$UUID" ]; then
+            if [ -n "$BUNDLE" ]; then
+                open -b "$BUNDLE" 2>/dev/null || open -a "$APP" 2>/dev/null
+            elif [ -n "$APP" ]; then
+                open -a "$APP" 2>/dev/null
+            fi
+            break
+        fi
+        sleep 0.05
+    done
+    sketchybar --trigger rift_windows_changed
+}
+
+case "$DIRECTION" in
+    left|right)
+        # Explicit column math for this display's active strip (column indexes
+        # repeat across workspaces, so scope to the active workspace).
+        WS=$(rift-cli query workspaces --display "$UUID" 2>/dev/null | jq -c '[.[] | select(.is_active == true)]')
+        COL=$(echo "$WS" | jq -r --argjson idx "$IDX" '[.[] | .windows[] | select(.id.idx == $idx)][0].layout_position.column // empty')
+        if [ -z "$COL" ]; then
+            # Unknown shape: plain move-node (reorders, or crosses at the edge
+            # for lone windows). Never force a cross blindly.
+            sync_selection
+            rift-cli execute layout move-node "$DIRECTION" >/dev/null
+            settle_move
+            exit 0
+        fi
+        INCOL=$(echo "$WS" | jq -r --argjson col "$COL" '[.[] | .windows[] | select(.layout_position.column == $col)] | length')
+        if [ "$INCOL" -gt 1 ]; then
+            # Shared column: eject into a new adjacent column (never crosses,
+            # never joins).
+            sync_selection
+            rift-cli execute layout consume-or-expel-window "$DIRECTION" >/dev/null
+            sketchybar --trigger rift_windows_changed
+        else
+            # Lone window: reorder within the strip, or transfer to the
+            # adjacent display at the strip edge (no column beyond).
+            sync_selection
+            rift-cli execute layout move-node "$DIRECTION" >/dev/null
+            settle_move
+        fi
+        ;;
+    *)
+        # Up/down reorder within the column; never crosses, so no focus pull.
+        sync_selection
+        rift-cli execute layout move-node "$DIRECTION" >/dev/null
+        sketchybar --trigger rift_windows_changed
+        ;;
+esac
