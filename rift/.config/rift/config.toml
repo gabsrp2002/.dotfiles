@@ -98,7 +98,7 @@ focus_navigation_style = "niri"
 [settings.layout.stack]
 # No offset: stacked windows overlap exactly (was 40.0).
 stack_offset = 0.0
-default_orientation = "perpendicular"
+default_orientation = "horizontal"
 
 [settings.layout.gaps]
 # Uniform outer top gap leaves room for Sketchybar (was conditional in Aerospace).
