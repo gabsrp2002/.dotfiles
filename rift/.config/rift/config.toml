@@ -33,6 +33,7 @@ hot_reload = true
 # without changing the window set) and layout_changed (column-width/geometry
 # changes, e.g. Alt+F) so window icons refresh.
 run_on_start = [
+  "sketchybar",
   "rift-cli subscribe cli --event workspace_changed --command sh --args -c --args 'sketchybar --trigger rift_workspace_changed'",
   "rift-cli subscribe cli --event windows_changed --command sh --args -c --args 'sketchybar --trigger rift_windows_changed'",
   "rift-cli subscribe cli --event focused_window_changed --command sh --args -c --args 'sketchybar --trigger rift_windows_changed'",
