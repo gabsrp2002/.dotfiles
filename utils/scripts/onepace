@@ -17,6 +17,23 @@ fi
 ONE_PACE_DIR=$(cd "$ONE_PACE_DIR" && pwd)
 STATE_FILE="$ONE_PACE_DIR/.one_pace_state.json"
 
+# ── cleanup ──────────────────────────────────────────────────────────────────
+# Temp paths and background processes registered here are removed/killed on exit.
+# zsh skips EXIT traps when killed by a signal, so signals are turned into a normal
+# exit (130) to make sure cleanup also runs on Ctrl+C, kill, or closing the terminal.
+CLEANUP_PATHS=()
+CLEANUP_PIDS=()
+cleanup() {
+  local pid
+  for pid in "${CLEANUP_PIDS[@]}"; do
+    kill "$pid" 2>/dev/null || true
+  done
+  (( ${#CLEANUP_PATHS[@]} )) && rm -rf -- "${CLEANUP_PATHS[@]}" 2>/dev/null
+  return 0
+}
+trap cleanup EXIT
+trap 'exit 130' INT TERM HUP
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 # Read a key from the JSON state file using Zsh regex pattern matching.
@@ -102,7 +119,7 @@ USAGE:
   onepace --recent        Replay the last watched episode immediately
   onepace --web [port]    Start local web streaming server & ngrok tunnel
   onepace --status, -s    Display current watch progress summary
-  onepace --import <src>  Import a .zip archive or folder of episodes
+  onepace --import <src>... Import episodes from .zip archives, folders or .mp4 files
   onepace --help, -h      Show this help message
 
 KEYBINDINGS IN FZF:
@@ -191,7 +208,7 @@ arc_number() {
   case "$slug" in
     reverie) slug="levely" ;;
     sabaody) slug="sabaody_archipelago" ;;
-    fishman|fish_man|fishman_island_arc) slug="fishman_island" ;;
+    fishman|fish_man|fish_man_island|fishman_island_arc) slug="fishman_island" ;;
     wano) slug="wano_country" ;;
     whole_cake) slug="whole_cake_island" ;;
     post_enies) slug="post_enies_lobby" ;;
@@ -207,6 +224,78 @@ arc_number() {
     fi
   done
   return 1
+}
+
+# ── import helpers ───────────────────────────────────────────────────────────
+
+# "Sabaody Archipelago" → "sabaody_archipelago"
+slugify() {
+  echo "$1" | tr '[:upper:]' '[:lower:]' | tr ' -' '__' | tr -cd 'a-z0-9_'
+}
+
+# Extract the arc name part of a One Pace zip/folder/file name:
+#   "[One Pace][903-904] Reverie 01 [1080p][En Sub][ACF334E7].mp4" → "Reverie 01"
+#   "[903-908] Levely [En Sub][1080p].zip"                         → "Levely"
+parse_arc_name() {
+  local name="${1:t}"
+  [[ "${name:l}" == *.(zip|mp4) ]] && name="${name:r}"
+  echo "$name" | sed -E 's/^(\[[^]]*\] *)+//; s/ *[[(].*$//; s/ +$//'
+}
+
+# Resolve a parsed arc name to its canonical directory name: "Reverie 01" → "30_levely".
+# Tries the full name first (so "Water 7" works), then without a trailing episode number.
+resolve_arc_dir() {
+  local name="$1" candidate slug num
+  for candidate in "$name" "${name% [0-9]*}"; do
+    slug=$(slugify "$candidate")
+    [[ -z "$slug" ]] && continue
+    if num=$(arc_number "$slug"); then
+      echo "${num}_${ARC_ORDER[$(( 10#$num ))]}"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Episode number from a file name: last number left after stripping [..] and (..) blocks.
+parse_episode_number() {
+  local base="${1:t:r}"
+  echo "$base" | sed -E 's/\[[^]]*\]//g; s/\([^)]*\)//g' | grep -oE '[0-9]+' | tail -1 || true
+}
+
+# Import a single .mp4. Args: <file> <arc dir hint or ""> <move: 0|1> <fallback ep number>
+# Returns 0 = imported, 1 = failed (unknown arc), 2 = skipped (episode already exists).
+import_episode() {
+  local f="$1" arc_dir_name="$2" move="$3" seq="$4"
+  local parsed ep_digit ep_name target_dir dest
+
+  if [[ -z "$arc_dir_name" ]]; then
+    parsed="$(parse_arc_name "$f")"
+    arc_dir_name=$(resolve_arc_dir "$parsed") || {
+      echo "✗ Unknown arc '$parsed' for: ${f:t}" >&2
+      return 1
+    }
+  fi
+
+  ep_digit=$(parse_episode_number "$f")
+  [[ -n "$ep_digit" ]] && seq=$(( 10#$ep_digit ))
+  ep_name=$(printf "ep%02d.mp4" "$seq")
+
+  target_dir="$ONE_PACE_DIR/$arc_dir_name"
+  dest="$target_dir/$ep_name"
+  if [[ -e "$dest" ]]; then
+    echo "⚠ Skipped, already exists: $(format_arc "$arc_dir_name") / $(format_episode "$ep_name")  ← ${f:t}" >&2
+    return 2
+  fi
+
+  mkdir -p "$target_dir"
+  if (( move )); then
+    mv "$f" "$dest"
+  else
+    # APFS clone (instant, no extra disk space); fall back to a regular copy across volumes.
+    cp -c "$f" "$dest" 2>/dev/null || cp "$f" "$dest"
+  fi
+  echo "✓ $(format_arc "$arc_dir_name") / $(format_episode "$ep_name")  ← ${f:t}"
 }
 
 # ── main ─────────────────────────────────────────────────────────────────────
@@ -240,9 +329,10 @@ case "${1:-}" in
     export ONE_PACE_DIR="$ONE_PACE_DIR"
     node "$web_dir/server.js" &
     server_pid=$!
+    CLEANUP_PIDS+=("$server_pid")
 
-    ngrok_log=$(mktemp "$ONE_PACE_DIR/.ngrok_log_XXXXXX")
-    trap 'kill $server_pid 2>/dev/null || true; kill ${ngrok_pid:-} 2>/dev/null || true; rm -f "$ngrok_log" 2>/dev/null || true' EXIT
+    ngrok_log=$(mktemp -t onepace_ngrok)
+    CLEANUP_PATHS+=("$ngrok_log")
 
     sleep 1
 
@@ -254,6 +344,7 @@ case "${1:-}" in
     if command -v ngrok &>/dev/null; then
       ngrok http --url easy-artistic-mullet.ngrok-free.app  "$port" >"$ngrok_log" 2>&1 &
       ngrok_pid=$!
+      CLEANUP_PIDS+=("$ngrok_pid")
 
       ngrok_url=""
       attempt=0
@@ -288,85 +379,71 @@ case "${1:-}" in
     ;;
 esac
 
-# --import <zip|folder>: extract/copy One Pace episodes into correct arc directory.
+# --import <src>...: import episodes from .zip archives, folders or individual .mp4 files.
+# The arc is taken from the zip/folder name when it matches a known arc, otherwise from
+# each file name, e.g. "[One Pace][903-904] Reverie 01 [1080p][En Sub][ACF334E7].mp4".
 if [[ "${1:-}" == "--import" ]]; then
-  import_src="${2:-}"
-  if [[ -z "$import_src" || ! -e "$import_src" ]]; then
-    echo "Usage: onepace --import <path-to-zip-or-folder>" >&2
+  shift
+  if (( $# == 0 )); then
+    echo "Usage: onepace --import <file.zip | folder | file.mp4> [more ...]" >&2
     exit 1
   fi
 
-  src_basename="$(basename "$import_src")"
-  src_name="${src_basename%.zip}"
-
-  # Parse arc name from filename/foldername: "[490-513] Sabaody Archipelago [En Sub][720p]"
-  arc_display=$(echo "$src_name" | sed 's/^\[[^]]*\] *//; s/ *\[.*$//')
-
-  if [[ -z "$arc_display" ]]; then
-    echo "Could not parse arc name from: $src_name" >&2
-    exit 1
-  fi
-
-  # Convert display name to slug: "Sabaody Archipelago" → "sabaody_archipelago"
-  arc_slug=$(echo "$arc_display" | tr '[:upper:]' '[:lower:]' | tr ' ' '_' | tr '-' '_' | tr -cd 'a-z0-9_')
-
-  # Look up the arc number
-  arc_num=$(arc_number "$arc_slug") || {
-    echo "Unknown arc: '$arc_display' (slug: $arc_slug)" >&2
-    echo "" >&2
-    echo "Known arcs:" >&2
-    local i
-    for (( i=1; i<=${#ARC_ORDER[@]}; i++ )); do
-      printf "  %02d  %s\n" "$i" "${ARC_ORDER[$i]}" >&2
-    done
-    exit 1
-  }
-
-  target_dir="$ONE_PACE_DIR/${arc_num}_${arc_slug}"
-  existing_eps=("$target_dir"/ep*.mp4(N))
-
-  if [[ -d "$target_dir" ]] && (( ${#existing_eps[@]} > 0 )); then
-    echo "⚠ Directory already has episodes: $target_dir" >&2
-    echo "  Delete it first if you want to re-import." >&2
-    exit 1
-  fi
-
-  echo "📦 Importing: $arc_display → $target_dir"
-  mkdir -p "$target_dir"
-
+  # Kept inside ONE_PACE_DIR (same volume) so extracted episodes can be moved instantly.
   tmp_dir=$(mktemp -d "$ONE_PACE_DIR/.import_XXXXXX")
-  trap 'rm -rf "$tmp_dir"' EXIT
+  CLEANUP_PATHS+=("$tmp_dir")
 
-  if [[ -f "$import_src" && "$import_src" == *.zip ]]; then
-    unzip -q "$import_src" -d "$tmp_dir"
-  else
-    cp -r "$import_src"/* "$tmp_dir/"
-  fi
+  imported=0 skipped=0 failed=0 zip_idx=0
 
-  count=0
-  local mp4_files=("$tmp_dir"/**/*.mp4(Nn))
-  local seq_num=1
-  for f in "${mp4_files[@]}"; do
-    [[ -f "$f" ]] || continue
-    fname="$(basename "$f")"
-    base="${fname:r}"
-    clean=$(echo "$base" | sed -E 's/\[[^]]*\]//g; s/\([^)]*\)//g')
-    ep_digit=$(echo "$clean" | grep -oE '[0-9]+' | tail -1 || true)
+  for src in "$@"; do
+    files=() hint_dir="" move=0
 
-    if [[ -n "$ep_digit" ]]; then
-      ep_num=$(( 10#$ep_digit ))
+    if [[ -f "$src" && "${src:l}" == *.zip ]]; then
+      zip_idx=$(( zip_idx + 1 ))
+      extract_dir="$tmp_dir/zip_$zip_idx"
+      mkdir -p "$extract_dir"
+      echo "📦 Extracting: ${src:t}"
+      unzip -q "$src" -d "$extract_dir"
+      files=("$extract_dir"/**/*.mp4(N.n))
+      hint_dir=$(resolve_arc_dir "$(parse_arc_name "$src")") || hint_dir=""
+      move=1   # extracted copies can be moved
+    elif [[ -d "$src" ]]; then
+      echo "📁 Scanning: ${src:t}"
+      files=("$src"/**/*.mp4(N.n))
+      hint_dir=$(resolve_arc_dir "$(parse_arc_name "$src")") || hint_dir=""
+    elif [[ -f "$src" && "${src:l}" == *.mp4 ]]; then
+      files=("$src")
     else
-      ep_num=$seq_num
+      echo "✗ Not a .zip, .mp4 or folder: $src" >&2
+      failed=$(( failed + 1 ))
+      continue
     fi
 
-    ep_name=$(printf "ep%02d.mp4" "$ep_num")
-    mv "$f" "$target_dir/$ep_name"
-    count=$(( count + 1 ))
-    seq_num=$(( seq_num + 1 ))
+    if (( ${#files[@]} == 0 )); then
+      echo "✗ No .mp4 files found in: $src" >&2
+      failed=$(( failed + 1 ))
+      continue
+    fi
+
+    seq_num=1
+    for f in "${files[@]}"; do
+      rc=0
+      import_episode "$f" "$hint_dir" "$move" "$seq_num" || rc=$?
+      case $rc in
+        0) imported=$(( imported + 1 )) ;;
+        2) skipped=$(( skipped + 1 )) ;;
+        *) failed=$(( failed + 1 )) ;;
+      esac
+      seq_num=$(( seq_num + 1 ))
+    done
   done
 
-  echo "✓ Imported $count episodes into $target_dir"
-  ls "$target_dir"
+  echo ""
+  echo "Done: $imported imported, $skipped skipped, $failed failed."
+  if (( failed > 0 )); then
+    echo "Known arcs: ${ARC_ORDER[*]}" >&2
+    exit 1
+  fi
   exit 0
 fi
 
@@ -535,8 +612,8 @@ fi
 
 echo "▶ Playing from: $(format_arc "$selected_arc") / $(format_episode "$selected_episode")"
 
-mpv_log=$(mktemp "$ONE_PACE_DIR/.mpv_log_XXXXXX")
-trap 'rm -f "$mpv_log"' EXIT
+mpv_log=$(mktemp -t onepace_mpv)
+CLEANUP_PATHS+=("$mpv_log")
 
 # Build MPV options disabling watch_later playlist redirects so selected_episode ALWAYS plays
 mpv_opts=(--no-resume-playback --save-position-on-quit --term-playing-msg='ONE_PACE_PLAYING:${path}' --title="One Pace")
@@ -547,7 +624,12 @@ if [[ -n "$start_ts" && "$start_ts" != "0" && "$selected_arc" == "$(read_state l
   mpv_opts+=(--start="$start_ts")
 fi
 
-mpv "${mpv_opts[@]}" "${playlist[@]}" 2>&1 | tee "$mpv_log"
+# While mpv runs, Ctrl+C should only quit mpv (which saves its position), not this
+# script, so the state below still gets saved. `|| true` keeps set -e from aborting
+# when mpv exits non-zero.
+trap ':' INT
+mpv "${mpv_opts[@]}" "${playlist[@]}" 2>&1 | tee "$mpv_log" || true
+trap 'exit 130' INT
 
 # Parse last played episode from MPV terminal output log
 last_played_line=$(grep "ONE_PACE_PLAYING:" "$mpv_log" | tail -1 || true)
