@@ -125,6 +125,10 @@ horizontal = 10
 vertical = 10
 
 [virtual_workspaces]
+# One numbered workspace list shared across all displays: each workspace lives
+# on exactly one display at a time. Keybind next/prev stay display-local in
+# this mode; direct workspace numbers and trackpad swipes can cross displays.
+mode = "global"
 enabled = true
 # Start with a single empty workspace; the rest are created on demand (Alt + C).
 default_workspace_count = 1
@@ -137,6 +141,13 @@ reapply_app_rules_on_title_change = false
 workspace_names = []
 # Start on workspace 0 (the only initial workspace).
 default_workspace = 0
+
+# Workspace 0 belongs to the built-in display and uses the stack layout by
+# default. An explicit move overrides this until the rule reactivates.
+[[virtual_workspaces.workspace_rules]]
+workspace = 0
+display = ["builtin"]
+layout = "stack"
 
 # Floating windows (were Aerospace on-window-detected `layout floating` rules).
 # position centers each floating window on arrival (fraction of free travel).
@@ -210,16 +221,21 @@ comb1 = "Alt + Shift"
 
 "Alt + Enter" = { toggle_window_floating = { center = true } }
 
-# New workspace (create auto-switches; script moves the focused window and follows).
+# Move the focused window to the first empty workspace on the current display
+# and follow it. Reuses an existing empty workspace; only creates a new one when
+# the display has no other empty workspace. (Create auto-switches, so the script
+# does the move and follow itself.)
 "Alt + C" = { exec = ["/bin/zsh", "-c", "~/scripts/move_to_new_ws"] }
 
-# Next/previous workspace, skipping empty ones.
-# (Script wrapper: native next/prev always lands on empties.)
-"Alt + N" = { exec = ["/bin/zsh", "-c", "~/scripts/focus_next_prev next"] }
-"Alt + P" = { exec = ["/bin/zsh", "-c", "~/scripts/focus_next_prev prev"] }
+# Next/previous non-empty workspace, wrapping. `true` = skip empty workspaces
+# (native: no script spawn). In global workspace mode this stays display-local,
+# matching Rift's own next/prev semantics.
+"Alt + N" = { next_workspace = true }
+"Alt + P" = { prev_workspace = true }
 
-# Move focused window to next/previous non-empty workspace and follow it.
-# (Script wrapper: Rift's move_window_to_workspace cannot skip empties.)
+# Move focused window to next/previous non-empty workspace on the current
+# display and follow it. (Script wrapper: Rift's move_window_to_workspace
+# cannot skip empties.)
 "comb1 + N" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_next_prev next"] }
 "comb1 + P" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_next_prev prev"] }
 

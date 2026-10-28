@@ -1,42 +1,39 @@
 #!/bin/zsh
 
-# Move the focused window to the next/previous non-empty workspace and follow it.
-# (Rift's move_window_to_workspace always lands on empty workspaces, so this
-# wraps it with skip-empty logic. Wraps around like Alt+N/P.)
+# Move the focused window to the next/previous non-empty workspace on the
+# current display and follow it, wrapping around on that display.
+# (Rift's native move_window_to_workspace next/prev does not skip empty
+# workspaces, so this wrapper picks the target itself. Rift's native
+# next/prev are display-local in global workspace mode; this matches that.)
 # Usage: move_window_next_prev next|prev
 
 DIRECTION=${1:-next}
 
+# One query, one jq pass: resolve the focused workspace, keep only that
+# display's workspaces (global mode has one active workspace per display, so
+# `is_active` is not unique), then step to the first non-empty neighbour.
 WORKSPACES_JSON=$(rift-cli query workspaces)
-CURRENT=$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')
-INDEXES=("${(@f)$(echo "$WORKSPACES_JSON" | jq -r 'sort_by(.index) | .[].index')}")
-N=${#INDEXES[@]}
-[ "$N" -eq 0 ] && exit 0
-
-POS=0
-for i in {1..$N}; do
-    if [ "${INDEXES[$i]}" = "$CURRENT" ]; then
-        POS=$i
-        break
-    fi
-done
-[ "$POS" -eq 0 ] && exit 0
-
-TARGET=""
-STEP=$POS
-for ((k = 0; k < N; k++)); do
-    if [ "$DIRECTION" = "next" ]; then
-        STEP=$((STEP % N + 1))
-    else
-        STEP=$(((STEP - 2 + N) % N + 1))
-    fi
-    CAND=${INDEXES[$STEP]}
-    COUNT=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$CAND" '.[] | select(.index == $idx) | .window_count // 0')
-    if [ "$COUNT" != "0" ]; then
-        TARGET=$CAND
-        break
-    fi
-done
+TARGET=$(echo "$WORKSPACES_JSON" | jq -r --arg dir "$DIRECTION" '
+    [.[] | select(.is_focused == true)][0] as $cur
+    | if $cur == null then empty else
+        ([.[] | select(.display_uuid == $cur.display_uuid)] | sort_by(.index)) as $list
+        | ($list | length) as $n
+        | ($list | map(.index) | index($cur.index)) as $pos
+        | if $n < 2 or $pos == null then empty else
+            (reduce range(1; $n) as $k ({target: null};
+                if .target != null then .
+                else
+                    (if $dir == "next"
+                     then ($pos + $k) % $n
+                     else (($pos - $k) % $n + $n) % $n
+                     end) as $i
+                    | if $list[$i].window_count != 0
+                      then .target = $list[$i].index
+                      else . end
+                end)
+             | .target)
+          end
+      end')
 [ -z "$TARGET" ] && exit 0
 
 rift-cli execute workspace move-window "$TARGET" --follow >/dev/null

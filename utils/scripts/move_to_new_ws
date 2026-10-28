@@ -1,23 +1,48 @@
 #!/bin/zsh
 
-# Move the focused window to the first empty workspace (other than the
-# current one) and follow it. Only creates a new workspace when no empty
-# one is available. (Rift's `workspace create` auto-switches, and indexes
-# are append-only since there is no destroy command.)
+# Move the focused window to the first empty workspace on the current display
+# and follow it. Reuses an existing empty workspace; only creates a new one
+# when the display has no other empty workspace. (Rift's `workspace create`
+# auto-switches, and indexes are append-only since there is no destroy
+# command.)
+#
+# In global workspace mode each display has its own active workspace, so
+# `is_active` is not unique. Resolve the focused workspace (globally unique via
+# `is_focused`) and scope the empty-workspace search to its display.
+#
+# One query + one jq pass keep the hot path fast; the Sketchybar rebuild only
+# runs when a workspace was actually created (reuse needs no new bar item).
 
 WORKSPACES_JSON=$(rift-cli query workspaces)
-CURRENT=$(echo "$WORKSPACES_JSON" | jq -r '.[] | select(.is_active == true) | .index')
-TARGET=$(echo "$WORKSPACES_JSON" | jq -r --argjson cur "$CURRENT" '[.[] | select(.index != $cur and .window_count == 0) | .index] | first // empty')
+# index, display uuid, first empty index on that display ("" when none).
+RESOLVED=$(echo "$WORKSPACES_JSON" | jq -r '
+    [.[] | select(.is_focused == true)][0] as $cur
+    | if $cur == null then empty else
+        ([.[] | select(.display_uuid == $cur.display_uuid
+                       and .index != $cur.index
+                       and .window_count == 0)]
+         | sort_by(.index)) as $empty
+        | [$cur.index, $cur.display_uuid, ($empty[0].index // "")] | @tsv
+      end')
+[ -z "$RESOLVED" ] && exit 0
+IFS=$'\t' read -r _ UUID TARGET <<< "$RESOLVED"
+[ -z "$UUID" ] && exit 0
 
+CREATED=0
 if [ -z "$TARGET" ]; then
     rift-cli execute workspace create >/dev/null
-    TARGET=$(rift-cli query workspaces | jq -r 'map(.index) | max')
+    TARGET=$(rift-cli query workspaces --display "$UUID" 2>/dev/null | jq -r 'map(.index) | max // empty')
+    CREATED=1
 fi
 
-rift-cli execute workspace move-window "$TARGET" --follow >/dev/null
+if [ -n "$TARGET" ]; then
+    rift-cli execute workspace move-window "$TARGET" --follow >/dev/null
+fi
 
-# Rebuild workspace items (covers the new workspace; idempotent).
-~/.config/sketchybar/plugins/rebuild_spaces.sh
+# A new workspace needs a new bar item; reusing an empty one does not.
+if [ "$CREATED" = "1" ]; then
+    ~/.config/sketchybar/plugins/rebuild_spaces.sh
+fi
 
 sketchybar --trigger rift_workspace_changed
 sketchybar --trigger rift_windows_changed
