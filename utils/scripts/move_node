@@ -1,0 +1,74 @@
+#!/bin/zsh
+
+# Move the focused window up/down, crossing to the adjacent display when the
+# workspace has no room left in that direction.
+#
+# Rift's native move_node only crosses displays along the physical display
+# layout and, in stack layout, prefers reordering the overlapping stack over
+# crossing. This machine stacks the displays vertically, so at the top row of
+# the top display (or the bottom row of the bottom display) native move_node
+# looks like a no-op, and in stack layout / for floating windows it never
+# crosses at all. This wrapper keeps the native move while there is a row above
+# or below inside the focused column, and otherwise falls back to
+# move_window_to_display, walking the displays in the horizontal_mouse_warp
+# order (top display first) and wrapping around.
+#
+# Usage: move_node up|down
+
+DIRECTION=${1:-}
+case "$DIRECTION" in
+  up|down) ;;
+  *)
+    print -u2 "usage: move_node up|down"
+    exit 2
+    ;;
+esac
+
+WORKSPACES_JSON=$(rift-cli query workspaces) || exit 0
+[ -z "$WORKSPACES_JSON" ] && exit 0
+
+# Does native move_node still have an in-workspace move available?
+#   - scrolling layout, tiled window: there must be a row above/below inside
+#     the focused column
+#   - stack layout / floating window / no focused window: no vertical move to
+#     preserve, so go straight to the display
+DECISION=$(echo "$WORKSPACES_JSON" | jq -r --arg dir "$DIRECTION" '
+  [.[] | select(.is_focused)][0] as $ws
+  | ($ws.windows // [] | map(select(.is_focused)) | first) as $win
+  | if $ws == null or $win == null then "native"
+    elif $ws.layout_mode != "scrolling" then "display"
+    elif ($win.layout_position.column // null) == null then "display"
+    else
+      ($win.layout_position.column) as $col
+      | ($win.layout_position.row // 0) as $row
+      | ([$ws.windows[] | select(.layout_position.column == $col)] | length) as $rows
+      | if $dir == "up" then
+          (if $row > 0 then "native" else "display" end)
+        else
+          (if $row < $rows - 1 then "native" else "display" end)
+        end
+    end
+') || exit 0
+
+if [ "$DECISION" != "display" ]; then
+  rift-cli execute layout move-node "$DIRECTION" >/dev/null
+  exit 0
+fi
+
+CURRENT_DISPLAY=$(echo "$WORKSPACES_JSON" | jq -r '[.[] | select(.is_focused)][0].display_uuid // empty')
+[ -z "$CURRENT_DISPLAY" ] && exit 0
+
+TARGET=$(rift-cli query displays | jq -r --arg cur "$CURRENT_DISPLAY" --arg dir "$DIRECTION" '
+  (sort_by(.frame.origin.y, .frame.origin.x)) as $screens
+  | ($screens | map(.uuid) | index($cur)) as $idx
+  | if $idx == null then empty
+    else
+      ($screens | length) as $n
+      | ($idx + (if $dir == "down" then 1 else -1 end))
+      | (. % $n + $n) % $n as $next
+      | $screens[$next].uuid
+    end
+') || exit 0
+[ -z "$TARGET" ] && exit 0
+
+rift-cli execute display move-window --uuid "$TARGET" >/dev/null

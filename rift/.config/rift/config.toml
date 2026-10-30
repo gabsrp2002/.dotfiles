@@ -204,12 +204,16 @@ comb1 = "Alt + Shift"
 "Alt + K" = { move_focus = "up" }
 "Alt + L" = { move_focus = "right" }
 
-# Move windows. In scrolling layout a shared column ejects into a new adjacent
-# column, a lone column reorders, and at the strip edge the window crosses to
-# the adjacent display (native move_node crosses displays in every layout).
+# Move windows. H/L are the plain native command: they reorder/eject columns
+# inside the scrolling strip and stop at the strip edge (the displays are
+# stacked vertically, so native left/right never finds a display neighbour).
+# J/K go through a wrapper: native move_node reorders the overlapping stack or
+# no-ops at the outer display edge, so the wrapper keeps the in-workspace move
+# and otherwise moves the window to the adjacent display in the
+# horizontal_mouse_warp order (up/down the chain), wrapping around.
 "comb1 + H" = { move_node = "left" }
-"comb1 + J" = { move_node = "down" }
-"comb1 + K" = { move_node = "up" }
+"comb1 + J" = { exec = ["/bin/zsh", "-c", "~/scripts/move_node down"] }
+"comb1 + K" = { exec = ["/bin/zsh", "-c", "~/scripts/move_node up"] }
 "comb1 + L" = { move_node = "right" }
 
 # Alt+F cycles the focused column between one (0.5) and two (1.0) columns (see
@@ -233,9 +237,11 @@ comb1 = "Alt + Shift"
 "Alt + N" = { next_workspace = true }
 "Alt + P" = { prev_workspace = true }
 
-# Move focused window to next/previous non-empty workspace on the current
-# display and follow it. (Script wrapper: Rift's move_window_to_workspace
-# cannot skip empties.)
+# Move the focused window to the next/previous non-empty workspace and follow
+# it. Walks the whole (global) workspace catalog in index order and wraps
+# around, so from the last non-empty workspace on a display it continues onto
+# the next display. (Script wrapper: Rift's move_window_to_workspace cannot
+# skip empties.)
 "comb1 + N" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_next_prev next"] }
 "comb1 + P" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_next_prev prev"] }
 

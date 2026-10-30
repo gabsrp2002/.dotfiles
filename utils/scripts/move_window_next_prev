@@ -1,24 +1,25 @@
 #!/bin/zsh
 
-# Move the focused window to the next/previous non-empty workspace on the
-# current display and follow it, wrapping around on that display.
-# (Rift's native move_window_to_workspace next/prev does not skip empty
-# workspaces, so this wrapper picks the target itself. Rift's native
-# next/prev are display-local in global workspace mode; this matches that.)
+# Move the focused window to the next/previous non-empty workspace and follow
+# it. Traverses the whole (global) workspace catalog and wraps around, matching
+# the old Aerospace `move-node-to-workspace --wrap-around next` behavior: from
+# the last non-empty workspace on a display the move continues onto the next
+# display instead of stopping at the display edge.
+# (Rift's native move_window_to_workspace next/prev cannot skip empty
+# workspaces, so this wrapper picks the target itself.)
 # Usage: move_window_next_prev next|prev
 
 DIRECTION=${1:-next}
 
-# One query, one jq pass: resolve the focused workspace, keep only that
-# display's workspaces (global mode has one active workspace per display, so
-# `is_active` is not unique), then step to the first non-empty neighbour.
+# One query, one jq pass: resolve the focused workspace, then step through the
+# catalog in index order to the nearest non-empty workspace, wrapping.
 WORKSPACES_JSON=$(rift-cli query workspaces)
 TARGET=$(echo "$WORKSPACES_JSON" | jq -r --arg dir "$DIRECTION" '
-    [.[] | select(.is_focused == true)][0] as $cur
+    [.[] | select(.is_focused == true)][0].index as $cur
     | if $cur == null then empty else
-        ([.[] | select(.display_uuid == $cur.display_uuid)] | sort_by(.index)) as $list
+        (sort_by(.index)) as $list
         | ($list | length) as $n
-        | ($list | map(.index) | index($cur.index)) as $pos
+        | ($list | map(.index) | index($cur)) as $pos
         | if $n < 2 or $pos == null then empty else
             (reduce range(1; $n) as $k ({target: null};
                 if .target != null then .
