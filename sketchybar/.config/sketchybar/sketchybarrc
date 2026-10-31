@@ -91,6 +91,8 @@ sketchybar --add item front_app left \
 sketchybar --add event rift_workspace_changed
 sketchybar --add event rift_windows_changed
 sketchybar --add event rift_mode_change
+# Internal follow-up used by rift_refresh.sh after Rift's switch animation.
+sketchybar --add event rift_trailing_refresh
 
 sketchybar --add item rift_mode left \
            --set rift_mode script="$PLUGIN_DIR/rift_mode.sh" \
@@ -105,14 +107,16 @@ sketchybar --add item rift_mode left \
 # space.<arrangement-id>_<workspace-index>, pinned via display=<arr>.
 # Clicking focuses that display first: `workspace switch` alone would act on
 # whichever display is currently active (upstream limitation, see #131).
-# Built by rebuild_spaces.sh, which also re-runs on every display_change
-# (dock/undock) via the spaces_watcher item below.
-"$CONFIG_DIR/plugins/rebuild_spaces.sh"
+# rift_refresh.sh owns item creation and rendering; the hidden rift_watcher is
+# the only subscriber, so one coalesced run handles each event burst. The space
+# items themselves only subscribe to mouse events (hover popups) in
+# rift_refresh.sh.
+"$CONFIG_DIR/plugins/rift_refresh.sh" --init
 
-sketchybar --add item spaces_watcher left \
-           --set spaces_watcher drawing=off \
-                                script="$CONFIG_DIR/plugins/rebuild_spaces.sh" \
-           --subscribe spaces_watcher display_change
+sketchybar --add item rift_watcher left \
+           --set rift_watcher drawing=off \
+                                script="$CONFIG_DIR/plugins/rift_refresh.sh" \
+           --subscribe rift_watcher rift_workspace_changed rift_windows_changed display_change rift_trailing_refresh
 
 ##### Adding Center Items #####
 

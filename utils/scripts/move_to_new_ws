@@ -28,21 +28,16 @@ RESOLVED=$(echo "$WORKSPACES_JSON" | jq -r '
 IFS=$'\t' read -r _ UUID TARGET <<< "$RESOLVED"
 [ -z "$UUID" ] && exit 0
 
-CREATED=0
 if [ -z "$TARGET" ]; then
     rift-cli execute workspace create >/dev/null
     TARGET=$(rift-cli query workspaces --display "$UUID" 2>/dev/null | jq -r 'map(.index) | max // empty')
-    CREATED=1
 fi
 
 if [ -n "$TARGET" ]; then
     rift-cli execute workspace move-window "$TARGET" --follow >/dev/null
 fi
 
-# A new workspace needs a new bar item; reusing an empty one does not.
-if [ "$CREATED" = "1" ]; then
-    ~/.config/sketchybar/plugins/rebuild_spaces.sh
-fi
-
+# The triggers below make rift_refresh.sh sync the bar, which also creates the
+# item for a newly created workspace (no explicit rebuild needed).
 sketchybar --trigger rift_workspace_changed
 sketchybar --trigger rift_windows_changed

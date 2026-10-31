@@ -8,7 +8,7 @@
 #   moves between item and popup).
 # - mouse.exited anywhere: hide shortly after, unless the pointer re-entered
 #   in the meantime (checked via the keepalive timestamp).
-# - any other event: normal item refresh (delegates to rift.sh).
+# - any other event: full refresh (delegates to rift_refresh.sh via rift.sh).
 
 PARENT="$NAME"
 if [[ "$PARENT" == *.win* ]]; then

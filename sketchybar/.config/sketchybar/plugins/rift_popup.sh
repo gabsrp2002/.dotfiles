@@ -52,8 +52,8 @@ if [ -n "$PREVIOUS_OPEN" ] && [ "$PREVIOUS_OPEN" != "$PARENT" ]; then
 fi
 printf '%s' "$PARENT" > "$OPEN_TRACKER"
 
-# Visibility rule mirrors plugins/rift.sh: focused column always counts,
-# otherwise ~90% of the frame must be inside the display (or cover it).
+# Visibility rule mirrors plugins/rift_refresh.sh: focused column always
+# counts, otherwise ~90% of the frame must be inside the display (or cover it).
 DISPLAY_FRAME=$(rift-cli query displays 2>/dev/null | jq -c --arg uuid "$DISPLAY_UUID" '.[] | select(.uuid == $uuid) | .frame // empty')
 FOCUSED_IDX=$(echo "$WORKSPACES_JSON" | jq -r --argjson idx "$WORKSPACE_INDEX" '.[] | select(.index == $idx) | .windows[] | select(.is_focused == true) | .id.idx // empty')
 if [ -n "$FOCUSED_IDX" ] && [ "$FOCUSED_IDX" != "null" ]; then
