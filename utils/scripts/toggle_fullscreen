@@ -14,7 +14,7 @@ STATE_FILE=/tmp/rift_fs_hidden_display
 
 # Display (uuid) holding a selected fullscreen window right now, if any.
 fullscreen_display() {
-    for uuid in $(rift-cli query displays | jq -r '.[].uuid'); do
+    for uuid in $(rift-cli query displays 2>/dev/null | jq -r '.[].uuid'); do
         if rift-cli query layout --display "$uuid" 2>/dev/null | jq -e '[.. | objects | select(.is_selected == true) | select(.is_fullscreen == true)] | length > 0' >/dev/null 2>&1; then
             echo "$uuid"
             return 0
@@ -28,11 +28,6 @@ arr_for() {
     sketchybar --query displays 2>/dev/null | jq -r --arg uuid "$1" '.[] | select(.UUID == $uuid) | ."arrangement-id" // empty'
 }
 
-# Notch check: only Apple's built-in display has one; its bar never overlaps.
-is_notch_display() {
-    [ "$(rift-cli query displays | jq -r --arg uuid "$1" '.[] | select(.uuid == $uuid) | .name // empty')" = "Built-in Retina Display" ]
-}
-
 if FULL_UUID=$(fullscreen_display); then
     # Leaving fullscreen: toggle Rift state, restore the bar we hid (if any).
     rift-cli execute window toggle-fullscreen >/dev/null
@@ -43,8 +38,8 @@ if FULL_UUID=$(fullscreen_display); then
 else
     # Entering fullscreen on the active display.
     rift-cli execute window toggle-fullscreen >/dev/null
-    ACTIVE_UUID=$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid')
-    if [ -n "$ACTIVE_UUID" ] && ! is_notch_display "$ACTIVE_UUID"; then
+    IFS=$'\t' read -r ACTIVE_UUID ACTIVE_NAME < <(rift-cli query displays 2>/dev/null | jq -r '.[] | select(.is_active_context == true) | "\(.uuid)\t\(.name)"')
+    if [ -n "$ACTIVE_UUID" ] && [ "$ACTIVE_NAME" != "Built-in Retina Display" ]; then
         sketchybar --bar hidden=current >/dev/null
         arr_for "$ACTIVE_UUID" > "$STATE_FILE"
     fi

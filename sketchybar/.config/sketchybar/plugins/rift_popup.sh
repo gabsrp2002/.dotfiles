@@ -112,7 +112,11 @@ while IFS=$'\x1f' read -r idx pid app title vis; do
     [ -n "$idx" ] || continue
     [ "$pool_i" -lt "$POOL_SIZE" ] || break
     child="${PARENT}.winpool.${pool_i}"
-    icon=$("$CONFIG_DIR/plugins/icon_map_fn.sh" "$app")
+    icon=""
+    if [ -f /tmp/sketchybar_rift_glyphs ]; then
+        icon=$(awk -F'\x1f' -v a="$app" '$1 == a {print $2; exit}' /tmp/sketchybar_rift_glyphs 2>/dev/null)
+    fi
+    [ -z "$icon" ] && icon=$("$CONFIG_DIR/plugins/icon_map_fn.sh" "$app")
     [ -z "$icon" ] && icon="•"
     if [ "$vis" = "true" ]; then
         color=$GREEN

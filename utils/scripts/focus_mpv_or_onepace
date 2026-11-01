@@ -3,40 +3,35 @@
 # Focus the mpv window wherever it is (any display/workspace), or open the
 # most recent Onepace note if mpv isn't running.
 #
-# Three Rift quirks make this a script instead of a one-liner:
+# Three Rift quirks shape this flow:
 # - `query windows` only covers the active workspace, so search via workspaces.
-# - `window focus` only works within the active workspace *and* active
-#   display (otherwise silently ignored), so focus the display and switch
-#   workspace first.
-# - Wait for the display activation to propagate (async native
-#   notification) before focusing, so a stale main-window focus event
-#   doesn't override it.
+# - `window focus` requires the target display and workspace to be active first.
+# - Wait for the display activation to propagate before focusing.
 
-FOUND_UUID=""
-FOUND_INDEX=""
-FOUND_ID=""
-for uuid in $(rift-cli query displays | jq -r '.[].uuid'); do
-    IDX=$(rift-cli query workspaces --display "$uuid" | jq -r '[.[] | select(.windows[].app_name == "mpv")][0].index // empty')
-    if [ -n "$IDX" ]; then
-        FOUND_UUID=$uuid
-        FOUND_INDEX=$IDX
-        FOUND_ID=$(rift-cli query workspaces --display "$uuid" | jq -c --argjson idx "$IDX" '[.[] | select(.index == $idx) | .windows[] | select(.app_name == "mpv")][0].id')
-        break
-    fi
-done
+MATCH=$(rift-cli query workspaces 2>/dev/null | jq -r '
+  [
+    .[] | {uuid: .display_uuid, index: .index} as $ws
+    | .windows[]?
+    | select(.app_name == "mpv")
+    | [$ws.uuid, ($ws.index | tostring), (.id | tojson)]
+  ] | first // [] | join("\t")
+')
 
-if [ -z "$FOUND_UUID" ]; then
+if [ -z "$MATCH" ]; then
     ~/scripts/onepace --recent
     exit 0
 fi
 
+IFS=$'\t' read -r FOUND_UUID FOUND_INDEX FOUND_ID <<< "$MATCH"
+
 rift-cli execute display focus --uuid "$FOUND_UUID" >/dev/null
 rift-cli execute workspace switch "$FOUND_INDEX" >/dev/null
-# Poll for display-context convergence instead of a fixed sleep; capped at
-# the old 0.3s budget.
+
+# Poll for display-context convergence (up to 0.3s)
 for _ in 1 2 3 4 5 6; do
     CTX=$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid')
     [ "$CTX" = "$FOUND_UUID" ] && break
     sleep 0.05
 done
+
 rift-cli execute window focus --window-id "$FOUND_ID" >/dev/null

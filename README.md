@@ -68,10 +68,16 @@ cd .dotfiles
 
 ### macOS
 
-Install all macOS packages:
+Install core macOS packages:
 
 ```sh
-stow git kitty latex nvim rift rofi sketchybar tmux utils zsh
+stow git kitty rift sketchybar tmux utils zsh
+```
+
+Optional packages (`nvim`, `latex`, `rofi`):
+
+```sh
+stow nvim latex
 ```
 
 ### Arch Linux

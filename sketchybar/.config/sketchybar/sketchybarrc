@@ -77,7 +77,7 @@ sketchybar --add item apple.logo left                                           
 
 sketchybar --add item disk left \
            --set disk script="$PLUGIN_DIR/disk.sh" \
-            update_freq=2 \
+            update_freq=5 \
             icon="" \
             label.color=$SUBTEXT_COLOR \
 
@@ -148,7 +148,7 @@ sketchybar --add item love q \
 
 # # CPU
 sketchybar --add item cpu e \
-           --set cpu  update_freq=2 \
+           --set cpu  update_freq=4 \
                       icon=  \
                       icon.color=$TEAL \
                       click_script="kitty -e btop" \
@@ -200,11 +200,12 @@ sketchybar --add item bluetooth right \
 
 # WiFi
 sketchybar --add item wifi right \
-           --set wifi update_freq=2 \
+           --set wifi update_freq=30 \
                       script="$PLUGIN_DIR/wifi.sh" \
                       click_script="$PLUGIN_DIR/click_wifi.sh" \
                       icon.color=$BLUE \
-                      label.color=$SUBTEXT_COLOR
+                      label.color=$SUBTEXT_COLOR \
+           --subscribe wifi system_woke
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update

@@ -25,7 +25,13 @@ fi
 
 # Stow dotfiles
 echo "\n=> Step 3: Stow dotfiles"
-stow git kitty latex nvim rift rofi sketchybar tmux utils zsh
+stow git kitty rift sketchybar tmux utils zsh
+if [[ "$*" == *"--with-nvim"* ]]; then
+    stow nvim
+fi
+if [[ "$*" == *"--with-latex"* ]]; then
+    stow latex
+fi
 echo "${GREEN}Dotfiles stowed!${NC}"
 
 # Install oh-my-zsh
@@ -72,20 +78,21 @@ brew install btop
 brew install jq # For rift-cli / sketchybar JSON parsing
 brew install felixkratz/formulae/sketchybar
 brew install lazygit
-
-echo "\nInstalling developer tools for neovim..."
-brew install nvim
-brew install stylua # For lua formatting
-brew install lua-language-server # For lua language server
-brew install prettier # For a lot of languages formatting
-brew install uv
-# TODO: Install a python virtual environment at $HOME/.config/nvim/venv with uv and install pynvim there
-brew install node
-npm install -g neovim
-brew install deno # For markdown preview
-brew install anomalyco/tap/opencode
 brew install tmux
-echo "${GREEN}Developer tools installed!${NC}"
+brew install anomalyco/tap/opencode
+
+if [[ "$*" == *"--with-nvim"* ]]; then
+    echo "\nInstalling developer tools for neovim..."
+    brew install nvim
+    brew install stylua # For lua formatting
+    brew install lua-language-server # For lua language server
+    brew install prettier # For code formatting
+    brew install uv
+    brew install node
+    npm install -g neovim
+    brew install deno # For markdown preview
+    echo "${GREEN}Developer tools for neovim installed!${NC}"
+fi
 
 # Give scripts permission to run
 echo "\n=> Step 8: Make scripts executable"

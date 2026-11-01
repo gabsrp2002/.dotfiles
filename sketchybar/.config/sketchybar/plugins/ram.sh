@@ -1,16 +1,13 @@
 #!/bin/bash
 
-VM_STAT=$(vm_stat)
-PAGE_SIZE=$(sysctl -n hw.pagesize)
-MEM_TOTAL=$(sysctl -n hw.memsize)
+# Parse memory usage directly from vm_stat and sysctl (avoids the heavy ~150ms `top` run)
+RAM_PERCENT=$(vm_stat | awk -v total="$(sysctl -n hw.memsize)" -v page="$(sysctl -n hw.pagesize)" '
+/Pages active:/ { gsub(/\./, "", $3); active = $3 }
+/Pages wired down:/ { gsub(/\./, "", $4); wired = $4 }
+/Pages occupied by compressor:/ { gsub(/\./, "", $5); comp = $5 }
+END {
+  used = (active + wired + comp) * page
+  printf "%.0f\n", (used * 100 / total)
+}')
 
-PAGES_ACTIVE=$(echo "$VM_STAT" | grep "Pages active:" | awk '{print $3}' | tr -d '.')
-PAGES_WIRED=$(echo "$VM_STAT" | grep "Pages wired down:" | awk '{print $4}' | tr -d '.')
-
-COMPRESSOR_MB=$(top -l 1 -n 0 | grep "PhysMem:" | sed -E 's/.*, ([0-9]+)M compressor.*/\1/')
-COMPRESSED_PAGES=$((COMPRESSOR_MB * 1024 * 1024 / PAGE_SIZE))
-
-MEM_USED=$(( (PAGES_ACTIVE + PAGES_WIRED + COMPRESSED_PAGES) * PAGE_SIZE ))
-RAM_PERCENT=$(( MEM_USED * 100 / MEM_TOTAL ))
-
-sketchybar --set $NAME label="$RAM_PERCENT%"
+sketchybar --set "${NAME:-ram}" label="${RAM_PERCENT}%"

@@ -6,6 +6,11 @@ ZSH_THEME="robbyrussell"
 # Do not use case sensitive completion
 CASE_SENSITIVE="false"
 
+# Docker CLI completions (added before oh-my-zsh compinit)
+if [[ -d "$HOME/.docker/completions" ]]; then
+  fpath=("$HOME/.docker/completions" $fpath)
+fi
+
 plugins=(git zsh-syntax-highlighting)
 
 source $ZSH/oh-my-zsh.sh
@@ -23,8 +28,10 @@ if [[ $(uname) == "Darwin" ]]; then
     alias prev="open -a Preview"
 fi
 
-# nvim alias
-alias vim="nvim"
+# nvim alias (if installed)
+if command -v nvim >/dev/null 2>&1; then
+  alias vim="nvim"
+fi
 alias claude="claude --dangerously-skip-permissions"
 unalias gwt
 
@@ -57,11 +64,6 @@ if [[ $(uname) == "Darwin" ]]; then
     export PATH=$HOME/eda/oss-cad-suite/bin:$PATH
     export PATH=/usr/local/bin:$PATH
 
-    # The following lines have been added by Docker Desktop to enable Docker CLI completions.
-    fpath=(/Users/gabriel/.docker/completions $fpath)
-    autoload -Uz compinit
-    compinit
-    # End of Docker CLI completions
     # eval "$(rbenv init -)"
 fi
 

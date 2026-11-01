@@ -1,10 +1,7 @@
 #!/bin/bash
 
-CORE_COUNT=$(sysctl -n machdep.cpu.thread_count)
-CPU_INFO=$(ps -eo pcpu,user)
-CPU_SYS=$(echo "$CPU_INFO" | grep -v $(whoami) | sed "s/[^ 0-9\.]//g" | awk "{sum+=\$1} END {print sum/(100.0 * $CORE_COUNT)}")
-CPU_USER=$(echo "$CPU_INFO" | grep $(whoami) | sed "s/[^ 0-9\.]//g" | awk "{sum+=\$1} END {print sum/(100.0 * $CORE_COUNT)}")
+# Single-pass CPU usage calculation across all cores (avoids multi-process grep/sed/awk pipeline)
+CORE_COUNT=$(sysctl -n machdep.cpu.thread_count 2>/dev/null || echo 8)
+CPU_PERCENT=$(ps -A -o %cpu= | awk -v cores="$CORE_COUNT" '{sum += $1} END {printf "%.0f\n", sum / cores}')
 
-CPU_PERCENT="$(echo "$CPU_SYS $CPU_USER" | awk '{printf "%.0f\n", ($1 + $2)*100}')"
-
-sketchybar --set $NAME label="$CPU_PERCENT%"
+sketchybar --set "${NAME:-cpu}" label="${CPU_PERCENT}%"

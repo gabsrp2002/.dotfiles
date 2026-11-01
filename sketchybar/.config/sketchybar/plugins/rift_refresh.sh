@@ -267,7 +267,7 @@ render_display() {
     local WORKSPACES_JSON focused focus_mode meta tag index active wc mode fidx name
     local drawing bg ic lc hi meta_read=0
     local HI_ARGS=() LBL_ARGS=()
-    local -a drawn_idx=() drawn_fidx=()
+    local -a drawn_idx=() drawn_fidx=() drawn_mode=() drawn_wids=()
 
     WORKSPACES_JSON=$(rift-cli query workspaces --display "$uuid" 2>/dev/null)
     if [ -z "$WORKSPACES_JSON" ]; then
@@ -277,7 +277,7 @@ render_display() {
 
     # One jq pass validates the shape and yields the display's metadata:
     #   F <focused index> <focused layout mode>
-    #   W <index> <active> <window count> <layout mode> <focused window idx>
+    #   W <index> <active> <window count> <layout mode> <focused window idx> <window idx list>
     #   E (Rift has no usable workspace set for this display)
     meta=$(echo "$WORKSPACES_JSON" | jq -r '
         if type != "array" then "E"
@@ -285,12 +285,12 @@ render_display() {
         else
           ([.[] | select(.is_active == true)][0].index) as $f |
           ("F\u001f\($f)\u001f\([.[] | select(.index == $f)][0].layout_mode // "")"),
-          (.[] | "W\u001f\(.index)\u001f\(.is_active)\u001f\(.window_count // 0)\u001f\(.layout_mode // "")\u001f\((([.windows[] | select(.is_focused == true) | .id.idx] | .[0]) // ""))")
+          (.[] | "W\u001f\(.index)\u001f\(.is_active)\u001f\(.window_count // 0)\u001f\(.layout_mode // "")\u001f\((([.windows[] | select(.is_focused == true) | .id.idx] | .[0]) // ""))\u001f\([.windows[]?.id.idx] | join(","))")
         end' 2>/dev/null)
 
     focused=""
     # Pass 1: item set + highlight/visibility (no frame or layout sampling).
-    while IFS=$'\x1f' read -r tag index active wc mode fidx; do
+    while IFS=$'\x1f' read -r tag index active wc mode fidx wids; do
         case "$tag" in
             E)
                 keep_existing_for_display "$arr"
@@ -320,6 +320,8 @@ render_display() {
             drawing="on"
             drawn_idx+=("$index")
             drawn_fidx+=("$fidx")
+            drawn_mode+=("$mode")
+            drawn_wids+=("$wids")
         fi
 
         case "$EXISTING_PAD" in
@@ -358,11 +360,20 @@ render_display() {
     fi
 
     # Pass 2: icons. Only for items that are actually drawn.
-    local i idx
+    local i idx sig
     for i in "${!drawn_idx[@]}"; do
         idx="${drawn_idx[$i]}"
         name="space.${arr}_${idx}"
+        sig="${idx}:${drawn_mode[$i]}:${drawn_fidx[$i]}:${drawn_wids[$i]}"
+
+        # Unfocused workspaces with unchanged window signatures can reuse their cached label.
+        if [ "$idx" != "$focused" ] && [ -s "$STATE_DIR/$name.lbl" ] && [ "$(cat "$STATE_DIR/$name.sig" 2>/dev/null || true)" = "$sig" ]; then
+            continue
+        fi
+
         render_label "$uuid" "$idx" "$focused" "$frame" "${drawn_fidx[$i]}"
+        printf '%s' "$sig" > "$STATE_DIR/$name.sig"
+
         local lbl_state
         lbl_state="${LABEL}${ICON_SEP}${LABEL_DRAWING}${ICON_SEP}${LABEL_PADDING}"
         if [ "$(cat "$STATE_DIR/$name.lbl" 2>/dev/null || true)" != "$lbl_state" ]; then
@@ -434,7 +445,7 @@ refresh() {
             *" $name "*) ;;
             *)
                 sketchybar --remove "$name" >/dev/null 2>&1
-                rm -f "$STATE_DIR/$name.hi" "$STATE_DIR/$name.lbl"
+                rm -f "$STATE_DIR/$name.hi" "$STATE_DIR/$name.lbl" "$STATE_DIR/$name.sig"
                 ;;
         esac
     done
