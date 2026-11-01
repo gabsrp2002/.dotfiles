@@ -200,12 +200,11 @@ sketchybar --add item bluetooth right \
 
 # WiFi
 sketchybar --add item wifi right \
-           --set wifi update_freq=30 \
+           --set wifi update_freq=2 \
                       script="$PLUGIN_DIR/wifi.sh" \
                       click_script="$PLUGIN_DIR/click_wifi.sh" \
                       icon.color=$BLUE \
-                      label.color=$SUBTEXT_COLOR \
-           --subscribe wifi system_woke
+                      label.color=$SUBTEXT_COLOR
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update
