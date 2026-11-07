@@ -71,6 +71,7 @@ mode = "scrolling"
 window_insertion_point = "next_to_selection"
 
 [settings.drag_drop]
+modifier = "alt"
 drop_action = "stack"
 
 # Sway-style node normalization on insert (replaces Aerospace
@@ -95,6 +96,13 @@ preserve_window_sizes = false
 # Focused-column placement; niri only scrolls as far as needed to reveal it.
 alignment = "center"
 focus_navigation_style = "niri"
+
+[settings.layout.scrolling.gestures]
+# Three-finger horizontal scroll moves through columns in the strip and
+# switches workspaces when scrolling past the end.
+enabled = true
+fingers = 3
+propagate_to_workspace_swipe = true
 
 [settings.layout.stack]
 # No offset: stacked windows overlap exactly (was 40.0).
@@ -213,6 +221,11 @@ comb1 = "Alt + Shift"
 "comb1 + K" = { exec = ["/bin/zsh", "-c", "~/scripts/move_node up"] }
 "comb1 + L" = { move_node = "right" }
 
+# Consume a neighbor into the current scrolling column (vertical stack) or
+# expel a stacked window back into its own column.
+"Alt + Comma" = { consume_or_expel_window = "left" }
+"Alt + Period" = { consume_or_expel_window = "right" }
+
 # Alt+F cycles the focused column between one (0.5) and two (1.0) columns (see
 # preset_column_widths). Fullscreen-within-gaps is no longer bound; true
 # fullscreen stays on Alt+Shift+F.
@@ -220,7 +233,7 @@ comb1 = "Alt + Shift"
 "Alt + Shift + F" = { exec = ["/bin/zsh", "-c", "~/scripts/toggle_fullscreen"] }
 "Alt + Shift + Space" = "toggle_window_floating"
 
-"Alt + Enter" = { toggle_window_floating = { center = true } }
+"Alt + Enter" = { toggle_window_floating = { center = true, size = "smart" } }
 
 # Move the focused window to the first empty workspace on the current display
 # and follow it. Reuses an existing empty workspace; only creates a new one when
