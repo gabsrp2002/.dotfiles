@@ -105,6 +105,7 @@ focus_navigation_style = "niri"
 # Three-finger horizontal scroll moves through columns in the strip and
 # switches workspaces when scrolling past the end.
 enabled = true
+invert_horizontal = true
 fingers = 3
 propagate_to_workspace_swipe = true
 
