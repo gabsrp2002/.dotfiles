@@ -127,7 +127,7 @@ while IFS=$'\x1f' read -r idx pid app title vis; do
     if [ "${#label}" -gt 45 ]; then
         label="${label:0:45}…"
     fi
-    focus_script="rift-cli execute display focus --uuid $DISPLAY_UUID && rift-cli execute workspace switch $WORKSPACE_INDEX && for i in 1 2 3 4 5 6; do CTX=\$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid'); [ \"\$CTX\" = \"$DISPLAY_UUID\" ] && break; sleep 0.05; done && rift-cli execute window focus --window-id '{\"idx\":$idx,\"pid\":$pid}' && sketchybar --set $PARENT popup.drawing=off"
+    focus_script="rift-cli execute workspace switch $WORKSPACE_INDEX && rift-cli execute window focus --window-id '{\"idx\":$idx,\"pid\":$pid}' && sketchybar --set $PARENT popup.drawing=off"
     sketchybar --query "$child" >/dev/null 2>&1 || sketchybar --add item "$child" "popup.${PARENT}" \
         --subscribe "$child" mouse.entered mouse.exited \
         --set "$child" \

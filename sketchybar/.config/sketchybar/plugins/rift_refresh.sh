@@ -138,7 +138,7 @@ append_static_args() {
             icon="$index" \
             label.font="sketchybar-app-font:Regular:15.0" \
             label.y_offset=-1 \
-            click_script="rift-cli execute display focus --uuid $uuid && rift-cli execute workspace switch $index && sketchybar --set \$NAME popup.drawing=off" \
+            click_script="rift-cli execute workspace switch $index && sketchybar --set \$NAME popup.drawing=off" \
             script="$PLUGIN_DIR/rift_hover.sh $index $uuid" \
             popup.background.border_width=2 \
             popup.background.corner_radius=10 \

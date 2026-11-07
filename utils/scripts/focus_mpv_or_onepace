@@ -3,17 +3,16 @@
 # Focus the mpv window wherever it is (any display/workspace), or open the
 # most recent Onepace note if mpv isn't running.
 #
-# Three Rift quirks shape this flow:
-# - `query windows` only covers the active workspace, so search via workspaces.
-# - `window focus` requires the target display and workspace to be active first.
-# - Wait for the display activation to propagate before focusing.
+# `query windows` only covers the active workspace, so search via workspaces.
+# In global workspace mode, `workspace switch` automatically focuses the
+# owning display and `window focus` resolves the target window across displays.
 
 MATCH=$(rift-cli query workspaces 2>/dev/null | jq -r '
   [
-    .[] | {uuid: .display_uuid, index: .index} as $ws
+    .[] | .index as $idx
     | .windows[]?
     | select(.app_name == "mpv")
-    | [$ws.uuid, ($ws.index | tostring), (.id | tojson)]
+    | [($idx | tostring), (.id | tojson)]
   ] | first // [] | join("\t")
 ')
 
@@ -22,16 +21,7 @@ if [ -z "$MATCH" ]; then
     exit 0
 fi
 
-IFS=$'\t' read -r FOUND_UUID FOUND_INDEX FOUND_ID <<< "$MATCH"
+IFS=$'\t' read -r FOUND_INDEX FOUND_ID <<< "$MATCH"
 
-rift-cli execute display focus --uuid "$FOUND_UUID" >/dev/null
 rift-cli execute workspace switch "$FOUND_INDEX" >/dev/null
-
-# Poll for display-context convergence (up to 0.3s)
-for _ in 1 2 3 4 5 6; do
-    CTX=$(rift-cli query displays | jq -r '.[] | select(.is_active_context == true) | .uuid')
-    [ "$CTX" = "$FOUND_UUID" ] && break
-    sleep 0.05
-done
-
 rift-cli execute window focus --window-id "$FOUND_ID" >/dev/null
