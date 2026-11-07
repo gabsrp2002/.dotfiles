@@ -56,6 +56,10 @@ enabled = false
 show_empty = false
 show_binding_mode = true
 
+[settings.ui.mission_control]
+enabled = true
+show_empty_workspaces = false
+
 [settings.gestures]
 # Three-finger horizontal swipes switch workspaces, skipping empty ones
 # (matches Alt+N/P behavior).
@@ -266,6 +270,9 @@ comb1 = "Alt + Shift"
 
 # Toggle Sketchybar visibility (was service-mode `b`).
 "Alt + B" = { exec = ["sketchybar", "--bar", "topmost=toggle"] }
+
+# Rift Mission Control overview across all workspaces/displays.
+"Ctrl + Up" = "show_mission_control_all"
 
 # Resize mode (restored Aerospace mode; mode indicator updates via
 # binding_mode_changed subscription).
