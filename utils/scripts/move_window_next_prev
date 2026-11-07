@@ -38,6 +38,3 @@ TARGET=$(echo "$WORKSPACES_JSON" | jq -r --arg dir "$DIRECTION" '
 [ -z "$TARGET" ] && exit 0
 
 rift-cli execute workspace move-window "$TARGET" --follow >/dev/null
-
-sketchybar --trigger rift_workspace_changed
-sketchybar --trigger rift_windows_changed

@@ -10,8 +10,8 @@
 # `is_active` is not unique. Resolve the focused workspace (globally unique via
 # `is_focused`) and scope the empty-workspace search to its display.
 #
-# One query + one jq pass keep the hot path fast; the Sketchybar rebuild only
-# runs when a workspace was actually created (reuse needs no new bar item).
+# One query + one jq pass keep the hot path fast; rift_refresh.sh automatically
+# syncs the bar via Rift's workspace_changed/windows_changed subscriptions.
 
 WORKSPACES_JSON=$(rift-cli query workspaces)
 # index, display uuid, first empty index on that display ("" when none).
@@ -36,8 +36,3 @@ fi
 if [ -n "$TARGET" ]; then
     rift-cli execute workspace move-window "$TARGET" --follow >/dev/null
 fi
-
-# The triggers below make rift_refresh.sh sync the bar, which also creates the
-# item for a newly created workspace (no explicit rebuild needed).
-sketchybar --trigger rift_workspace_changed
-sketchybar --trigger rift_windows_changed
