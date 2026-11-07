@@ -126,8 +126,8 @@ vertical = 10
 
 [virtual_workspaces]
 # One numbered workspace list shared across all displays: each workspace lives
-# on exactly one display at a time. Keybind next/prev stay display-local in
-# this mode; direct workspace numbers and trackpad swipes can cross displays.
+# on exactly one display at a time. Next/prev commands, direct workspace
+# numbers, and trackpad swipes all navigate across visible displays.
 mode = "global"
 enabled = true
 # Start with a single empty workspace; the rest are created on demand (Alt + C).
@@ -229,8 +229,8 @@ comb1 = "Alt + Shift"
 "Alt + C" = { exec = ["/bin/zsh", "-c", "~/scripts/move_to_new_ws"] }
 
 # Next/previous non-empty workspace, wrapping. `true` = skip empty workspaces
-# (native: no script spawn). In global workspace mode this stays display-local,
-# matching Rift's own next/prev semantics.
+# (native: no script spawn). In global workspace mode this traverses across all
+# visible displays, matching trackpad swipes.
 "Alt + N" = { next_workspace = true }
 "Alt + P" = { prev_workspace = true }
 
@@ -254,8 +254,8 @@ comb1 = "Alt + Shift"
 # Toggle Sketchybar visibility (was service-mode `b`).
 "Alt + B" = { exec = ["sketchybar", "--bar", "topmost=toggle"] }
 
-# Resize mode (restored Aerospace mode; single command per key, so no
-# sketchybar mode indicator is possible).
+# Resize mode (restored Aerospace mode; mode indicator updates via
+# binding_mode_changed subscription).
 "Alt + R" = { binding_mode = "resize" }
 
 # Service mode (restored Aerospace mode).

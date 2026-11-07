@@ -102,11 +102,9 @@ sketchybar --add item rift_mode left \
            label="default" \
            --subscribe rift_mode rift_mode_change
 
-# Per-display workspace items. Rift keeps a separate workspace set per macOS
-# Space (= per display), so each display gets its own item group:
-# space.<arrangement-id>_<workspace-index>, pinned via display=<arr>.
-# Clicking focuses that display first: `workspace switch` alone would act on
-# whichever display is currently active (upstream limitation, see #131).
+# Per-display workspace items. In global workspace mode each workspace lives on
+# one display at a time, rendered as space.<arrangement-id>_<workspace-index>
+# and pinned via display=<arr>.
 # rift_refresh.sh owns item creation and rendering; the hidden rift_watcher is
 # the only subscriber, so one coalesced run handles each event burst. The space
 # items themselves only subscribe to mouse events (hover popups) in
