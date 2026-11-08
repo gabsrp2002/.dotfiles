@@ -1,4 +1,4 @@
 #!/bin/bash
 
-# Open Network preferences if modifier is not "cmd"
-open /System/Library/PreferencePanes/Network.prefPane
+# Open Wi-Fi settings in System Settings
+open "x-apple.systempreferences:com.apple.wifi-settings-extension"
