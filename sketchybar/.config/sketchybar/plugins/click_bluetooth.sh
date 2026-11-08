@@ -11,7 +11,7 @@ source "$CONFIG_DIR/colors.sh"
 
 PARENT="bluetooth"
 ACTION="${1:-}"
-POOL_SIZE=12
+POOL_SIZE=15
 ROW_WIDTH=240
 
 FLAG="/tmp/sketchybar_bt_hover"
@@ -20,6 +20,7 @@ OPEN_TRACKER="/tmp/sketchybar_rift_popup_open"
 LOOP_PID_FILE="/tmp/sketchybar_bt_loop.pid"
 INQUIRY_CACHE="/tmp/sketchybar_bt_inquiry.json"
 INQUIRY_PID_FILE="/tmp/sketchybar_bt_inquiry.pid"
+OFFSET_FILE="/tmp/sketchybar_bt_offset"
 
 touch_flag() {
     touch "$FLAG"
@@ -47,6 +48,7 @@ hide_popup() {
     if [ "$(cat "$OPEN_TRACKER" 2>/dev/null || true)" = "$PARENT" ]; then
         rm -f "$OPEN_TRACKER"
     fi
+    rm -f "$OFFSET_FILE"
     sketchybar --set "$PARENT" popup.drawing=off >/dev/null 2>&1
     stop_loops
 }
@@ -65,8 +67,9 @@ schedule_hide() {
 # Handle mouse events from popup children (`hover` arg) or delegated from bluetooth.sh
 if [ "$ACTION" = "hover" ]; then
     case "${SENDER:-}" in
-        mouse.entered) ACTION="hover_enter" ;;
-        mouse.exited)  ACTION="hover_exit" ;;
+        mouse.entered)  ACTION="hover_enter" ;;
+        mouse.exited)   ACTION="hover_exit" ;;
+        mouse.scrolled) ACTION="scroll" ;;
         *) exit 0 ;;
     esac
 fi
@@ -125,6 +128,8 @@ render_devices() {
     bt_power=$(blueutil --power 2>/dev/null || echo "0")
     local -a args=()
     local pool_i=0
+    local total=0
+    local offset=0
 
     if [ "$bt_power" != "1" ]; then
         args+=(--set "${PARENT}.pool.0"
@@ -165,11 +170,10 @@ render_devices() {
             | join("\u001f")
         ' 2>/dev/null)
 
-        local addr name conn paired child icon ic lc label
+        local -a rows_icon=() rows_ic=() rows_label=() rows_lc=() rows_cmd=()
+        local addr name conn paired icon ic lc label
         while IFS=$'\x1f' read -r addr name conn paired; do
             [ -n "$addr" ] || continue
-            [ "$pool_i" -lt "$POOL_SIZE" ] || break
-            child="${PARENT}.pool.${pool_i}"
             if [ "$conn" = "1" ]; then
                 icon="󰂱"
                 ic="$GREEN"
@@ -189,16 +193,36 @@ render_devices() {
             if [ "${#label}" -gt 26 ]; then
                 label="${label:0:25}…"
             fi
+            rows_icon+=("$icon")
+            rows_ic+=("$ic")
+            rows_label+=("$label")
+            rows_lc+=("$lc")
+            rows_cmd+=("$PLUGIN_DIR/click_bluetooth.sh toggle_device '$addr' '$paired'")
+        done <<< "$merged_tsv"
+
+        total="${#rows_label[@]}"
+        offset=$(cat "$OFFSET_FILE" 2>/dev/null || echo 0)
+        local max_offset=$((total - POOL_SIZE))
+        [ "$max_offset" -lt 0 ] && max_offset=0
+        [ "$offset" -gt "$max_offset" ] && offset="$max_offset"
+        [ "$offset" -lt 0 ] && offset=0
+        echo "$offset" > "$OFFSET_FILE"
+
+        local idx="$offset"
+        local child
+        while [ "$idx" -lt "$total" ] && [ "$pool_i" -lt "$POOL_SIZE" ]; do
+            child="${PARENT}.pool.${pool_i}"
             args+=(--set "$child"
                 drawing=on
                 width="$ROW_WIDTH"
-                icon="$icon"
-                icon.color="$ic"
-                label="$label"
-                label.color="$lc"
-                click_script="$PLUGIN_DIR/click_bluetooth.sh toggle_device '$addr' '$paired' '$child'")
+                icon="${rows_icon[$idx]}"
+                icon.color="${rows_ic[$idx]}"
+                label="${rows_label[$idx]}"
+                label.color="${rows_lc[$idx]}"
+                click_script="${rows_cmd[$idx]} '$child'")
             pool_i=$((pool_i + 1))
-        done <<< "$merged_tsv"
+            idx=$((idx + 1))
+        done
 
         # If inquiry is actively running and we still have room, show a subtle scanning row
         if [ -f "$INQUIRY_PID_FILE" ] && kill -0 "$(cat "$INQUIRY_PID_FILE" 2>/dev/null)" 2>/dev/null && [ "$pool_i" -lt "$POOL_SIZE" ]; then
@@ -215,6 +239,15 @@ render_devices() {
         fi
     fi
 
+    if [ "$total" -gt "$POOL_SIZE" ]; then
+        local start_n=$((offset + 1))
+        local end_n=$((offset + pool_i))
+        [ "$end_n" -gt "$total" ] && end_n="$total"
+        args+=(--set "${PARENT}.settings" label="Bluetooth Settings… (${start_n}–${end_n}/${total} ↕)")
+    else
+        args+=(--set "${PARENT}.settings" label="Open Bluetooth Settings…")
+    fi
+
     while [ "$pool_i" -lt "$POOL_SIZE" ]; do
         args+=(--set "${PARENT}.pool.${pool_i}" drawing=off)
         pool_i=$((pool_i + 1))
@@ -222,6 +255,25 @@ render_devices() {
 
     [ "${#args[@]}" -gt 0 ] && sketchybar "${args[@]}" >/dev/null 2>&1
 }
+
+if [ "$ACTION" = "scroll" ]; then
+    touch_flag
+    [ "$(cat "$OPEN_TRACKER" 2>/dev/null || true)" = "$PARENT" ] || exit 0
+    delta="${SCROLL_DELTA:-0}"
+    [ "$delta" -eq 0 ] 2>/dev/null && exit 0
+    offset=$(cat "$OFFSET_FILE" 2>/dev/null || echo 0)
+    if [ "$delta" -lt 0 ] 2>/dev/null; then
+        step=$(( -delta > 3 ? 3 : (-delta < 1 ? 1 : -delta) ))
+        offset=$((offset + step))
+    elif [ "$delta" -gt 0 ] 2>/dev/null; then
+        step=$(( delta > 3 ? 3 : (delta < 1 ? 1 : delta) ))
+        offset=$((offset - step))
+        [ "$offset" -lt 0 ] && offset=0
+    fi
+    echo "$offset" > "$OFFSET_FILE"
+    render_devices
+    exit 0
+fi
 
 if [ "$ACTION" = "render_once" ]; then
     render_devices
@@ -235,6 +287,8 @@ if [ "$PREVIOUS_OPEN" = "$PARENT" ] && [ "$ACTION" != "show" ]; then
     hide_popup
     exit 0
 fi
+
+echo 0 > "$OFFSET_FILE"
 
 # Close any other open popup (wifi or rift workspace popup) and open ours IMMEDIATELY
 if [ -n "$PREVIOUS_OPEN" ] && [ "$PREVIOUS_OPEN" != "$PARENT" ] && [ "$PREVIOUS_OPEN" != "wifi" ]; then

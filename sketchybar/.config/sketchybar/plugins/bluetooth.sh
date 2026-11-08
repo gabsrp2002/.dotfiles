@@ -13,6 +13,9 @@ case "$SENDER" in
     mouse.exited)
         exec "$CONFIG_DIR/plugins/click_bluetooth.sh" hover_exit
         ;;
+    mouse.scrolled)
+        exec "$CONFIG_DIR/plugins/click_bluetooth.sh" scroll
+        ;;
 esac
 
 # Skip background status polls while Bluetooth inquiry is actively running

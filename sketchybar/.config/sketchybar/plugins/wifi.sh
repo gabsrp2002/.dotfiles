@@ -13,6 +13,9 @@ case "$SENDER" in
     mouse.exited)
         exec "$CONFIG_DIR/plugins/click_wifi.sh" hover_exit
         ;;
+    mouse.scrolled)
+        exec "$CONFIG_DIR/plugins/click_wifi.sh" scroll
+        ;;
 esac
 
 source "$CONFIG_DIR/colors.sh"

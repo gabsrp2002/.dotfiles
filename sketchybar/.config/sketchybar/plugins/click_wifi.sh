@@ -11,7 +11,7 @@ source "$CONFIG_DIR/colors.sh"
 
 PARENT="wifi"
 ACTION="${1:-}"
-POOL_SIZE=12
+POOL_SIZE=15
 ROW_WIDTH=240
 WIFI_DEV="en0"
 
@@ -21,6 +21,7 @@ OPEN_TRACKER="/tmp/sketchybar_rift_popup_open"
 LOOP_PID_FILE="/tmp/sketchybar_wifi_loop.pid"
 SCAN_CACHE="/tmp/sketchybar_wifi_scan.tsv"
 SCAN_PID_FILE="/tmp/sketchybar_wifi_scan.pid"
+OFFSET_FILE="/tmp/sketchybar_wifi_offset"
 
 touch_flag() {
     touch "$FLAG"
@@ -48,6 +49,7 @@ hide_popup() {
     if [ "$(cat "$OPEN_TRACKER" 2>/dev/null || true)" = "$PARENT" ]; then
         rm -f "$OPEN_TRACKER"
     fi
+    rm -f "$OFFSET_FILE"
     sketchybar --set "$PARENT" popup.drawing=off >/dev/null 2>&1
     stop_loops
 }
@@ -66,8 +68,9 @@ schedule_hide() {
 # Handle mouse events from popup children (`hover` arg) or delegated from wifi.sh
 if [ "$ACTION" = "hover" ]; then
     case "${SENDER:-}" in
-        mouse.entered) ACTION="hover_enter" ;;
-        mouse.exited)  ACTION="hover_exit" ;;
+        mouse.entered)  ACTION="hover_enter" ;;
+        mouse.exited)   ACTION="hover_exit" ;;
+        mouse.scrolled) ACTION="scroll" ;;
         *) exit 0 ;;
     esac
 fi
@@ -156,6 +159,8 @@ render_networks() {
     power_state=$(networksetup -getairportpower "$WIFI_DEV" 2>/dev/null | awk '{print $NF}')
     local -a args=()
     local pool_i=0
+    local total=0
+    local offset=0
 
     if [ "$power_state" != "On" ]; then
         args+=(--set "${PARENT}.pool.0"
@@ -172,46 +177,37 @@ render_networks() {
         current_ssid=$(ipconfig getsummary "$WIFI_DEV" 2>/dev/null | awk -F': ' '/  SSID : / {print $2; exit}')
         preferred_list=$(networksetup -listpreferredwirelessnetworks "$WIFI_DEV" 2>/dev/null | sed '1d;s/^[[:space:]]*//')
 
+        local -a rows_icon=() rows_ic=() rows_label=() rows_lc=() rows_cmd=()
+
         # Row 0: Currently connected network (if any)
         if [ -n "$current_ssid" ]; then
-            local child="${PARENT}.pool.${pool_i}"
             local safe_ssid="${current_ssid//\'/\'\\\'\'}"
             local disp_ssid="$current_ssid"
             [ "${#disp_ssid}" -gt 26 ] && disp_ssid="${disp_ssid:0:25}…"
-            args+=(--set "$child"
-                drawing=on
-                width="$ROW_WIDTH"
-                icon="󰤨"
-                icon.color="$GREEN"
-                label="$disp_ssid"
-                label.color="$TEXT_COLOR"
-                click_script="$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 1 0 '$child'")
-            pool_i=$((pool_i + 1))
+            rows_icon+=("󰤨")
+            rows_ic+=("$GREEN")
+            rows_label+=("$disp_ssid")
+            rows_lc+=("$TEXT_COLOR")
+            rows_cmd+=("$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 1 0")
         fi
 
-        # If we have a scan cache, render discovered networks (saved first, then by signal strength)
+        # If we have a scan cache, collect all discovered networks (saved first, then by signal strength)
         if [ -s "$SCAN_CACHE" ]; then
-            local ssid rssi is_open icon label child safe_ssid
+            local ssid rssi is_open icon label safe_ssid
             # Pass 1: Saved networks in range
             while IFS=$'\t' read -r ssid rssi is_open; do
                 [ -n "$ssid" ] || continue
                 [ "$ssid" = "$current_ssid" ] && continue
-                [ "$pool_i" -lt "$POOL_SIZE" ] || break
                 if printf '%s\n' "$preferred_list" | grep -Fxq "$ssid"; then
-                    child="${PARENT}.pool.${pool_i}"
                     icon=$(signal_icon "$rssi")
                     safe_ssid="${ssid//\'/\'\\\'\'}"
                     label="$ssid (Saved)"
                     [ "${#label}" -gt 26 ] && label="${label:0:25}…"
-                    args+=(--set "$child"
-                        drawing=on
-                        width="$ROW_WIDTH"
-                        icon="$icon"
-                        icon.color="$SAPPHIRE"
-                        label="$label"
-                        label.color="$TEXT_COLOR"
-                        click_script="$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 1 '$is_open' '$child'")
-                    pool_i=$((pool_i + 1))
+                    rows_icon+=("$icon")
+                    rows_ic+=("$SAPPHIRE")
+                    rows_label+=("$label")
+                    rows_lc+=("$TEXT_COLOR")
+                    rows_cmd+=("$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 1 '$is_open'")
                 fi
             done < "$SCAN_CACHE"
 
@@ -219,9 +215,7 @@ render_networks() {
             while IFS=$'\t' read -r ssid rssi is_open; do
                 [ -n "$ssid" ] || continue
                 [ "$ssid" = "$current_ssid" ] && continue
-                [ "$pool_i" -lt "$POOL_SIZE" ] || break
                 if ! printf '%s\n' "$preferred_list" | grep -Fxq "$ssid"; then
-                    child="${PARENT}.pool.${pool_i}"
                     icon=$(signal_icon "$rssi")
                     safe_ssid="${ssid//\'/\'\\\'\'}"
                     label="$ssid"
@@ -229,39 +223,53 @@ render_networks() {
                     if [ "$is_open" != "1" ]; then
                         label="$label  "
                     fi
-                    args+=(--set "$child"
-                        drawing=on
-                        width="$ROW_WIDTH"
-                        icon="$icon"
-                        icon.color="$SUBTEXT_COLOR"
-                        label="$label"
-                        label.color="$SUBTEXT_COLOR"
-                        click_script="$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 0 '$is_open' '$child'")
-                    pool_i=$((pool_i + 1))
+                    rows_icon+=("$icon")
+                    rows_ic+=("$SUBTEXT_COLOR")
+                    rows_label+=("$label")
+                    rows_lc+=("$SUBTEXT_COLOR")
+                    rows_cmd+=("$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 0 '$is_open'")
                 fi
             done < "$SCAN_CACHE"
         else
-            # Before first scan completes: show top saved networks so the popup is immediately populated
-            local saved_ssid child safe_ssid label
+            # Before first scan completes: show saved networks so the popup is immediately populated
+            local saved_ssid safe_ssid label
             while IFS= read -r saved_ssid; do
                 [ -n "$saved_ssid" ] || continue
                 [ "$saved_ssid" = "$current_ssid" ] && continue
-                [ "$pool_i" -lt $((POOL_SIZE - 1)) ] || break
-                child="${PARENT}.pool.${pool_i}"
                 safe_ssid="${saved_ssid//\'/\'\\\'\'}"
                 label="$saved_ssid (Saved)"
                 [ "${#label}" -gt 26 ] && label="${label:0:25}…"
-                args+=(--set "$child"
-                    drawing=on
-                    width="$ROW_WIDTH"
-                    icon="󰤥"
-                    icon.color="$SAPPHIRE"
-                    label="$label"
-                    label.color="$SUBTEXT_COLOR"
-                    click_script="$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 1 0 '$child'")
-                pool_i=$((pool_i + 1))
+                rows_icon+=("󰤥")
+                rows_ic+=("$SAPPHIRE")
+                rows_label+=("$label")
+                rows_lc+=("$SUBTEXT_COLOR")
+                rows_cmd+=("$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 1 0")
             done <<< "$preferred_list"
         fi
+
+        total="${#rows_label[@]}"
+        offset=$(cat "$OFFSET_FILE" 2>/dev/null || echo 0)
+        local max_offset=$((total - POOL_SIZE))
+        [ "$max_offset" -lt 0 ] && max_offset=0
+        [ "$offset" -gt "$max_offset" ] && offset="$max_offset"
+        [ "$offset" -lt 0 ] && offset=0
+        echo "$offset" > "$OFFSET_FILE"
+
+        local idx="$offset"
+        local child
+        while [ "$idx" -lt "$total" ] && [ "$pool_i" -lt "$POOL_SIZE" ]; do
+            child="${PARENT}.pool.${pool_i}"
+            args+=(--set "$child"
+                drawing=on
+                width="$ROW_WIDTH"
+                icon="${rows_icon[$idx]}"
+                icon.color="${rows_ic[$idx]}"
+                label="${rows_label[$idx]}"
+                label.color="${rows_lc[$idx]}"
+                click_script="${rows_cmd[$idx]} '$child'")
+            pool_i=$((pool_i + 1))
+            idx=$((idx + 1))
+        done
 
         # Show scanning indicator at bottom while background scan is active and space remains
         if [ -f "$SCAN_PID_FILE" ] && kill -0 "$(cat "$SCAN_PID_FILE" 2>/dev/null)" 2>/dev/null && [ "$pool_i" -lt "$POOL_SIZE" ]; then
@@ -278,6 +286,15 @@ render_networks() {
         fi
     fi
 
+    if [ "$total" -gt "$POOL_SIZE" ]; then
+        local start_n=$((offset + 1))
+        local end_n=$((offset + pool_i))
+        [ "$end_n" -gt "$total" ] && end_n="$total"
+        args+=(--set "${PARENT}.settings" label="Wi-Fi Settings… (${start_n}–${end_n}/${total} ↕)")
+    else
+        args+=(--set "${PARENT}.settings" label="Open Wi-Fi Settings…")
+    fi
+
     while [ "$pool_i" -lt "$POOL_SIZE" ]; do
         args+=(--set "${PARENT}.pool.${pool_i}" drawing=off)
         pool_i=$((pool_i + 1))
@@ -285,6 +302,25 @@ render_networks() {
 
     [ "${#args[@]}" -gt 0 ] && sketchybar "${args[@]}" >/dev/null 2>&1
 }
+
+if [ "$ACTION" = "scroll" ]; then
+    touch_flag
+    [ "$(cat "$OPEN_TRACKER" 2>/dev/null || true)" = "$PARENT" ] || exit 0
+    delta="${SCROLL_DELTA:-0}"
+    [ "$delta" -eq 0 ] 2>/dev/null && exit 0
+    offset=$(cat "$OFFSET_FILE" 2>/dev/null || echo 0)
+    if [ "$delta" -lt 0 ] 2>/dev/null; then
+        step=$(( -delta > 3 ? 3 : (-delta < 1 ? 1 : -delta) ))
+        offset=$((offset + step))
+    elif [ "$delta" -gt 0 ] 2>/dev/null; then
+        step=$(( delta > 3 ? 3 : (delta < 1 ? 1 : delta) ))
+        offset=$((offset - step))
+        [ "$offset" -lt 0 ] && offset=0
+    fi
+    echo "$offset" > "$OFFSET_FILE"
+    render_networks
+    exit 0
+fi
 
 if [ "$ACTION" = "render_once" ]; then
     render_networks
@@ -298,6 +334,8 @@ if [ "$PREVIOUS_OPEN" = "$PARENT" ] && [ "$ACTION" != "show" ]; then
     hide_popup
     exit 0
 fi
+
+echo 0 > "$OFFSET_FILE"
 
 # Close any other open popup (bluetooth or rift workspace popup) and open ours IMMEDIATELY
 if [ -n "$PREVIOUS_OPEN" ] && [ "$PREVIOUS_OPEN" != "$PARENT" ] && [ "$PREVIOUS_OPEN" != "bluetooth" ]; then
