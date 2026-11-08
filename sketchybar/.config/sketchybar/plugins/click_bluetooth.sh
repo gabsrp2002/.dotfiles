@@ -67,6 +67,7 @@ if [ -z "$ACTION" ]; then
     case "${SENDER:-}" in
         mouse.entered) ACTION="hover_enter" ;;
         mouse.exited)  ACTION="hover_exit" ;;
+        forced|routine|system_woke|bluetooth_update) exit 0 ;;
     esac
 fi
 

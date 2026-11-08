@@ -193,8 +193,6 @@ sketchybar --add item bluetooth right \
            --set bluetooth script="$PLUGIN_DIR/bluetooth.sh" \
                            click_script="$PLUGIN_DIR/click_bluetooth.sh" \
                            label.drawing=off \
-                           icon.padding_left=7 \
-                           icon.padding_right=7 \
                            icon.color=$BLUE \
                            label.color=$SUBTEXT_COLOR \
                            popup.align=right \
@@ -260,6 +258,9 @@ for pool_i in $(seq 0 11); do
                                          script="$PLUGIN_DIR/click_wifi.sh"
 done
 sketchybar --set wifi.pool.0 drawing=on icon="󰑐" icon.color=$SAPPHIRE label="Loading networks…" label.color=$SUBTEXT_COLOR
+
+# Clear any stale popup open tracker on reload
+rm -f /tmp/sketchybar_rift_popup_open /tmp/sketchybar_bt_loop.pid /tmp/sketchybar_bt_inquiry.pid /tmp/sketchybar_wifi_loop.pid /tmp/sketchybar_wifi_scan.pid
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update
