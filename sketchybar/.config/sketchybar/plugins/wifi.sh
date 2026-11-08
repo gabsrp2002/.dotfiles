@@ -1,14 +1,8 @@
 #!/bin/bash
 
-FLAG="/tmp/sketchybar_wifi_hover"
-COUNT_FILE="${FLAG}.count"
-
 case "$SENDER" in
     mouse.entered)
-        touch "$FLAG"
-        count=$(cat "$COUNT_FILE" 2>/dev/null || echo 0)
-        echo $((count + 1)) > "$COUNT_FILE"
-        exit 0
+        exec "$CONFIG_DIR/plugins/click_wifi.sh" show
         ;;
     mouse.exited)
         exec "$CONFIG_DIR/plugins/click_wifi.sh" hover_exit

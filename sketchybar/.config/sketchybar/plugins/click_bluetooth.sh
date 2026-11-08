@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Interactive Bluetooth popup for SketchyBar.
-# - Left-click: show popup immediately, then populate paired devices and
-#   auto-scan for nearby unpaired devices in the background while open.
-# - Cmd + Click: toggle Bluetooth power on/off.
+# - Hover (mouse.entered on bar item): show popup immediately, then populate
+#   paired devices and auto-scan for nearby unpaired devices in the background.
+# - Left-click on bar item: toggle Bluetooth power on/off.
 # - Hover keepalive: generation counter + 0.35s delay across bar item and rows.
 
 CONFIG_DIR="${CONFIG_DIR:-$HOME/.config/sketchybar}"
@@ -107,8 +107,8 @@ case "$ACTION" in
         ;;
 esac
 
-# Cmd + Click toggles Bluetooth power
-if [ "${MODIFIER:-}" = "cmd" ] || [ "$ACTION" = "toggle_power" ]; then
+# Left-click on the bar item (no ACTION arg) or explicit toggle_power toggles Bluetooth power
+if [ -z "$ACTION" ] || [ "$ACTION" = "toggle_power" ]; then
     hide_popup
     status=$(blueutil --power 2>/dev/null)
     if [ "$status" = "1" ]; then
@@ -280,11 +280,10 @@ if [ "$ACTION" = "render_once" ]; then
     exit 0
 fi
 
-# Toggle behavior on Left-click (zero-query fast path using OPEN_TRACKER)
+# Hover on bar item (`show`): keep alive if already open, otherwise open popup
 touch_flag
 PREVIOUS_OPEN=$(cat "$OPEN_TRACKER" 2>/dev/null || true)
-if [ "$PREVIOUS_OPEN" = "$PARENT" ] && [ "$ACTION" != "show" ]; then
-    hide_popup
+if [ "$PREVIOUS_OPEN" = "$PARENT" ]; then
     exit 0
 fi
 

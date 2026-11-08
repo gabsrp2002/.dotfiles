@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Interactive Wi-Fi popup for SketchyBar.
-# - Left-click: show popup immediately, then populate current & saved networks
-#   and auto-scan for nearby networks in the background while open.
-# - Cmd + Click: toggle Wi-Fi power on/off.
+# - Hover (mouse.entered on bar item): show popup immediately, then populate
+#   current & saved networks and auto-scan for nearby networks in the background.
+# - Left-click on bar item: toggle Wi-Fi power on/off.
 # - Hover keepalive: generation counter + 0.35s delay across bar item and rows.
 
 CONFIG_DIR="${CONFIG_DIR:-$HOME/.config/sketchybar}"
@@ -127,17 +127,18 @@ case "$ACTION" in
         ;;
 esac
 
-# Cmd + Click toggles Wi-Fi power
-if [ "${MODIFIER:-}" = "cmd" ] || [ "$ACTION" = "toggle_power" ]; then
+# Left-click on the bar item (no ACTION arg) or explicit toggle_power toggles Wi-Fi power
+if [ -z "$ACTION" ] || [ "$ACTION" = "toggle_power" ]; then
     hide_popup
     power_state=$(networksetup -getairportpower "$WIFI_DEV" 2>/dev/null | awk '{print $NF}')
     if [ "$power_state" = "On" ]; then
+        sketchybar --set "$PARENT" icon="󰤮" icon.color="$RED" icon.padding_right=3 label.drawing=off >/dev/null 2>&1
         networksetup -setairportpower "$WIFI_DEV" off >/dev/null 2>&1
     else
+        sketchybar --set "$PARENT" icon="󰤨" icon.color="$MAUVE" >/dev/null 2>&1
         networksetup -setairportpower "$WIFI_DEV" on >/dev/null 2>&1
     fi
-    sleep 0.3
-    NAME=wifi "$PLUGIN_DIR/wifi.sh" >/dev/null 2>&1 &
+    (sleep 0.5; NAME=wifi "$PLUGIN_DIR/wifi.sh" >/dev/null 2>&1) &
     exit 0
 fi
 
@@ -327,11 +328,10 @@ if [ "$ACTION" = "render_once" ]; then
     exit 0
 fi
 
-# Toggle behavior on Left-click (zero-query fast path using OPEN_TRACKER)
+# Hover on bar item (`show`): keep alive if already open, otherwise open popup
 touch_flag
 PREVIOUS_OPEN=$(cat "$OPEN_TRACKER" 2>/dev/null || true)
-if [ "$PREVIOUS_OPEN" = "$PARENT" ] && [ "$ACTION" != "show" ]; then
-    hide_popup
+if [ "$PREVIOUS_OPEN" = "$PARENT" ]; then
     exit 0
 fi
 
