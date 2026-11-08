@@ -1,13 +1,24 @@
 #!/bin/bash
 
+FLAG="/tmp/sketchybar_bt_hover"
+COUNT_FILE="${FLAG}.count"
+
 case "$SENDER" in
     mouse.entered)
-        exec "$CONFIG_DIR/plugins/click_bluetooth.sh" hover_enter
+        touch "$FLAG"
+        count=$(cat "$COUNT_FILE" 2>/dev/null || echo 0)
+        echo $((count + 1)) > "$COUNT_FILE"
+        exit 0
         ;;
     mouse.exited)
         exec "$CONFIG_DIR/plugins/click_bluetooth.sh" hover_exit
         ;;
 esac
+
+# Skip background status polls while Bluetooth inquiry is actively running
+if [ "$SENDER" = "bluetooth_update" ] && [ -f "/tmp/sketchybar_bt_inquiry.pid" ]; then
+    exit 0
+fi
 
 # Prevent concurrent runs during rapid notification bursts
 LOCKDIR="/tmp/sketchybar_bt.lock"

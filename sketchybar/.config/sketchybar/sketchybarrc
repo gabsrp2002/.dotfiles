@@ -193,6 +193,8 @@ sketchybar --add item bluetooth right \
            --set bluetooth script="$PLUGIN_DIR/bluetooth.sh" \
                            click_script="$PLUGIN_DIR/click_bluetooth.sh" \
                            label.drawing=off \
+                           icon.padding_left=7 \
+                           icon.padding_right=7 \
                            icon.color=$BLUE \
                            label.color=$SUBTEXT_COLOR \
                            popup.align=right \
@@ -211,7 +213,7 @@ sketchybar --add item bluetooth right \
                                     width=240 \
                                     background.color=$TRANSPARENT \
                                     script="$PLUGIN_DIR/click_bluetooth.sh" \
-                                    click_script="open /System/Library/PreferencePanes/Bluetooth.prefPane; sketchybar --set bluetooth popup.drawing=off"
+                                    click_script="open /System/Library/PreferencePanes/Bluetooth.prefPane; $PLUGIN_DIR/click_bluetooth.sh hide"
 
 for pool_i in $(seq 0 11); do
   sketchybar --add item "bluetooth.pool.${pool_i}" popup.bluetooth \
@@ -247,7 +249,7 @@ sketchybar --add item wifi right \
                                width=240 \
                                background.color=$TRANSPARENT \
                                script="$PLUGIN_DIR/click_wifi.sh" \
-                               click_script="open 'x-apple.systempreferences:com.apple.wifi-settings-extension'; sketchybar --set wifi popup.drawing=off"
+                               click_script="open 'x-apple.systempreferences:com.apple.wifi-settings-extension'; $PLUGIN_DIR/click_wifi.sh hide"
 
 for pool_i in $(seq 0 11); do
   sketchybar --add item "wifi.pool.${pool_i}" popup.wifi \

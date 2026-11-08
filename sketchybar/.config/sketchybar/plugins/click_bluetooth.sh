@@ -33,18 +33,22 @@ stop_loops() {
     for f in "$LOOP_PID_FILE" "$INQUIRY_PID_FILE"; do
         if [ -f "$f" ]; then
             pid=$(cat "$f" 2>/dev/null || true)
-            [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
+            if [ -n "$pid" ]; then
+                pkill -P "$pid" 2>/dev/null || true
+                kill "$pid" 2>/dev/null || true
+            fi
             rm -f "$f"
         fi
     done
+    pkill -f "blueutil --inquiry" 2>/dev/null || true
 }
 
 hide_popup() {
-    stop_loops
-    sketchybar --set "$PARENT" popup.drawing=off >/dev/null 2>&1
     if [ "$(cat "$OPEN_TRACKER" 2>/dev/null || true)" = "$PARENT" ]; then
         rm -f "$OPEN_TRACKER"
     fi
+    sketchybar --set "$PARENT" popup.drawing=off >/dev/null 2>&1
+    stop_loops
 }
 
 schedule_hide() {
@@ -223,15 +227,15 @@ if [ "$ACTION" = "render_once" ]; then
     exit 0
 fi
 
-# Toggle behavior on Left-click
-DRAWING=$(sketchybar --query "$PARENT" 2>/dev/null | jq -r '.popup.drawing // "off"')
-if [ "$DRAWING" = "on" ] && [ "$ACTION" != "show" ]; then
+# Toggle behavior on Left-click (zero-query fast path using OPEN_TRACKER)
+touch_flag
+PREVIOUS_OPEN=$(cat "$OPEN_TRACKER" 2>/dev/null || true)
+if [ "$PREVIOUS_OPEN" = "$PARENT" ] && [ "$ACTION" != "show" ]; then
     hide_popup
     exit 0
 fi
 
 # Close any other open popup (wifi or rift workspace popup) and open ours IMMEDIATELY
-PREVIOUS_OPEN=$(cat "$OPEN_TRACKER" 2>/dev/null || true)
 if [ -n "$PREVIOUS_OPEN" ] && [ "$PREVIOUS_OPEN" != "$PARENT" ] && [ "$PREVIOUS_OPEN" != "wifi" ]; then
     sketchybar --set "$PREVIOUS_OPEN" popup.drawing=off --set wifi popup.drawing=off --set "$PARENT" popup.drawing=on >/dev/null 2>&1
 else
@@ -239,15 +243,26 @@ else
 fi
 printf '%s' "$PARENT" > "$OPEN_TRACKER"
 
-touch_flag
 stop_loops
+# Also stop any lingering wifi background loops if wifi was open
+if [ "$PREVIOUS_OPEN" = "wifi" ]; then
+    for wf in /tmp/sketchybar_wifi_loop.pid /tmp/sketchybar_wifi_scan.pid; do
+        if [ -f "$wf" ]; then
+            wpid=$(cat "$wf" 2>/dev/null || true)
+            [ -n "$wpid" ] && { pkill -P "$wpid" 2>/dev/null || true; kill "$wpid" 2>/dev/null || true; }
+            rm -f "$wf"
+        fi
+    done
+    pkill -f "scanForNetworks" 2>/dev/null || true
+fi
 
 # Populate devices and start background inquiry asynchronously
 (
-    echo $BASHPID > "$INQUIRY_PID_FILE"
+    sh -c 'echo $PPID' > "$INQUIRY_PID_FILE"
     render_devices
-    while [ "$(sketchybar --query "$PARENT" 2>/dev/null | jq -r '.popup.drawing // "off"')" = "on" ]; do
+    while [ "$(cat "$OPEN_TRACKER" 2>/dev/null || true)" = "$PARENT" ]; do
         out=$(blueutil --inquiry 4 --format json 2>/dev/null)
+        [ "$(cat "$OPEN_TRACKER" 2>/dev/null || true)" = "$PARENT" ] || break
         if [ -n "$out" ]; then
             printf '%s' "$out" > "${INQUIRY_CACHE}.tmp" && mv "${INQUIRY_CACHE}.tmp" "$INQUIRY_CACHE"
             "$0" render_once
@@ -259,10 +274,10 @@ stop_loops
 
 # Auto-update loop while popup stays open
 (
-    echo $BASHPID > "$LOOP_PID_FILE"
-    while [ "$(sketchybar --query "$PARENT" 2>/dev/null | jq -r '.popup.drawing // "off"')" = "on" ]; do
+    sh -c 'echo $PPID' > "$LOOP_PID_FILE"
+    while [ "$(cat "$OPEN_TRACKER" 2>/dev/null || true)" = "$PARENT" ]; do
         sleep 2
-        [ "$(sketchybar --query "$PARENT" 2>/dev/null | jq -r '.popup.drawing // "off"')" = "on" ] || break
+        [ "$(cat "$OPEN_TRACKER" 2>/dev/null || true)" = "$PARENT" ] || break
         "$0" render_once
     done
     rm -f "$LOOP_PID_FILE"

@@ -49,6 +49,17 @@ fi
 PREVIOUS_OPEN=$(cat "$OPEN_TRACKER" 2>/dev/null || true)
 if [ -n "$PREVIOUS_OPEN" ] && [ "$PREVIOUS_OPEN" != "$PARENT" ]; then
     sketchybar --set "$PREVIOUS_OPEN" popup.drawing=off >/dev/null 2>&1
+    if [ "$PREVIOUS_OPEN" = "bluetooth" ] || [ "$PREVIOUS_OPEN" = "wifi" ]; then
+        for pf in /tmp/sketchybar_bt_loop.pid /tmp/sketchybar_bt_inquiry.pid /tmp/sketchybar_wifi_loop.pid /tmp/sketchybar_wifi_scan.pid; do
+            if [ -f "$pf" ]; then
+                ppid=$(cat "$pf" 2>/dev/null || true)
+                [ -n "$ppid" ] && { pkill -P "$ppid" 2>/dev/null || true; kill "$ppid" 2>/dev/null || true; }
+                rm -f "$pf"
+            fi
+        done
+        pkill -f "blueutil --inquiry" 2>/dev/null || true
+        pkill -f "scanForNetworks" 2>/dev/null || true
+    fi
 fi
 printf '%s' "$PARENT" > "$OPEN_TRACKER"
 
