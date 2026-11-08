@@ -182,6 +182,11 @@ floating = true
 position = { x = 0.5, y = 0.5 }
 
 [[virtual_workspaces.app_rules]]
+app_id = "com.apple.systempreferences"
+floating = true
+position = { x = 0.5, y = 0.5 }
+
+[[virtual_workspaces.app_rules]]
 app_name = "mpv"
 floating = true
 position = { x = 0.5, y = 0.5 }
