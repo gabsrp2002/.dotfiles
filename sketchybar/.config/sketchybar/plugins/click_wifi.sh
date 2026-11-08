@@ -64,12 +64,14 @@ schedule_hide() {
 }
 
 # Handle mouse events from popup children (or delegated from wifi.sh)
-if [ -z "$ACTION" ]; then
+if [ "$ACTION" = "hover" ] || [ -z "$ACTION" ]; then
     case "${SENDER:-}" in
         mouse.entered) ACTION="hover_enter" ;;
         mouse.exited)  ACTION="hover_exit" ;;
-        forced|routine|system_woke|wifi_change) exit 0 ;;
     esac
+    if [ "$ACTION" = "hover" ] || { [ -z "$ACTION" ] && [ -z "${BUTTON:-}" ]; }; then
+        exit 0
+    fi
 fi
 
 case "$ACTION" in

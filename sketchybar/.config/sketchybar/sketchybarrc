@@ -210,7 +210,7 @@ sketchybar --add item bluetooth right \
                                     label.color=$SUBTEXT_COLOR \
                                     width=240 \
                                     background.color=$TRANSPARENT \
-                                    script="$PLUGIN_DIR/click_bluetooth.sh" \
+                                    script="$PLUGIN_DIR/click_bluetooth.sh hover" \
                                     click_script="open /System/Library/PreferencePanes/Bluetooth.prefPane; $PLUGIN_DIR/click_bluetooth.sh hide"
 
 for pool_i in $(seq 0 11); do
@@ -219,7 +219,7 @@ for pool_i in $(seq 0 11); do
              --set "bluetooth.pool.${pool_i}" drawing=off \
                                               width=240 \
                                               background.color=$TRANSPARENT \
-                                              script="$PLUGIN_DIR/click_bluetooth.sh"
+                                              script="$PLUGIN_DIR/click_bluetooth.sh hover"
 done
 sketchybar --set bluetooth.pool.0 drawing=on icon="󰑐" icon.color=$SAPPHIRE label="Loading devices…" label.color=$SUBTEXT_COLOR
 
@@ -246,7 +246,7 @@ sketchybar --add item wifi right \
                                label.color=$SUBTEXT_COLOR \
                                width=240 \
                                background.color=$TRANSPARENT \
-                               script="$PLUGIN_DIR/click_wifi.sh" \
+                               script="$PLUGIN_DIR/click_wifi.sh hover" \
                                click_script="open 'x-apple.systempreferences:com.apple.wifi-settings-extension'; $PLUGIN_DIR/click_wifi.sh hide"
 
 for pool_i in $(seq 0 11); do
@@ -255,7 +255,7 @@ for pool_i in $(seq 0 11); do
              --set "wifi.pool.${pool_i}" drawing=off \
                                          width=240 \
                                          background.color=$TRANSPARENT \
-                                         script="$PLUGIN_DIR/click_wifi.sh"
+                                         script="$PLUGIN_DIR/click_wifi.sh hover"
 done
 sketchybar --set wifi.pool.0 drawing=on icon="󰑐" icon.color=$SAPPHIRE label="Loading networks…" label.color=$SUBTEXT_COLOR
 
