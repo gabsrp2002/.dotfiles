@@ -189,6 +189,23 @@ app_id = "com.workpuls.Agent"
 floating = true
 position = { x = 0.5, y = 0.5 }
 
+# Float macOS dialog/sheet windows and WhatsApp call popups so transient small
+# windows are centered instead of tiled into full scrolling columns.
+[[virtual_workspaces.app_rules]]
+ax_subrole = "AXDialog"
+floating = true
+position = { x = 0.5, y = 0.5 }
+
+[[virtual_workspaces.app_rules]]
+ax_subrole = "AXSystemDialog"
+floating = true
+position = { x = 0.5, y = 0.5 }
+
+[[virtual_workspaces.app_rules]]
+app_id = "net.whatsapp.WhatsApp"
+title_substring = "call"
+floating = true
+
 [modifier_combinations]
 comb1 = "Alt + Shift"
 
