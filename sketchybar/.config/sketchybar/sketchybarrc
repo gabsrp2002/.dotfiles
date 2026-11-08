@@ -189,20 +189,35 @@ sketchybar --add item battery right \
 # Bluetooth
 sketchybar --add item bluetooth right \
             --add event bluetooth_update "com.apple.bluetooth.status" \
-            --subscribe bluetooth system_woke bluetooth_update \
+            --subscribe bluetooth system_woke bluetooth_update mouse.entered mouse.exited \
            --set bluetooth script="$PLUGIN_DIR/bluetooth.sh" \
                            click_script="$PLUGIN_DIR/click_bluetooth.sh" \
                            label.drawing=off \
                            icon.color=$BLUE \
-                           label.color=$SUBTEXT_COLOR
+                           label.color=$SUBTEXT_COLOR \
+                           popup.align=right \
+                           popup.background.border_width=2 \
+                           popup.background.corner_radius=10 \
+                           popup.background.border_color=$BORDER_COLOR \
+                           popup.background.color=$BASE_COLOR \
+                           popup.blur_radius=20 \
+                           popup.y_offset=5
 
 # WiFi
 sketchybar --add item wifi right \
            --set wifi update_freq=2 \
                       script="$PLUGIN_DIR/wifi.sh" \
                       click_script="$PLUGIN_DIR/click_wifi.sh" \
+                      popup.align=right \
+                      popup.background.border_width=2 \
+                      popup.background.corner_radius=10 \
+                      popup.background.border_color=$BORDER_COLOR \
+                      popup.background.color=$BASE_COLOR \
+                      popup.blur_radius=20 \
+                      popup.y_offset=5 \
                       icon.color=$BLUE \
-                      label.color=$SUBTEXT_COLOR
+                      label.color=$SUBTEXT_COLOR \
+           --subscribe wifi mouse.entered mouse.exited
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update

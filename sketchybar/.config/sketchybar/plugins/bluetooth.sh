@@ -1,5 +1,14 @@
 #!/bin/bash
 
+case "$SENDER" in
+    mouse.entered)
+        exec "$CONFIG_DIR/plugins/click_bluetooth.sh" hover_enter
+        ;;
+    mouse.exited)
+        exec "$CONFIG_DIR/plugins/click_bluetooth.sh" hover_exit
+        ;;
+esac
+
 # Prevent concurrent runs during rapid notification bursts
 LOCKDIR="/tmp/sketchybar_bt.lock"
 if ! mkdir "$LOCKDIR" 2>/dev/null; then

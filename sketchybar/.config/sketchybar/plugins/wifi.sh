@@ -1,5 +1,14 @@
 #!/bin/bash
 
+case "$SENDER" in
+    mouse.entered)
+        exec "$CONFIG_DIR/plugins/click_wifi.sh" hover_enter
+        ;;
+    mouse.exited)
+        exec "$CONFIG_DIR/plugins/click_wifi.sh" hover_exit
+        ;;
+esac
+
 source "$CONFIG_DIR/colors.sh"
 
 MAX_CHARS=20
