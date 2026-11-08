@@ -26,7 +26,12 @@ mouse_hides_on_focus = true
 horizontal_mouse_warp = "top-to-bottom"
 
 # Apps that must not steal focus / trigger workspace switches.
-auto_focus_blacklist = []
+auto_focus_blacklist = [
+  "com.apple.Spotlight",
+  "com.apple.systemuiserver",
+  "com.apple.SecurityAgent",
+  "com.raycast.macos",
+]
 
 hot_reload = true
 
