@@ -13,7 +13,9 @@ animation_fps = 120.0
 default_disable = false
 
 # Mouse/focus behavior (matches Aerospace: focus-follows-mouse + mouse-follows-focus).
+# Hold Alt to temporarily suspend focus-follows-mouse when moving the cursor.
 focus_follows_mouse = true
+focus_follows_mouse_disable_hotkey = "Alt"
 mouse_follows_focus = true
 mouse_hides_on_focus = true
 
