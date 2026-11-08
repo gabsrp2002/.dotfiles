@@ -201,7 +201,27 @@ sketchybar --add item bluetooth right \
                            popup.background.border_color=$BORDER_COLOR \
                            popup.background.color=$BASE_COLOR \
                            popup.blur_radius=20 \
-                           popup.y_offset=5
+                           popup.y_offset=5 \
+           --add item bluetooth.settings popup.bluetooth \
+           --subscribe bluetooth.settings mouse.entered mouse.exited \
+           --set bluetooth.settings icon="" \
+                                    icon.color=$LAVENDER \
+                                    label="Open Bluetooth Settings…" \
+                                    label.color=$SUBTEXT_COLOR \
+                                    width=240 \
+                                    background.color=$TRANSPARENT \
+                                    script="$PLUGIN_DIR/click_bluetooth.sh" \
+                                    click_script="open /System/Library/PreferencePanes/Bluetooth.prefPane; sketchybar --set bluetooth popup.drawing=off"
+
+for pool_i in $(seq 0 11); do
+  sketchybar --add item "bluetooth.pool.${pool_i}" popup.bluetooth \
+             --subscribe "bluetooth.pool.${pool_i}" mouse.entered mouse.exited \
+             --set "bluetooth.pool.${pool_i}" drawing=off \
+                                              width=240 \
+                                              background.color=$TRANSPARENT \
+                                              script="$PLUGIN_DIR/click_bluetooth.sh"
+done
+sketchybar --set bluetooth.pool.0 drawing=on icon="󰑐" icon.color=$SAPPHIRE label="Loading devices…" label.color=$SUBTEXT_COLOR
 
 # WiFi
 sketchybar --add item wifi right \
@@ -217,7 +237,27 @@ sketchybar --add item wifi right \
                       popup.y_offset=5 \
                       icon.color=$BLUE \
                       label.color=$SUBTEXT_COLOR \
-           --subscribe wifi mouse.entered mouse.exited
+           --subscribe wifi mouse.entered mouse.exited \
+           --add item wifi.settings popup.wifi \
+           --subscribe wifi.settings mouse.entered mouse.exited \
+           --set wifi.settings icon="" \
+                               icon.color=$LAVENDER \
+                               label="Open Wi-Fi Settings…" \
+                               label.color=$SUBTEXT_COLOR \
+                               width=240 \
+                               background.color=$TRANSPARENT \
+                               script="$PLUGIN_DIR/click_wifi.sh" \
+                               click_script="open 'x-apple.systempreferences:com.apple.wifi-settings-extension'; sketchybar --set wifi popup.drawing=off"
+
+for pool_i in $(seq 0 11); do
+  sketchybar --add item "wifi.pool.${pool_i}" popup.wifi \
+             --subscribe "wifi.pool.${pool_i}" mouse.entered mouse.exited \
+             --set "wifi.pool.${pool_i}" drawing=off \
+                                         width=240 \
+                                         background.color=$TRANSPARENT \
+                                         script="$PLUGIN_DIR/click_wifi.sh"
+done
+sketchybar --set wifi.pool.0 drawing=on icon="󰑐" icon.color=$SAPPHIRE label="Loading networks…" label.color=$SUBTEXT_COLOR
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update

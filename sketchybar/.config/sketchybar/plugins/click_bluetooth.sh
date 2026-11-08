@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Interactive Bluetooth popup for SketchyBar.
-# - Left-click: toggle popup, show paired devices immediately, auto-scan for
-#   nearby unpaired devices and refresh status in the background while open.
+# - Left-click: show popup immediately, then populate paired devices and
+#   auto-scan for nearby unpaired devices in the background while open.
 # - Cmd + Click: toggle Bluetooth power on/off.
-# - Hover keepalive: matches rift_hover.sh (generation counter + 0.35s delay).
+# - Hover keepalive: generation counter + 0.35s delay across bar item and rows.
 
 CONFIG_DIR="${CONFIG_DIR:-$HOME/.config/sketchybar}"
 PLUGIN_DIR="$CONFIG_DIR/plugins"
@@ -12,6 +12,7 @@ source "$CONFIG_DIR/colors.sh"
 PARENT="bluetooth"
 ACTION="${1:-}"
 POOL_SIZE=12
+ROW_WIDTH=240
 
 FLAG="/tmp/sketchybar_bt_hover"
 COUNT_FILE="${FLAG}.count"
@@ -114,39 +115,7 @@ if [ "${MODIFIER:-}" = "cmd" ] || [ "$ACTION" = "toggle_power" ]; then
     exit 0
 fi
 
-ensure_pool() {
-    local settings_item="${PARENT}.settings"
-    if ! sketchybar --query "$settings_item" >/dev/null 2>&1; then
-        local -a init_args=(
-            --add item "$settings_item" "popup.${PARENT}"
-            --subscribe "$settings_item" mouse.entered mouse.exited
-            --set "$settings_item"
-                icon=""
-                icon.color="$LAVENDER"
-                label="Open Bluetooth Settings…"
-                label.color="$SUBTEXT_COLOR"
-                background.color="$TRANSPARENT"
-                script="$PLUGIN_DIR/click_bluetooth.sh"
-                click_script="open /System/Library/PreferencePanes/Bluetooth.prefPane; sketchybar --set $PARENT popup.drawing=off"
-        )
-        local i child
-        for ((i = 0; i < POOL_SIZE; i++)); do
-            child="${PARENT}.pool.${i}"
-            init_args+=(
-                --add item "$child" "popup.${PARENT}"
-                --subscribe "$child" mouse.entered mouse.exited
-                --set "$child"
-                    drawing=off
-                    background.color="$TRANSPARENT"
-                    script="$PLUGIN_DIR/click_bluetooth.sh"
-            )
-        done
-        sketchybar "${init_args[@]}" >/dev/null 2>&1
-    fi
-}
-
 render_devices() {
-    ensure_pool
     local bt_power
     bt_power=$(blueutil --power 2>/dev/null || echo "0")
     local -a args=()
@@ -155,6 +124,7 @@ render_devices() {
     if [ "$bt_power" != "1" ]; then
         args+=(--set "${PARENT}.pool.0"
             drawing=on
+            width="$ROW_WIDTH"
             icon="󰂲"
             icon.color="$RED"
             label="Bluetooth is Off (click to turn on)"
@@ -211,8 +181,12 @@ render_devices() {
                 lc="$SUBTEXT_COLOR"
                 label="$name (New)"
             fi
+            if [ "${#label}" -gt 26 ]; then
+                label="${label:0:25}…"
+            fi
             args+=(--set "$child"
                 drawing=on
+                width="$ROW_WIDTH"
                 icon="$icon"
                 icon.color="$ic"
                 label="$label"
@@ -226,6 +200,7 @@ render_devices() {
             child="${PARENT}.pool.${pool_i}"
             args+=(--set "$child"
                 drawing=on
+                width="$ROW_WIDTH"
                 icon="󰑐"
                 icon.color="$SAPPHIRE"
                 label="Scanning nearby devices…"
@@ -255,23 +230,22 @@ if [ "$DRAWING" = "on" ] && [ "$ACTION" != "show" ]; then
     exit 0
 fi
 
-# Close any other open popup (wifi or rift workspace popup)
+# Close any other open popup (wifi or rift workspace popup) and open ours IMMEDIATELY
 PREVIOUS_OPEN=$(cat "$OPEN_TRACKER" 2>/dev/null || true)
-if [ -n "$PREVIOUS_OPEN" ] && [ "$PREVIOUS_OPEN" != "$PARENT" ]; then
-    sketchybar --set "$PREVIOUS_OPEN" popup.drawing=off >/dev/null 2>&1
+if [ -n "$PREVIOUS_OPEN" ] && [ "$PREVIOUS_OPEN" != "$PARENT" ] && [ "$PREVIOUS_OPEN" != "wifi" ]; then
+    sketchybar --set "$PREVIOUS_OPEN" popup.drawing=off --set wifi popup.drawing=off --set "$PARENT" popup.drawing=on >/dev/null 2>&1
+else
+    sketchybar --set wifi popup.drawing=off --set "$PARENT" popup.drawing=on >/dev/null 2>&1
 fi
-sketchybar --set wifi popup.drawing=off >/dev/null 2>&1
 printf '%s' "$PARENT" > "$OPEN_TRACKER"
 
 touch_flag
 stop_loops
 
-render_devices
-sketchybar --set "$PARENT" popup.drawing=on
-
-# Start background inquiry for nearby unpaired devices after popup is open
+# Populate devices and start background inquiry asynchronously
 (
     echo $BASHPID > "$INQUIRY_PID_FILE"
+    render_devices
     while [ "$(sketchybar --query "$PARENT" 2>/dev/null | jq -r '.popup.drawing // "off"')" = "on" ]; do
         out=$(blueutil --inquiry 4 --format json 2>/dev/null)
         if [ -n "$out" ]; then

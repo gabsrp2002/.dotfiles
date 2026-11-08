@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Interactive Wi-Fi popup for SketchyBar.
-# - Left-click: toggle popup, show current & saved networks immediately,
+# - Left-click: show popup immediately, then populate current & saved networks
 #   and auto-scan for nearby networks in the background while open.
 # - Cmd + Click: toggle Wi-Fi power on/off.
-# - Hover keepalive: matches rift_hover.sh (generation counter + 0.35s delay).
+# - Hover keepalive: generation counter + 0.35s delay across bar item and rows.
 
 CONFIG_DIR="${CONFIG_DIR:-$HOME/.config/sketchybar}"
 PLUGIN_DIR="$CONFIG_DIR/plugins"
@@ -12,6 +12,7 @@ source "$CONFIG_DIR/colors.sh"
 PARENT="wifi"
 ACTION="${1:-}"
 POOL_SIZE=12
+ROW_WIDTH=240
 WIFI_DEV="en0"
 
 FLAG="/tmp/sketchybar_wifi_hover"
@@ -132,37 +133,6 @@ if [ "${MODIFIER:-}" = "cmd" ] || [ "$ACTION" = "toggle_power" ]; then
     exit 0
 fi
 
-ensure_pool() {
-    local settings_item="${PARENT}.settings"
-    if ! sketchybar --query "$settings_item" >/dev/null 2>&1; then
-        local -a init_args=(
-            --add item "$settings_item" "popup.${PARENT}"
-            --subscribe "$settings_item" mouse.entered mouse.exited
-            --set "$settings_item"
-                icon=""
-                icon.color="$LAVENDER"
-                label="Open Wi-Fi Settings…"
-                label.color="$SUBTEXT_COLOR"
-                background.color="$TRANSPARENT"
-                script="$PLUGIN_DIR/click_wifi.sh"
-                click_script="open 'x-apple.systempreferences:com.apple.wifi-settings-extension'; sketchybar --set $PARENT popup.drawing=off"
-        )
-        local i child
-        for ((i = 0; i < POOL_SIZE; i++)); do
-            child="${PARENT}.pool.${i}"
-            init_args+=(
-                --add item "$child" "popup.${PARENT}"
-                --subscribe "$child" mouse.entered mouse.exited
-                --set "$child"
-                    drawing=off
-                    background.color="$TRANSPARENT"
-                    script="$PLUGIN_DIR/click_wifi.sh"
-            )
-        done
-        sketchybar "${init_args[@]}" >/dev/null 2>&1
-    fi
-}
-
 signal_icon() {
     local rssi="${1:--70}"
     if [ "$rssi" -ge -55 ] 2>/dev/null; then
@@ -177,7 +147,6 @@ signal_icon() {
 }
 
 render_networks() {
-    ensure_pool
     local power_state
     power_state=$(networksetup -getairportpower "$WIFI_DEV" 2>/dev/null | awk '{print $NF}')
     local -a args=()
@@ -186,6 +155,7 @@ render_networks() {
     if [ "$power_state" != "On" ]; then
         args+=(--set "${PARENT}.pool.0"
             drawing=on
+            width="$ROW_WIDTH"
             icon="󰤮"
             icon.color="$RED"
             label="Wi-Fi is Off (click to turn on)"
@@ -201,11 +171,14 @@ render_networks() {
         if [ -n "$current_ssid" ]; then
             local child="${PARENT}.pool.${pool_i}"
             local safe_ssid="${current_ssid//\'/\'\\\'\'}"
+            local disp_ssid="$current_ssid"
+            [ "${#disp_ssid}" -gt 26 ] && disp_ssid="${disp_ssid:0:25}…"
             args+=(--set "$child"
                 drawing=on
+                width="$ROW_WIDTH"
                 icon="󰤨"
                 icon.color="$GREEN"
-                label="$current_ssid"
+                label="$disp_ssid"
                 label.color="$TEXT_COLOR"
                 click_script="$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 1 0 '$child'")
             pool_i=$((pool_i + 1))
@@ -213,7 +186,7 @@ render_networks() {
 
         # If we have a scan cache, render discovered networks (saved first, then by signal strength)
         if [ -s "$SCAN_CACHE" ]; then
-            local ssid rssi is_open is_saved icon ic lc label child safe_ssid
+            local ssid rssi is_open icon label child safe_ssid
             # Pass 1: Saved networks in range
             while IFS=$'\t' read -r ssid rssi is_open; do
                 [ -n "$ssid" ] || continue
@@ -223,11 +196,14 @@ render_networks() {
                     child="${PARENT}.pool.${pool_i}"
                     icon=$(signal_icon "$rssi")
                     safe_ssid="${ssid//\'/\'\\\'\'}"
+                    label="$ssid (Saved)"
+                    [ "${#label}" -gt 26 ] && label="${label:0:25}…"
                     args+=(--set "$child"
                         drawing=on
+                        width="$ROW_WIDTH"
                         icon="$icon"
                         icon.color="$SAPPHIRE"
-                        label="$ssid (Saved)"
+                        label="$label"
                         label.color="$TEXT_COLOR"
                         click_script="$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 1 '$is_open' '$child'")
                     pool_i=$((pool_i + 1))
@@ -243,13 +219,14 @@ render_networks() {
                     child="${PARENT}.pool.${pool_i}"
                     icon=$(signal_icon "$rssi")
                     safe_ssid="${ssid//\'/\'\\\'\'}"
-                    if [ "$is_open" = "1" ]; then
-                        label="$ssid"
-                    else
-                        label="$ssid  "
+                    label="$ssid"
+                    [ "${#label}" -gt 23 ] && label="${label:0:22}…"
+                    if [ "$is_open" != "1" ]; then
+                        label="$label  "
                     fi
                     args+=(--set "$child"
                         drawing=on
+                        width="$ROW_WIDTH"
                         icon="$icon"
                         icon.color="$SUBTEXT_COLOR"
                         label="$label"
@@ -260,18 +237,21 @@ render_networks() {
             done < "$SCAN_CACHE"
         else
             # Before first scan completes: show top saved networks so the popup is immediately populated
-            local saved_ssid child safe_ssid
+            local saved_ssid child safe_ssid label
             while IFS= read -r saved_ssid; do
                 [ -n "$saved_ssid" ] || continue
                 [ "$saved_ssid" = "$current_ssid" ] && continue
                 [ "$pool_i" -lt $((POOL_SIZE - 1)) ] || break
                 child="${PARENT}.pool.${pool_i}"
                 safe_ssid="${saved_ssid//\'/\'\\\'\'}"
+                label="$saved_ssid (Saved)"
+                [ "${#label}" -gt 26 ] && label="${label:0:25}…"
                 args+=(--set "$child"
                     drawing=on
+                    width="$ROW_WIDTH"
                     icon="󰤥"
                     icon.color="$SAPPHIRE"
-                    label="$saved_ssid (Saved)"
+                    label="$label"
                     label.color="$SUBTEXT_COLOR"
                     click_script="$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 1 0 '$child'")
                 pool_i=$((pool_i + 1))
@@ -283,6 +263,7 @@ render_networks() {
             child="${PARENT}.pool.${pool_i}"
             args+=(--set "$child"
                 drawing=on
+                width="$ROW_WIDTH"
                 icon="󰑐"
                 icon.color="$SAPPHIRE"
                 label="Scanning networks…"
@@ -312,24 +293,22 @@ if [ "$DRAWING" = "on" ] && [ "$ACTION" != "show" ]; then
     exit 0
 fi
 
-# Close any other open popup (bluetooth or rift workspace popup)
+# Close any other open popup (bluetooth or rift workspace popup) and open ours IMMEDIATELY
 PREVIOUS_OPEN=$(cat "$OPEN_TRACKER" 2>/dev/null || true)
-if [ -n "$PREVIOUS_OPEN" ] && [ "$PREVIOUS_OPEN" != "$PARENT" ]; then
-    sketchybar --set "$PREVIOUS_OPEN" popup.drawing=off >/dev/null 2>&1
+if [ -n "$PREVIOUS_OPEN" ] && [ "$PREVIOUS_OPEN" != "$PARENT" ] && [ "$PREVIOUS_OPEN" != "bluetooth" ]; then
+    sketchybar --set "$PREVIOUS_OPEN" popup.drawing=off --set bluetooth popup.drawing=off --set "$PARENT" popup.drawing=on >/dev/null 2>&1
+else
+    sketchybar --set bluetooth popup.drawing=off --set "$PARENT" popup.drawing=on >/dev/null 2>&1
 fi
-sketchybar --set bluetooth popup.drawing=off >/dev/null 2>&1
 printf '%s' "$PARENT" > "$OPEN_TRACKER"
 
 touch_flag
 stop_loops
 
-render_networks
-sketchybar --set "$PARENT" popup.drawing=on
-
-# Start background CoreWLAN scan loop after popup is open
+# Populate networks and start background CoreWLAN scan loop asynchronously
 (
     echo $BASHPID > "$SCAN_PID_FILE"
-    "$0" render_once
+    render_networks
     while [ "$(sketchybar --query "$PARENT" 2>/dev/null | jq -r '.popup.drawing // "off"')" = "on" ]; do
         scan_out=$(swift -e '
             import CoreWLAN
