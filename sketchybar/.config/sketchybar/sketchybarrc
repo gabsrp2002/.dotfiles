@@ -79,6 +79,7 @@ sketchybar --add item disk left \
            --set disk script="$PLUGIN_DIR/disk.sh" \
             update_freq=5 \
             icon="" \
+            icon.color=$GREEN \
             label.color=$SUBTEXT_COLOR \
 
 sketchybar --add item front_app left \
@@ -224,6 +225,9 @@ done
 sketchybar --set bluetooth.pool.0 drawing=on icon="󰑐" icon.color=$SAPPHIRE label="Loading devices…" label.color=$SUBTEXT_COLOR
 
 # WiFi
+# NOTE: Keep update_freq=2 polling here rather than switching to wifi_change or
+# a slower interval; event-driven updates / longer intervals were tested before
+# and caused noticeable delays when network state changed.
 sketchybar --add item wifi right \
            --set wifi update_freq=2 \
                       script="$PLUGIN_DIR/wifi.sh" \
@@ -260,7 +264,8 @@ done
 sketchybar --set wifi.pool.0 drawing=on icon="󰑐" icon.color=$SAPPHIRE label="Loading networks…" label.color=$SUBTEXT_COLOR
 
 # Clear any stale popup open tracker on reload
-rm -f /tmp/sketchybar_rift_popup_open /tmp/sketchybar_bt_loop.pid /tmp/sketchybar_bt_inquiry.pid /tmp/sketchybar_bt_offset /tmp/sketchybar_wifi_loop.pid /tmp/sketchybar_wifi_scan.pid /tmp/sketchybar_wifi_offset
+rm -f /tmp/sketchybar_rift_popup_open /tmp/sketchybar_bt_loop.pid /tmp/sketchybar_bt_inquiry.pid /tmp/sketchybar_bt_offset /tmp/sketchybar_bt_rows.tsv /tmp/sketchybar_bt_render.sig /tmp/sketchybar_wifi_loop.pid /tmp/sketchybar_wifi_scan.pid /tmp/sketchybar_wifi_offset /tmp/sketchybar_wifi_rows.tsv /tmp/sketchybar_wifi_render.sig
+rm -rf /tmp/sketchybar_bt_render.lock /tmp/sketchybar_wifi_render.lock
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update

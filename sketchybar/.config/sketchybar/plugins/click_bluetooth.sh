@@ -7,7 +7,6 @@
 
 CONFIG_DIR="${CONFIG_DIR:-$HOME/.config/sketchybar}"
 PLUGIN_DIR="$CONFIG_DIR/plugins"
-source "$CONFIG_DIR/colors.sh"
 
 PARENT="bluetooth"
 ACTION="${1:-}"
@@ -20,7 +19,10 @@ OPEN_TRACKER="/tmp/sketchybar_rift_popup_open"
 LOOP_PID_FILE="/tmp/sketchybar_bt_loop.pid"
 INQUIRY_CACHE="/tmp/sketchybar_bt_inquiry.json"
 INQUIRY_PID_FILE="/tmp/sketchybar_bt_inquiry.pid"
+ROWS_CACHE="/tmp/sketchybar_bt_rows.tsv"
+RENDER_SIG="/tmp/sketchybar_bt_render.sig"
 OFFSET_FILE="/tmp/sketchybar_bt_offset"
+RENDER_LOCK="/tmp/sketchybar_bt_render.lock"
 
 touch_flag() {
     touch "$FLAG"
@@ -48,7 +50,7 @@ hide_popup() {
     if [ "$(cat "$OPEN_TRACKER" 2>/dev/null || true)" = "$PARENT" ]; then
         rm -f "$OPEN_TRACKER"
     fi
-    rm -f "$OFFSET_FILE"
+    rm -f "$OFFSET_FILE" "$RENDER_SIG"
     sketchybar --set "$PARENT" popup.drawing=off >/dev/null 2>&1
     stop_loops
 }
@@ -59,7 +61,7 @@ schedule_hide() {
     (
         sleep 0.35
         if [ "$(cat "$COUNT_FILE" 2>/dev/null || echo 0)" = "$seen" ]; then
-            "$0" hide
+            hide_popup
         fi
     ) >/dev/null 2>&1 &
 }
@@ -74,6 +76,7 @@ if [ "$ACTION" = "hover" ]; then
     esac
 fi
 
+# Fast-path hover keepalive and hide without sourcing colors.sh
 case "$ACTION" in
     hover_enter)
         touch_flag
@@ -87,6 +90,11 @@ case "$ACTION" in
         hide_popup
         exit 0
         ;;
+esac
+
+source "$CONFIG_DIR/colors.sh"
+
+case "$ACTION" in
     toggle_device)
         ADDR="$2"
         IS_PAIRED="${3:-1}"
@@ -123,15 +131,84 @@ if [ -z "$ACTION" ] || [ "$ACTION" = "toggle_power" ]; then
     exit 0
 fi
 
-render_devices() {
+build_device_rows() {
     local bt_power
     bt_power=$(blueutil --power 2>/dev/null || echo "0")
+    if [ "$bt_power" != "1" ]; then
+        printf 'OFF\n' > "${ROWS_CACHE}.tmp" && mv -f "${ROWS_CACHE}.tmp" "$ROWS_CACHE"
+        return 0
+    fi
+
+    local paired_json inquiry_json merged_tsv
+    paired_json=$(blueutil --paired --format json 2>/dev/null || echo "[]")
+    inquiry_json="[]"
+    [ -s "$INQUIRY_CACHE" ] && inquiry_json=$(cat "$INQUIRY_CACHE" 2>/dev/null || echo "[]")
+
+    merged_tsv=$(jq -rn \
+        --argjson paired "$paired_json" \
+        --argjson inq "$inquiry_json" '
+        ($paired | map(select(.name != null and .name != "")) | map({
+            address: .address,
+            name: .name,
+            connected: (.connected // false),
+            paired: true
+        })) as $p
+        | ($p | map(.address)) as $p_addrs
+        | ($inq | map(select(.name != null and .name != "" and ((.address) as $a | ($p_addrs | index($a)) == null))) | map({
+            address: .address,
+            name: .name,
+            connected: (.connected // false),
+            paired: false
+        })) as $u
+        | ($p + $u)
+        | sort_by((if .connected then 0 else 1 end), (if .paired then 0 else 1 end), .name)
+        | .[]
+        | [.address, .name, (if .connected then "1" else "0" end), (if .paired then "1" else "0" end)]
+        | join("\u001f")
+    ' 2>/dev/null)
+
+    local sep=$'\x1f'
+    local out_rows=""
+    local addr name conn paired icon ic lc label
+    while IFS=$'\x1f' read -r addr name conn paired; do
+        [ -n "$addr" ] || continue
+        if [ "$conn" = "1" ]; then
+            icon="󰂱"
+            ic="$GREEN"
+            lc="$TEXT_COLOR"
+            label="$name"
+        elif [ "$paired" = "1" ]; then
+            icon=""
+            ic="$SUBTEXT_COLOR"
+            lc="$SUBTEXT_COLOR"
+            label="$name"
+        else
+            icon="󰂰"
+            ic="$PEACH"
+            lc="$SUBTEXT_COLOR"
+            label="$name (New)"
+        fi
+        if [ "${#label}" -gt 26 ]; then
+            label="${label:0:25}…"
+        fi
+        out_rows+="${icon}${sep}${ic}${sep}${label}${sep}${lc}${sep}${PLUGIN_DIR}/click_bluetooth.sh toggle_device '${addr}' '${paired}'"$'\n'
+    done <<< "$merged_tsv"
+
+    printf '%s' "$out_rows" > "${ROWS_CACHE}.tmp"
+    mv -f "${ROWS_CACHE}.tmp" "$ROWS_CACHE"
+}
+
+render_viewport() {
+    [ -f "$ROWS_CACHE" ] || build_device_rows
+
     local -a args=()
     local pool_i=0
     local total=0
     local offset=0
+    local first_line=""
+    IFS= read -r first_line < "$ROWS_CACHE" 2>/dev/null || true
 
-    if [ "$bt_power" != "1" ]; then
+    if [ "$first_line" = "OFF" ]; then
         args+=(--set "${PARENT}.pool.0"
             drawing=on
             width="$ROW_WIDTH"
@@ -142,63 +219,16 @@ render_devices() {
             click_script="$PLUGIN_DIR/click_bluetooth.sh toggle_power")
         pool_i=1
     else
-        local paired_json inquiry_json merged_tsv
-        paired_json=$(blueutil --paired --format json 2>/dev/null || echo "[]")
-        inquiry_json="[]"
-        [ -s "$INQUIRY_CACHE" ] && inquiry_json=$(cat "$INQUIRY_CACHE" 2>/dev/null || echo "[]")
-
-        merged_tsv=$(jq -rn \
-            --argjson paired "$paired_json" \
-            --argjson inq "$inquiry_json" '
-            ($paired | map(select(.name != null and .name != "")) | map({
-                address: .address,
-                name: .name,
-                connected: (.connected // false),
-                paired: true
-            })) as $p
-            | ($p | map(.address)) as $p_addrs
-            | ($inq | map(select(.name != null and .name != "" and ((.address) as $a | ($p_addrs | index($a)) == null))) | map({
-                address: .address,
-                name: .name,
-                connected: (.connected // false),
-                paired: false
-            })) as $u
-            | ($p + $u)
-            | sort_by((if .connected then 0 else 1 end), (if .paired then 0 else 1 end), .name)
-            | .[]
-            | [.address, .name, (if .connected then "1" else "0" end), (if .paired then "1" else "0" end)]
-            | join("\u001f")
-        ' 2>/dev/null)
-
         local -a rows_icon=() rows_ic=() rows_label=() rows_lc=() rows_cmd=()
-        local addr name conn paired icon ic lc label
-        while IFS=$'\x1f' read -r addr name conn paired; do
-            [ -n "$addr" ] || continue
-            if [ "$conn" = "1" ]; then
-                icon="󰂱"
-                ic="$GREEN"
-                lc="$TEXT_COLOR"
-                label="$name"
-            elif [ "$paired" = "1" ]; then
-                icon=""
-                ic="$SUBTEXT_COLOR"
-                lc="$SUBTEXT_COLOR"
-                label="$name"
-            else
-                icon="󰂰"
-                ic="$PEACH"
-                lc="$SUBTEXT_COLOR"
-                label="$name (New)"
-            fi
-            if [ "${#label}" -gt 26 ]; then
-                label="${label:0:25}…"
-            fi
+        local icon ic label lc cmd
+        while IFS=$'\x1f' read -r icon ic label lc cmd; do
+            [ -n "$icon" ] || continue
             rows_icon+=("$icon")
             rows_ic+=("$ic")
             rows_label+=("$label")
             rows_lc+=("$lc")
-            rows_cmd+=("$PLUGIN_DIR/click_bluetooth.sh toggle_device '$addr' '$paired'")
-        done <<< "$merged_tsv"
+            rows_cmd+=("$cmd")
+        done < "$ROWS_CACHE"
 
         total="${#rows_label[@]}"
         offset=$(cat "$OFFSET_FILE" 2>/dev/null || echo 0)
@@ -253,7 +283,27 @@ render_devices() {
         pool_i=$((pool_i + 1))
     done
 
-    [ "${#args[@]}" -gt 0 ] && sketchybar "${args[@]}" >/dev/null 2>&1
+    if [ "${#args[@]}" -gt 0 ]; then
+        local sig="${args[*]}"
+        if [ "$(cat "$RENDER_SIG" 2>/dev/null || true)" != "$sig" ]; then
+            printf '%s' "$sig" > "$RENDER_SIG"
+            sketchybar "${args[@]}" >/dev/null 2>&1
+        fi
+    fi
+}
+
+render_devices() {
+    if ! mkdir "$RENDER_LOCK" 2>/dev/null; then
+        if [ $(($(date +%s) - $(stat -f %m "$RENDER_LOCK" 2>/dev/null || echo 0))) -gt 5 ]; then
+            rm -rf "$RENDER_LOCK"
+            mkdir "$RENDER_LOCK" 2>/dev/null || return 0
+        else
+            return 0
+        fi
+    fi
+    trap 'rmdir "$RENDER_LOCK" 2>/dev/null || true' RETURN
+    build_device_rows
+    render_viewport
 }
 
 if [ "$ACTION" = "scroll" ]; then
@@ -271,7 +321,7 @@ if [ "$ACTION" = "scroll" ]; then
         [ "$offset" -lt 0 ] && offset=0
     fi
     echo "$offset" > "$OFFSET_FILE"
-    render_devices
+    render_viewport
     exit 0
 fi
 
@@ -288,6 +338,7 @@ if [ "$PREVIOUS_OPEN" = "$PARENT" ]; then
 fi
 
 echo 0 > "$OFFSET_FILE"
+rm -f "$RENDER_SIG" "$RENDER_LOCK"
 
 # Close any other open popup (wifi or rift workspace popup) and open ours IMMEDIATELY
 if [ -n "$PREVIOUS_OPEN" ] && [ "$PREVIOUS_OPEN" != "$PARENT" ] && [ "$PREVIOUS_OPEN" != "wifi" ]; then
@@ -300,14 +351,7 @@ printf '%s' "$PARENT" > "$OPEN_TRACKER"
 stop_loops
 # Also stop any lingering wifi background loops if wifi was open
 if [ "$PREVIOUS_OPEN" = "wifi" ]; then
-    for wf in /tmp/sketchybar_wifi_loop.pid /tmp/sketchybar_wifi_scan.pid; do
-        if [ -f "$wf" ]; then
-            wpid=$(cat "$wf" 2>/dev/null || true)
-            [ -n "$wpid" ] && { pkill -P "$wpid" 2>/dev/null || true; kill "$wpid" 2>/dev/null || true; }
-            rm -f "$wf"
-        fi
-    done
-    pkill -f "scanForNetworks" 2>/dev/null || true
+    "$PLUGIN_DIR/click_wifi.sh" hide >/dev/null 2>&1 &
 fi
 
 # Populate devices and start background inquiry asynchronously

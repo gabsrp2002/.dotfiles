@@ -7,7 +7,6 @@
 
 CONFIG_DIR="${CONFIG_DIR:-$HOME/.config/sketchybar}"
 PLUGIN_DIR="$CONFIG_DIR/plugins"
-source "$CONFIG_DIR/colors.sh"
 
 PARENT="wifi"
 ACTION="${1:-}"
@@ -21,7 +20,10 @@ OPEN_TRACKER="/tmp/sketchybar_rift_popup_open"
 LOOP_PID_FILE="/tmp/sketchybar_wifi_loop.pid"
 SCAN_CACHE="/tmp/sketchybar_wifi_scan.tsv"
 SCAN_PID_FILE="/tmp/sketchybar_wifi_scan.pid"
+ROWS_CACHE="/tmp/sketchybar_wifi_rows.tsv"
+RENDER_SIG="/tmp/sketchybar_wifi_render.sig"
 OFFSET_FILE="/tmp/sketchybar_wifi_offset"
+RENDER_LOCK="/tmp/sketchybar_wifi_render.lock"
 
 touch_flag() {
     touch "$FLAG"
@@ -42,6 +44,7 @@ stop_loops() {
             rm -f "$f"
         fi
     done
+    pkill -f "wifi_scanner.swift" 2>/dev/null || true
     pkill -f "scanForNetworks" 2>/dev/null || true
 }
 
@@ -49,7 +52,7 @@ hide_popup() {
     if [ "$(cat "$OPEN_TRACKER" 2>/dev/null || true)" = "$PARENT" ]; then
         rm -f "$OPEN_TRACKER"
     fi
-    rm -f "$OFFSET_FILE"
+    rm -f "$OFFSET_FILE" "$RENDER_SIG"
     sketchybar --set "$PARENT" popup.drawing=off >/dev/null 2>&1
     stop_loops
 }
@@ -60,7 +63,7 @@ schedule_hide() {
     (
         sleep 0.35
         if [ "$(cat "$COUNT_FILE" 2>/dev/null || echo 0)" = "$seen" ]; then
-            "$0" hide
+            hide_popup
         fi
     ) >/dev/null 2>&1 &
 }
@@ -75,6 +78,7 @@ if [ "$ACTION" = "hover" ]; then
     esac
 fi
 
+# Fast-path hover keepalive and hide without sourcing colors.sh
 case "$ACTION" in
     hover_enter)
         touch_flag
@@ -88,6 +92,11 @@ case "$ACTION" in
         hide_popup
         exit 0
         ;;
+esac
+
+source "$CONFIG_DIR/colors.sh"
+
+case "$ACTION" in
     connect)
         TARGET_SSID="$2"
         IS_SAVED="${3:-0}"
@@ -160,15 +169,75 @@ signal_icon() {
     fi
 }
 
-render_networks() {
-    local power_state
-    power_state=$(networksetup -getairportpower "$WIFI_DEV" 2>/dev/null | awk '{print $NF}')
+build_network_rows() {
+    local current_ssid power_state preferred_list preferred_nl
+    current_ssid=$(ipconfig getsummary "$WIFI_DEV" 2>/dev/null | awk -F': ' '/  SSID : / {print $2; exit}')
+    if [ -n "$current_ssid" ]; then
+        power_state="On"
+    else
+        power_state=$(networksetup -getairportpower "$WIFI_DEV" 2>/dev/null | awk '{print $NF}')
+    fi
+
+    if [ "$power_state" != "On" ]; then
+        printf 'OFF\n' > "${ROWS_CACHE}.tmp" && mv -f "${ROWS_CACHE}.tmp" "$ROWS_CACHE"
+        return 0
+    fi
+
+    preferred_list=$(networksetup -listpreferredwirelessnetworks "$WIFI_DEV" 2>/dev/null | sed '1d;s/^[[:space:]]*//')
+    preferred_nl=$'\n'"$preferred_list"$'\n'
+
+    local sep=$'\x1f'
+    local out_active="" out_saved="" out_other=""
+
+    # Row 0: Currently connected network (if any)
+    if [ -n "$current_ssid" ]; then
+        local safe_ssid="${current_ssid//\'/\'\\\'\'}"
+        local disp_ssid="$current_ssid"
+        [ "${#disp_ssid}" -gt 26 ] && disp_ssid="${disp_ssid:0:25}…"
+        out_active="󰤨${sep}${GREEN}${sep}${disp_ssid}${sep}${TEXT_COLOR}${sep}${PLUGIN_DIR}/click_wifi.sh connect '${safe_ssid}' 1 0"$'\n'
+    fi
+
+    # Single pure-bash pass over SCAN_CACHE (no per-line grep process forks)
+    if [ -s "$SCAN_CACHE" ]; then
+        local ssid rssi is_open icon label safe_ssid
+        while IFS=$'\t' read -r ssid rssi is_open; do
+            [ -n "$ssid" ] || continue
+            [ "$ssid" = "$current_ssid" ] && continue
+            icon=$(signal_icon "$rssi")
+            safe_ssid="${ssid//\'/\'\\\'\'}"
+            case "$preferred_nl" in
+                *$'\n'"$ssid"$'\n'*)
+                    label="$ssid (Saved)"
+                    [ "${#label}" -gt 26 ] && label="${label:0:25}…"
+                    out_saved+="${icon}${sep}${SAPPHIRE}${sep}${label}${sep}${TEXT_COLOR}${sep}${PLUGIN_DIR}/click_wifi.sh connect '${safe_ssid}' 1 '${is_open}'"$'\n'
+                    ;;
+                *)
+                    label="$ssid"
+                    [ "${#label}" -gt 23 ] && label="${label:0:22}…"
+                    if [ "$is_open" != "1" ]; then
+                        label="$label  "
+                    fi
+                    out_other+="${icon}${sep}${SUBTEXT_COLOR}${sep}${label}${sep}${SUBTEXT_COLOR}${sep}${PLUGIN_DIR}/click_wifi.sh connect '${safe_ssid}' 0 '${is_open}'"$'\n'
+                    ;;
+            esac
+        done < "$SCAN_CACHE"
+    fi
+
+    printf '%s%s%s' "$out_active" "$out_saved" "$out_other" > "${ROWS_CACHE}.tmp"
+    mv -f "${ROWS_CACHE}.tmp" "$ROWS_CACHE"
+}
+
+render_viewport() {
+    [ -f "$ROWS_CACHE" ] || build_network_rows
+
     local -a args=()
     local pool_i=0
     local total=0
     local offset=0
+    local first_line=""
+    IFS= read -r first_line < "$ROWS_CACHE" 2>/dev/null || true
 
-    if [ "$power_state" != "On" ]; then
+    if [ "$first_line" = "OFF" ]; then
         args+=(--set "${PARENT}.pool.0"
             drawing=on
             width="$ROW_WIDTH"
@@ -179,64 +248,16 @@ render_networks() {
             click_script="$PLUGIN_DIR/click_wifi.sh toggle_power")
         pool_i=1
     else
-        local current_ssid preferred_list
-        current_ssid=$(ipconfig getsummary "$WIFI_DEV" 2>/dev/null | awk -F': ' '/  SSID : / {print $2; exit}')
-        preferred_list=$(networksetup -listpreferredwirelessnetworks "$WIFI_DEV" 2>/dev/null | sed '1d;s/^[[:space:]]*//')
-
         local -a rows_icon=() rows_ic=() rows_label=() rows_lc=() rows_cmd=()
-
-        # Row 0: Currently connected network (if any)
-        if [ -n "$current_ssid" ]; then
-            local safe_ssid="${current_ssid//\'/\'\\\'\'}"
-            local disp_ssid="$current_ssid"
-            [ "${#disp_ssid}" -gt 26 ] && disp_ssid="${disp_ssid:0:25}…"
-            rows_icon+=("󰤨")
-            rows_ic+=("$GREEN")
-            rows_label+=("$disp_ssid")
-            rows_lc+=("$TEXT_COLOR")
-            rows_cmd+=("$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 1 0")
-        fi
-
-        # If we have a scan cache, collect all discovered networks (saved first, then by signal strength)
-        if [ -s "$SCAN_CACHE" ]; then
-            local ssid rssi is_open icon label safe_ssid
-            # Pass 1: Saved networks in range
-            while IFS=$'\t' read -r ssid rssi is_open; do
-                [ -n "$ssid" ] || continue
-                [ "$ssid" = "$current_ssid" ] && continue
-                if printf '%s\n' "$preferred_list" | grep -Fxq "$ssid"; then
-                    icon=$(signal_icon "$rssi")
-                    safe_ssid="${ssid//\'/\'\\\'\'}"
-                    label="$ssid (Saved)"
-                    [ "${#label}" -gt 26 ] && label="${label:0:25}…"
-                    rows_icon+=("$icon")
-                    rows_ic+=("$SAPPHIRE")
-                    rows_label+=("$label")
-                    rows_lc+=("$TEXT_COLOR")
-                    rows_cmd+=("$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 1 '$is_open'")
-                fi
-            done < "$SCAN_CACHE"
-
-            # Pass 2: Other nearby networks in range
-            while IFS=$'\t' read -r ssid rssi is_open; do
-                [ -n "$ssid" ] || continue
-                [ "$ssid" = "$current_ssid" ] && continue
-                if ! printf '%s\n' "$preferred_list" | grep -Fxq "$ssid"; then
-                    icon=$(signal_icon "$rssi")
-                    safe_ssid="${ssid//\'/\'\\\'\'}"
-                    label="$ssid"
-                    [ "${#label}" -gt 23 ] && label="${label:0:22}…"
-                    if [ "$is_open" != "1" ]; then
-                        label="$label  "
-                    fi
-                    rows_icon+=("$icon")
-                    rows_ic+=("$SUBTEXT_COLOR")
-                    rows_label+=("$label")
-                    rows_lc+=("$SUBTEXT_COLOR")
-                    rows_cmd+=("$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 0 '$is_open'")
-                fi
-            done < "$SCAN_CACHE"
-        fi
+        local icon ic label lc cmd
+        while IFS=$'\x1f' read -r icon ic label lc cmd; do
+            [ -n "$icon" ] || continue
+            rows_icon+=("$icon")
+            rows_ic+=("$ic")
+            rows_label+=("$label")
+            rows_lc+=("$lc")
+            rows_cmd+=("$cmd")
+        done < "$ROWS_CACHE"
 
         total="${#rows_label[@]}"
         offset=$(cat "$OFFSET_FILE" 2>/dev/null || echo 0)
@@ -291,7 +312,27 @@ render_networks() {
         pool_i=$((pool_i + 1))
     done
 
-    [ "${#args[@]}" -gt 0 ] && sketchybar "${args[@]}" >/dev/null 2>&1
+    if [ "${#args[@]}" -gt 0 ]; then
+        local sig="${args[*]}"
+        if [ "$(cat "$RENDER_SIG" 2>/dev/null || true)" != "$sig" ]; then
+            printf '%s' "$sig" > "$RENDER_SIG"
+            sketchybar "${args[@]}" >/dev/null 2>&1
+        fi
+    fi
+}
+
+render_networks() {
+    if ! mkdir "$RENDER_LOCK" 2>/dev/null; then
+        if [ $(($(date +%s) - $(stat -f %m "$RENDER_LOCK" 2>/dev/null || echo 0))) -gt 5 ]; then
+            rm -rf "$RENDER_LOCK"
+            mkdir "$RENDER_LOCK" 2>/dev/null || return 0
+        else
+            return 0
+        fi
+    fi
+    trap 'rmdir "$RENDER_LOCK" 2>/dev/null || true' RETURN
+    build_network_rows
+    render_viewport
 }
 
 if [ "$ACTION" = "scroll" ]; then
@@ -309,7 +350,7 @@ if [ "$ACTION" = "scroll" ]; then
         [ "$offset" -lt 0 ] && offset=0
     fi
     echo "$offset" > "$OFFSET_FILE"
-    render_networks
+    render_viewport
     exit 0
 fi
 
@@ -326,6 +367,7 @@ if [ "$PREVIOUS_OPEN" = "$PARENT" ]; then
 fi
 
 echo 0 > "$OFFSET_FILE"
+rm -f "$RENDER_SIG" "$RENDER_LOCK"
 
 # Close any other open popup (bluetooth or rift workspace popup) and open ours IMMEDIATELY
 if [ -n "$PREVIOUS_OPEN" ] && [ "$PREVIOUS_OPEN" != "$PARENT" ] && [ "$PREVIOUS_OPEN" != "bluetooth" ]; then
@@ -338,47 +380,14 @@ printf '%s' "$PARENT" > "$OPEN_TRACKER"
 stop_loops
 # Also stop any lingering bluetooth background loops if bluetooth was open
 if [ "$PREVIOUS_OPEN" = "bluetooth" ]; then
-    for bf in /tmp/sketchybar_bt_loop.pid /tmp/sketchybar_bt_inquiry.pid; do
-        if [ -f "$bf" ]; then
-            bpid=$(cat "$bf" 2>/dev/null || true)
-            [ -n "$bpid" ] && { pkill -P "$bpid" 2>/dev/null || true; kill "$bpid" 2>/dev/null || true; }
-            rm -f "$bf"
-        fi
-    done
-    pkill -f "blueutil --inquiry" 2>/dev/null || true
+    "$PLUGIN_DIR/click_bluetooth.sh" hide >/dev/null 2>&1 &
 fi
 
-# Populate networks and start background CoreWLAN scan loop asynchronously
+# Populate networks and start background CoreWLAN scan loop asynchronously.
 (
     sh -c 'echo $PPID' > "$SCAN_PID_FILE"
     render_networks
-    while [ "$(cat "$OPEN_TRACKER" 2>/dev/null || true)" = "$PARENT" ]; do
-        scan_out=$(swift -e '
-            import CoreWLAN
-            if let iface = CWWiFiClient.shared().interface(),
-               let nets = try? iface.scanForNetworks(withName: nil) {
-                var best: [String: (Int, Bool)] = [:]
-                for n in nets {
-                    guard let s = n.ssid, !s.isEmpty else { continue }
-                    let r = n.rssiValue
-                    guard r >= -86 && r < 0 else { continue }
-                    let o = n.supportsSecurity(.none)
-                    if best[s] == nil || r > best[s]!.0 {
-                        best[s] = (r, o)
-                    }
-                }
-                for (s, info) in best.sorted(by: { $0.value.0 > $1.value.0 }) {
-                    print("\(s)\t\(info.0)\t\(info.1 ? 1 : 0)")
-                }
-            }
-        ' 2>/dev/null)
-        [ "$(cat "$OPEN_TRACKER" 2>/dev/null || true)" = "$PARENT" ] || break
-        if [ -n "$scan_out" ]; then
-            printf '%s\n' "$scan_out" > "${SCAN_CACHE}.tmp" && mv "${SCAN_CACHE}.tmp" "$SCAN_CACHE"
-            "$0" render_once
-        fi
-        sleep 3
-    done
+    SCRIPT_PATH="$0" swift "$PLUGIN_DIR/wifi_scanner.swift" 2>/dev/null
     rm -f "$SCAN_PID_FILE"
 ) >/dev/null 2>&1 &
 

@@ -1,4 +1,7 @@
 #!/bin/bash
+# NOTE: Invoked every 2s via update_freq=2 (plus mouse events). Relying on
+# wifi_change or slower polling was tested previously and introduced a noticeable
+# delay when Wi-Fi/VPN status changed, so keep this fast 2s poll.
 
 case "$SENDER" in
     mouse.entered)

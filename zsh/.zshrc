@@ -42,27 +42,30 @@ function acp() {
   git push
 }
 
+# Deduplicate PATH entries automatically across reloads
+typeset -U path PATH
+
 # Basic paths
 if [[ $(uname) == "Darwin" ]]; then
     export HOMEBREW_NO_ENV_HINTS=1
-    export PATH=/bin
-    export PATH=/sbin:$PATH
-    export PATH=/usr/bin:$PATH
-    export PATH=/usr/sbin:$PATH
-
-    # TeX path
-    export PATH=/Library/TeX/texbin:$PATH
-
-    # Homebrew paths
-    export PATH=$HOME/.rbenv/shims:$PATH
-    export PATH=/opt/homebrew/opt/llvm/bin:$PATH
-    export PATH=/opt/homebrew/bin:$PATH
-    export PATH=/opt/homebrew/sbin:$PATH
-
-    # Scripts path
-    export PATH=$HOME/scripts:$PATH
-    export PATH=$HOME/eda/oss-cad-suite/bin:$PATH
-    export PATH=/usr/local/bin:$PATH
+    path=(
+        "$HOME/.ob1/bin"
+        "$HOME/.local/bin"
+        "$HOME/.deno/bin"
+        /usr/local/bin
+        "$HOME/eda/oss-cad-suite/bin"
+        "$HOME/scripts"
+        /opt/homebrew/sbin
+        /opt/homebrew/bin
+        /opt/homebrew/opt/llvm/bin
+        "$HOME/.rbenv/shims"
+        /Library/TeX/texbin
+        /usr/sbin
+        /usr/bin
+        /sbin
+        /bin
+    )
+    export PATH
 
     # eval "$(rbenv init -)"
 fi
@@ -71,12 +74,11 @@ if [[ $(uname) == "Linux" ]]; then
     function open() {
         xdg-open "$@" > /dev/null 2>&1 &!
     }
+    path=(
+        "$HOME/.ob1/bin"
+        "$HOME/.local/bin"
+        "$HOME/.deno/bin"
+        $path
+    )
+    export PATH
 fi
-
-export PATH="$HOME/.deno/bin:$PATH"
-
-# uv
-export PATH="$HOME/.local/bin:$PATH"
-
-# OB1 dev tools
-export PATH="$HOME/.ob1/bin:$PATH"
