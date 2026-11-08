@@ -108,9 +108,14 @@ case "$ACTION" in
 
         if [ "$IS_SAVED" = "1" ] || [ "$IS_OPEN" = "1" ]; then
             OUT=$(networksetup -setairportnetwork "$WIFI_DEV" "$TARGET_SSID" 2>&1)
-            if ! echo "$OUT" | grep -qiE "Failed|Error|Could not|not found"; then
+            if ! echo "$OUT" | grep -qiE "Failed to join|Could not find network|Error:"; then
                 hide_popup
                 NAME=wifi "$PLUGIN_DIR/wifi.sh" >/dev/null 2>&1 &
+                exit 0
+            fi
+            # If the network simply moved out of range, don't ask for a password
+            if echo "$OUT" | grep -qi "Could not find network"; then
+                hide_popup
                 exit 0
             fi
         fi
@@ -231,21 +236,6 @@ render_networks() {
                     rows_cmd+=("$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 0 '$is_open'")
                 fi
             done < "$SCAN_CACHE"
-        else
-            # Before first scan completes: show saved networks so the popup is immediately populated
-            local saved_ssid safe_ssid label
-            while IFS= read -r saved_ssid; do
-                [ -n "$saved_ssid" ] || continue
-                [ "$saved_ssid" = "$current_ssid" ] && continue
-                safe_ssid="${saved_ssid//\'/\'\\\'\'}"
-                label="$saved_ssid (Saved)"
-                [ "${#label}" -gt 26 ] && label="${label:0:25}…"
-                rows_icon+=("󰤥")
-                rows_ic+=("$SAPPHIRE")
-                rows_label+=("$label")
-                rows_lc+=("$SUBTEXT_COLOR")
-                rows_cmd+=("$PLUGIN_DIR/click_wifi.sh connect '$safe_ssid' 1 0")
-            done <<< "$preferred_list"
         fi
 
         total="${#rows_label[@]}"
@@ -371,6 +361,7 @@ fi
                 for n in nets {
                     guard let s = n.ssid, !s.isEmpty else { continue }
                     let r = n.rssiValue
+                    guard r >= -86 && r < 0 else { continue }
                     let o = n.supportsSecurity(.none)
                     if best[s] == nil || r > best[s]!.0 {
                         best[s] = (r, o)
