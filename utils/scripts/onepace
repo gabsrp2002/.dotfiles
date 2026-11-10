@@ -621,14 +621,16 @@ mpv_opts=(--no-resume-playback --save-position-on-quit --term-playing-msg='ONE_P
 start_ts="$(read_state timestamp)"
 if [[ -n "$start_ts" && "$start_ts" != "0" && "$selected_arc" == "$(read_state last_arc)" && "$selected_episode" == "$(read_state last_episode)" ]]; then
   echo "⏱ Resuming at timestamp: $(format_time "$start_ts") (${start_ts}s)"
-  mpv_opts+=(--start="$start_ts")
+  mpv_args=("--{" --start="$start_ts" "${playlist[1]}" "--}" "${playlist[@]:1}")
+else
+  mpv_args=("${playlist[@]}")
 fi
 
 # While mpv runs, Ctrl+C should only quit mpv (which saves its position), not this
 # script, so the state below still gets saved. `|| true` keeps set -e from aborting
 # when mpv exits non-zero.
 trap ':' INT
-mpv "${mpv_opts[@]}" "${playlist[@]}" 2>&1 | tee "$mpv_log" || true
+mpv "${mpv_opts[@]}" "${mpv_args[@]}" 2>&1 | tee "$mpv_log" || true
 trap 'exit 130' INT
 
 # Parse last played episode from MPV terminal output log
