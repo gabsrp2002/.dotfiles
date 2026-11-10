@@ -1,0 +1,35 @@
+#!/bin/zsh
+
+# Switch to the next/previous non-empty workspace on the CURRENT display,
+# wrapping around within that display and never crossing to another monitor.
+# Usage: switch_workspace_next_prev next|prev
+
+DIRECTION=${1:-next}
+
+WORKSPACES_JSON=$(rift-cli query workspaces) || exit 0
+TARGET=$(echo "$WORKSPACES_JSON" | jq -r --arg dir "$DIRECTION" '
+    [.[] | select(.is_focused == true)][0] as $cur
+    | if $cur == null then empty else
+        ([.[] | select(.display_uuid == $cur.display_uuid
+                       and (.window_count != 0 or .index == $cur.index))]
+         | sort_by(.index)) as $list
+        | ($list | length) as $n
+        | ($list | map(.index) | index($cur.index)) as $pos
+        | if $n < 2 or $pos == null then empty else
+            (reduce range(1; $n) as $k ({target: null};
+                if .target != null then .
+                else
+                    (if $dir == "next"
+                     then ($pos + $k) % $n
+                     else (($pos - $k) % $n + $n) % $n
+                     end) as $i
+                    | if $list[$i].window_count != 0
+                      then .target = $list[$i].index
+                      else . end
+                end)
+             | .target)
+          end
+      end')
+[ -z "$TARGET" ] && exit 0
+
+rift-cli execute workspace switch "$TARGET" >/dev/null

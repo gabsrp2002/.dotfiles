@@ -66,6 +66,7 @@ show_binding_mode = true
 [settings.ui.mission_control]
 enabled = true
 show_empty_workspaces = false
+activate_on_hotkey_release = false
 
 [settings.gestures]
 # Three-finger horizontal swipes switch workspaces, skipping empty ones
@@ -275,17 +276,12 @@ comb1 = "Alt + Shift"
 # does the move and follow itself.)
 "Alt + C" = { exec = ["/bin/zsh", "-c", "~/scripts/move_to_new_ws"] }
 
-# Next/previous non-empty workspace, wrapping. `true` = skip empty workspaces
-# (native: no script spawn). In global workspace mode this traverses across all
-# visible displays, matching trackpad swipes.
-"Alt + N" = { next_workspace = true }
-"Alt + P" = { prev_workspace = true }
+# Next/previous non-empty workspace on the CURRENT display only, wrapping around.
+"Alt + N" = { exec = ["/bin/zsh", "-c", "~/scripts/switch_workspace_next_prev next"] }
+"Alt + P" = { exec = ["/bin/zsh", "-c", "~/scripts/switch_workspace_next_prev prev"] }
 
-# Move the focused window to the next/previous non-empty workspace and follow
-# it. Walks the whole (global) workspace catalog in index order and wraps
-# around, so from the last non-empty workspace on a display it continues onto
-# the next display. (Script wrapper: Rift's move_window_to_workspace cannot
-# skip empties.)
+# Move the focused window to the next/previous non-empty workspace on the
+# CURRENT display and follow it, wrapping around within that display.
 "comb1 + N" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_next_prev next"] }
 "comb1 + P" = { exec = ["/bin/zsh", "-c", "~/scripts/move_window_next_prev prev"] }
 
