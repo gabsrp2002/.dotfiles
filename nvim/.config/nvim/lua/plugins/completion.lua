@@ -10,8 +10,6 @@ return {
       "hrsh7th/cmp-cmdline",
       "hrsh7th/cmp-nvim-lua",
       "kdheepak/cmp-latex-symbols",
-      "SirVer/ultisnips",
-      "quangnguyen30192/cmp-nvim-ultisnips",
     },
     config = function()
       local cmp = require("cmp")
@@ -44,11 +42,6 @@ return {
       }
 
       cmp.setup({
-        snippet = {
-          expand = function(args)
-            vim.fn["UltiSnips#Anon"](args.body)
-          end,
-        },
         window = {
           completion = cmp.config.window.bordered(),
           documentation = cmp.config.window.bordered(),
@@ -61,7 +54,6 @@ return {
         sources = cmp.config.sources({
           { name = "lazydev", group_index = 0 },
           { name = "nvim_lsp" },
-          { name = "ultisnips" },
           { name = "path" },
           {
             name = "latex_symbols",
@@ -78,7 +70,6 @@ return {
             vim_item.menu = ({
               buffer = "[Buffer]",
               nvim_lsp = "[LSP]",
-              ultisnips = "[Snip]",
               path = "[Path]",
               nvim_lua = "[Lua]",
               latex_symbols = "[LaTeX]",
@@ -137,10 +128,7 @@ return {
         "clangd",
         "texlab",
         "cssls",
-        "svlangserver",
         "html",
-        "gopls",
-        "rust_analyzer"
       }
 
       for _, server in ipairs(servers) do
@@ -159,24 +147,6 @@ return {
         },
       })
 
-      vim.lsp.config("sourcekit", {
-        cmd = { "sourcekit-lsp" },
-        root_dir = root_pattern({ "Package.swift", ".git" }),
-        capabilities = {
-          workspace = {
-            didChangeWatchedFiles = {
-              dynamicRegistration = true,
-            },
-          },
-          textDocument = {
-            diagnostic = {
-              dynamicRegistration = true,
-              relatedDocumentSupport = true,
-            },
-          },
-        },
-      })
-
       vim.lsp.config("denols", {
         capabilities = capabilities,
         root_dir = root_pattern({ "deno.json", "deno.jsonc" }),
@@ -187,18 +157,7 @@ return {
         root_dir = root_pattern({ "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lockb", "bun.lock" }),
       })
 
-      vim.lsp.enable({ "lua_ls", "sourcekit", "denols", "ts_ls" })
-    end,
-  },
-  {
-    "SirVer/ultisnips",
-    lazy = true,
-    cmd = { "UltiSnipsEdit", "UltiSnipsAddFiletypes" },
-    init = function()
-      vim.g.UltiSnipsEditSplit = "vertical"
-      vim.g.UltiSnipsExpandTrigger = "<c-k>"
-      vim.g.UltiSnipsJumpForwardTrigger = "<c-k>"
-      vim.g.UltiSnipsJumpBackwardTrigger = "<c-j>"
+      vim.lsp.enable({ "lua_ls", "denols", "ts_ls" })
     end,
   },
 }

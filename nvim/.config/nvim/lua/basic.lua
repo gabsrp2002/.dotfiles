@@ -11,9 +11,15 @@ vim.opt.autoread = true
 -- Set the scroll offset
 vim.opt.so = 7
 
-vim.g.python3_host_prog = vim.fn.expand('$HOME/.config/nvim/venv/bin/python')
+-- Disable unused providers
+
+vim.g.loaded_python3_provider = 0
 
 vim.g.loaded_perl_provider = 0
+
+vim.g.loaded_node_provider = 0
+
+vim.g.loaded_ruby_provider = 0
 
 -- Copys to clipboard
 vim.schedule(function()
@@ -80,7 +86,7 @@ if not vim.uv.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
-require("lazy").setup({ spec = "plugins", change_detection = { notify = false } })
+require("lazy").setup({ spec = "plugins", change_detection = { notify = false }, rocks = { enabled = false } })
 
 -- LSP signs
 vim.diagnostic.config({
