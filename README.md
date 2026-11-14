@@ -6,7 +6,6 @@ My dotfiles managed with `stow`
 
 | Package      | Platform       | Description                                 |
 | ------------ | -------------- | ------------------------------------------- |
-| `aerospace`  | macOS          | Aerospace window manager configuration (legacy, kept for rollback) |
 | `rift`       | macOS          | Rift window manager configuration         |
 | `git`        | Cross-platform | Git configuration and aliases               |
 | `hypr`       | Linux          | Hyprland (Wayland compositor) configuration |

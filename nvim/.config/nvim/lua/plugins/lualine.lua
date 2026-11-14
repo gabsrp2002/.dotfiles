@@ -1,6 +1,6 @@
 return {
   "nvim-lualine/lualine.nvim",
-  dependencies = { "kyazdani42/nvim-web-devicons", opt = true },
+  dependencies = { "nvim-tree/nvim-web-devicons" },
   init = function()
     local refresh_callback = function()
       -- Requires lualine now to lazyload it
@@ -67,13 +67,13 @@ return {
       n = colors.red,
       i = colors.green,
       v = colors.blue,
-      [""] = colors.blue,
+      ["\22"] = colors.blue,
       V = colors.blue,
       c = colors.pink,
       no = colors.red,
       s = colors.yellow,
       S = colors.yellow,
-      [""] = colors.yellow,
+      ["\19"] = colors.yellow,
       ic = colors.yellow,
       R = colors.teal,
       Rv = colors.teal,
@@ -89,12 +89,12 @@ return {
       n = "NORMAL",
       i = "INSERT",
       v = "VIRTUAL",
-      [""] = "VIRTUAL",
+      ["\22"] = "VIRTUAL",
       V = "VIRTUAL",
       c = "COMMAND",
       s = "SELECT",
       S = "SELECT",
-      [""] = "SELECT",
+      ["\19"] = "SELECT",
       ic = "INSERT",
       R = "REPLACE",
       Rv = "REPLACE",
@@ -156,8 +156,10 @@ return {
       -- mode component
       function()
         -- auto change color according to neovims mode
-        vim.api.nvim_command("hi! LualineMode guifg=" .. colors.surface0 .. " guibg=" .. mode_color[vim.fn.mode()])
-        return mode_name[vim.fn.mode()]
+        local mode = vim.fn.mode()
+        local bg = mode_color[mode] or colors.red
+        vim.api.nvim_command("hi! LualineMode guifg=" .. colors.surface0 .. " guibg=" .. bg)
+        return mode_name[mode] or mode
       end,
       color = "LualineMode",
       padding = { right = 1, left = 1 },
@@ -231,12 +233,12 @@ return {
           "GitHub Copilot",
         }
 
+        local seen = {}
         local curr_buf_clients = {}
         for _, client in ipairs(clients) do
-          if not curr_buf_clients[client.name] then
-            if not vim.tbl_contains(ignore, client.name) then
-              table.insert(curr_buf_clients, client.name)
-            end
+          if not seen[client.name] and not vim.tbl_contains(ignore, client.name) then
+            seen[client.name] = true
+            table.insert(curr_buf_clients, client.name)
           end
         end
 
@@ -273,7 +275,8 @@ return {
     ins_right({
       function()
         -- auto change color according to neovims mode
-        vim.api.nvim_command("hi! LualineEndMode guifg=" .. mode_color[vim.fn.mode()])
+        local fg = mode_color[vim.fn.mode()] or colors.red
+        vim.api.nvim_command("hi! LualineEndMode guifg=" .. fg)
         return "▊"
       end,
       color = "LualineEndMode",

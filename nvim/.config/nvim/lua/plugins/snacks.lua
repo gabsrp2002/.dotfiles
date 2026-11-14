@@ -16,7 +16,7 @@ return {
             icon = " ",
             key = "c",
             desc = "Config",
-            action = ":lua Snacks.dashboard.pick('files', { cwd = '~/.dotfiles/nvim/.config/nvim' })",
+            action = ":lua Snacks.dashboard.pick('files', { cwd = vim.fn.stdpath('config') })",
           },
           { icon = "󰒲 ", key = "L", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
           { icon = " ", key = "q", desc = "Quit", action = ":qa" },

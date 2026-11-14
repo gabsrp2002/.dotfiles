@@ -44,8 +44,7 @@ stop_loops() {
             rm -f "$f"
         fi
     done
-    pkill -f "wifi_scanner.swift" 2>/dev/null || true
-    pkill -f "scanForNetworks" 2>/dev/null || true
+    pkill -f "swift .*wifi_scanner\.swift" 2>/dev/null || true
 }
 
 hide_popup() {
@@ -131,8 +130,16 @@ case "$ACTION" in
 
         # Unknown secured network (or saved network needing a password update): prompt via native dialog
         hide_popup
-        ESCAPED_SSID="${TARGET_SSID//\"/\\\"}"
-        PASS=$(osascript -e "Tell application \"System Events\" to display dialog \"Enter password for Wi-Fi network \\\"${ESCAPED_SSID}\\\":\" default answer \"\" with title \"Wi-Fi Network\" with hidden answer buttons {\"Cancel\", \"Connect\"} default button \"Connect\"" -e 'text returned of result' 2>/dev/null) || exit 0
+        PASS=$(osascript - "$TARGET_SSID" 2>/dev/null <<'APPLESCRIPT'
+on run argv
+    set ssid to item 1 of argv
+    tell application "System Events"
+        set dlg to display dialog ("Enter password for Wi-Fi network \"" & ssid & "\":") default answer "" with title "Wi-Fi Network" with hidden answer buttons {"Cancel", "Connect"} default button "Connect"
+        return text returned of dlg
+    end tell
+end run
+APPLESCRIPT
+        ) || exit 0
         if [ -n "$PASS" ]; then
             networksetup -setairportnetwork "$WIFI_DEV" "$TARGET_SSID" "$PASS" >/dev/null 2>&1
             NAME=wifi "$PLUGIN_DIR/wifi.sh" >/dev/null 2>&1 &

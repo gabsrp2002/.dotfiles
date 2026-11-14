@@ -10,8 +10,27 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 3000;
 const ONE_PACE_DIR = process.env.ONE_PACE_DIR || path.join(os.homedir(), 'one_pace');
-const STATE_FILE = path.join(ONE_PACE_DIR, '.one_pace_state.json');
+const RESOLVED_ONE_PACE_DIR = path.resolve(ONE_PACE_DIR);
+const STATE_FILE = path.join(RESOLVED_ONE_PACE_DIR, '.one_pace_state.json');
 const WATCH_LATER_DIR = path.join(os.homedir(), '.config', 'mpv', 'watch_later');
+const WEB_TOKEN = process.env.ONEPACE_WEB_TOKEN || '';
+
+function resolveEpisodePath(arc, episode) {
+  if (typeof arc !== 'string' || typeof episode !== 'string' || !arc || !episode) {
+    return null;
+  }
+  if (
+    arc.includes('/') || arc.includes('\\') || arc === '.' || arc === '..' ||
+    episode.includes('/') || episode.includes('\\') || episode === '.' || episode === '..'
+  ) {
+    return null;
+  }
+  const candidate = path.resolve(RESOLVED_ONE_PACE_DIR, arc, episode);
+  if (!candidate.startsWith(RESOLVED_ONE_PACE_DIR + path.sep)) {
+    return null;
+  }
+  return candidate;
+}
 
 // Helper to format arc directory: 25_fishman_island -> 25. Fishman Island
 function formatArc(dir) {
@@ -168,20 +187,28 @@ app.get('/api/arcs', (req, res) => {
 });
 
 app.post('/api/state', (req, res) => {
-  const { arc, episode, timestamp } = req.body;
-  if (!arc || !episode) {
-    return res.status(400).json({ error: 'Missing arc or episode parameter' });
+  if (WEB_TOKEN && req.get('x-onepace-token') !== WEB_TOKEN) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
-  writeState(arc, episode, timestamp || 0);
-  res.json({ success: true, arc, episode, timestamp: timestamp || 0 });
+  const { arc, episode, timestamp } = req.body || {};
+  const filePath = resolveEpisodePath(arc, episode);
+  if (!filePath || !fs.existsSync(filePath)) {
+    return res.status(400).json({ error: 'Invalid arc or episode' });
+  }
+  const parsedTs = timestamp === undefined ? 0 : Number(timestamp);
+  if (!Number.isFinite(parsedTs) || parsedTs < 0) {
+    return res.status(400).json({ error: 'Invalid timestamp' });
+  }
+  writeState(arc, episode, parsedTs);
+  res.json({ success: true, arc, episode, timestamp: Math.floor(parsedTs) });
 });
 
 // Stream endpoint with HTTP 206 Partial Content Range support
 app.get('/stream/:arc/:episode', (req, res) => {
   const { arc, episode } = req.params;
-  const filePath = path.join(ONE_PACE_DIR, arc, episode);
+  const filePath = resolveEpisodePath(arc, episode);
 
-  if (!fs.existsSync(filePath)) {
+  if (!filePath || !fs.existsSync(filePath)) {
     return res.status(404).send('Episode video file not found');
   }
 
@@ -218,9 +245,9 @@ app.get('/stream/:arc/:episode', (req, res) => {
 // Download endpoint for saving video files offline on mobile
 app.get('/download/:arc/:episode', (req, res) => {
   const { arc, episode } = req.params;
-  const filePath = path.join(ONE_PACE_DIR, arc, episode);
+  const filePath = resolveEpisodePath(arc, episode);
 
-  if (!fs.existsSync(filePath)) {
+  if (!filePath || !fs.existsSync(filePath)) {
     return res.status(404).send('Episode video file not found');
   }
 

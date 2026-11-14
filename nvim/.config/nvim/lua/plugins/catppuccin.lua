@@ -39,14 +39,17 @@ return {
         custom_highlights = {},
         integrations = {
           cmp = true,
-          treesitter = true,
-          noice = true,
-          alpha = true,
-          harpoon = true,
-          lightspeed = true,
           copilot_vim = true,
-          telescope = true,
+          gitsigns = true,
+          leap = true,
+          mini = { enabled = true },
+          noice = true,
+          notify = true,
           rainbow_delimiters = true,
+          snacks = { enabled = true },
+          telescope = { enabled = true },
+          treesitter = true,
+          lsp_trouble = true,
         },
       }
     )

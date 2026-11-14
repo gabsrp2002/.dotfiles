@@ -32,14 +32,14 @@ fi
 if command -v nvim >/dev/null 2>&1; then
   alias vim="nvim"
 fi
-alias claude="claude --dangerously-skip-permissions"
-unalias gwt
 
 # Function to fast add, commit and push
 function acp() {
-  git add .
-  git commit -m "$1"
-  git push
+  if [[ -z "${1:-}" ]]; then
+    echo "Usage: acp <commit message>" >&2
+    return 1
+  fi
+  git add . && git commit -m "$1" && git push
 }
 
 # Deduplicate PATH entries automatically across reloads

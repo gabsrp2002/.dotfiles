@@ -1,14 +1,11 @@
 local function map(mode, lhs, rhs, opts)
-	local options = { noremap = true }
-	if opts then
-		options = vim.tbl_extend("force", options, opts)
-	end
-	vim.api.nvim_set_keymap(mode, lhs, rhs, options)
+  local options = vim.tbl_extend("force", { buffer = true, silent = true }, opts or {})
+  vim.keymap.set(mode, lhs, rhs, options)
 end
 
-vim.opt.tabstop = 2
-vim.opt.shiftwidth = 2
-vim.opt.softtabstop = 2
+vim.opt_local.tabstop = 2
+vim.opt_local.shiftwidth = 2
+vim.opt_local.softtabstop = 2
 
-map("n", "<leader>rr", ":w <bar> :split <bar> :res 8 <bar> :terminal g++ % -o %:r && ./%:r<CR>i")
-map("n", "<leader>cc", ":w <bar> :split<CR> :res 8<CR> :terminal g++ % -o %:r <CR>i")
+map("n", "<leader>rr", ":w | split | res 8 | terminal g++ % -o %:r && ./%:r<CR>i")
+map("n", "<leader>cc", ":w | split | res 8 | terminal g++ % -o %:r<CR>i")

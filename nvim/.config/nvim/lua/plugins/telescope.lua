@@ -3,7 +3,7 @@ return {
     "nvim-telescope/telescope.nvim",
     dependencies = {
       "nvim-lua/plenary.nvim",
-      "kyazdani42/nvim-web-devicons",
+      "nvim-tree/nvim-web-devicons",
       "nvim-lua/popup.nvim",
       "BurntSushi/ripgrep",
       "nvim-telescope/telescope-ui-select.nvim",

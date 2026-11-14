@@ -312,7 +312,8 @@ case "${1:-}" in
     ;;
   --web)
     port="${2:-3000}"
-    web_dir="$(dirname "$0")/onepace_web"
+    web_dir="${XDG_DATA_HOME:-$HOME/.local/share}/onepace_web"
+    [[ -d "$web_dir" ]] || web_dir="$(dirname "$0")/onepace_web"
 
     if [[ ! -d "$web_dir" ]]; then
       echo "Error: Web server directory not found at $web_dir" >&2
@@ -342,7 +343,10 @@ case "${1:-}" in
 
     ngrok_pid=""
     if command -v ngrok &>/dev/null; then
-      ngrok http --url easy-artistic-mullet.ngrok-free.app  "$port" >"$ngrok_log" 2>&1 &
+      ngrok_args=(http)
+      [[ -n "${ONEPACE_NGROK_DOMAIN:-}" ]] && ngrok_args+=(--url "$ONEPACE_NGROK_DOMAIN")
+      ngrok_args+=("$port")
+      ngrok "${ngrok_args[@]}" >"$ngrok_log" 2>&1 &
       ngrok_pid=$!
       CLEANUP_PIDS+=("$ngrok_pid")
 

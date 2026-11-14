@@ -18,7 +18,7 @@ return {
       {
         "rcarriga/nvim-notify",
         config = function()
-          vim.g.termguicolors = true
+          vim.opt.termguicolors = true
           local notify = require("notify")
           notify.setup({
             background_colour = "#000000",
@@ -89,19 +89,18 @@ return {
   {
     "chrisgrieser/nvim-spider",
     keys = {
-      { "w", "<cmd>lua require('spider').motion('w')<CR>", mode = { "n", "o", "x" }, { desc = "Spider-w" } },
-      { "e", "<cmd>lua require('spider').motion('e')<CR>", mode = { "n", "o", "x" }, { desc = "Spider-e" } },
-      { "b", "<cmd>lua require('spider').motion('b')<CR>", mode = { "n", "o", "x" }, { desc = "Spider-b" } },
-      { "ge", "<cmd>lua require('spider').motion('ge')<CR>", mode = { "n", "o", "x" }, { desc = "Spider-ge" } },
+      { "w", "<cmd>lua require('spider').motion('w')<CR>", mode = { "n", "o", "x" }, desc = "Spider-w" },
+      { "e", "<cmd>lua require('spider').motion('e')<CR>", mode = { "n", "o", "x" }, desc = "Spider-e" },
+      { "b", "<cmd>lua require('spider').motion('b')<CR>", mode = { "n", "o", "x" }, desc = "Spider-b" },
+      { "ge", "<cmd>lua require('spider').motion('ge')<CR>", mode = { "n", "o", "x" }, desc = "Spider-ge" },
     },
   },
 
   -- Bufferline
   {
     "akinsho/bufferline.nvim",
-    dependencies = { "kyazdani42/nvim-web-devicons" },
+    dependencies = { "nvim-tree/nvim-web-devicons" },
     event = "BufReadPre",
-    after = "catppuccin",
     config = function()
       vim.opt.termguicolors = true
       require("bufferline").setup({
@@ -123,7 +122,7 @@ return {
   {
     "iamcco/markdown-preview.nvim",
     cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
-    build = "cd app && yarn install",
+    build = "cd app && npm install",
     init = function()
       vim.g.mkdp_filetypes = { "markdown" }
     end,
@@ -147,11 +146,11 @@ return {
             print("Cannot split a maximized window")
           end
         end,
-        { desc = "split nicely" },
+        desc = "split nicely",
       },
     },
     init = function()
-      local ignore_filetypes = { "TelescopePrompt", "alpha", "oil" }
+      local ignore_filetypes = { "TelescopePrompt", "snacks_dashboard", "minifiles", "trouble", "lazy" }
       local ignore_buftypes = { "nofile", "prompt", "popup" }
 
       local augroup = vim.api.nvim_create_augroup("FocusDisable", { clear = true })
@@ -228,7 +227,7 @@ return {
             modeline = false,
           })
         end,
-        { desc = "toggle maximize window" },
+        desc = "toggle maximize window",
       },
     },
     opts = {

@@ -96,7 +96,7 @@ return {
         tex = {
           function()
             return {
-              exe = "/opt/homebrew/bin/latexindent",
+              exe = "latexindent",
               args = {
                 "-l",
                 "-m",
@@ -129,9 +129,6 @@ return {
 
             local binary_path = search_ancestors(current_file, ".deps/swiftformat/swiftformat")
 
-            print("Formatting Swift file with args: " .. vim.inspect(args))
-            print("Using binary path: " .. (binary_path or "swiftformat"))
-
             return {
               exe = binary_path or "swiftformat",
               args = args,
@@ -144,7 +141,6 @@ return {
         },
         ["*"] = {
           require("formatter.filetypes.any").remove_trailing_whitespace,
-          require("formatter.filetypes.any").trim_whitespace,
         },
       },
     })
